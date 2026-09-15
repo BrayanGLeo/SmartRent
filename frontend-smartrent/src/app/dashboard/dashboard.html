@@ -1,0 +1,27 @@
+<div class="dashboard-container">
+  <div class="glass-card profile-card">
+    <h2>Hola, <span class="highlight">{{ userName }}</span></h2>
+    <div class="profile-details">
+      <div class="detail-item">
+        <span class="label">Email:</span>
+        <span class="value">{{ userEmail }}</span>
+      </div>
+      <div class="detail-item" *ngIf="userRoles && userRoles.length > 0">
+        <span class="label">Roles:</span>
+        <div class="roles-container">
+          <span class="role-badge" *ngFor="let role of userRoles">{{ role }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass-card actions-card">
+    <h3>Simulación de API (Backend BFF)</h3>
+    <p>Haz clic en el botón para solicitar los arriendos. Aunque la API falle, el MSAL Interceptor adjuntará el token Bearer. Verifica la pestaña Network.</p>
+    <button class="btn-primary" (click)="fetchRentals()">Cargar Arriendos</button>
+    
+    <div class="api-response" *ngIf="apiResponse">
+      <pre>{{ apiResponse }}</pre>
+    </div>
+  </div>
+</div>
