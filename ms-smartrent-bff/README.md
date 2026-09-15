@@ -1,32 +1,34 @@
-# Backend SmartRent (Spring Boot BFF)
+# SmartRent - Backend for Frontend (BFF)
 
-Este directorio contiene el backend de la aplicación, implementado con **Spring Boot 3** y **Java 21**. Su objetivo es exponer una API REST segura mediante el patrón Backend For Frontend (BFF).
+Este es el microservicio **BFF (Backend for Frontend)** de la plataforma SmartRent. Su propósito principal es servir como intermediario entre la aplicación frontend (Angular) y los servicios internos o recursos externos, proporcionando una capa de seguridad y orquestación de datos.
 
-## Arquitectura y Seguridad
+## 🛠️ Tecnologías y Frameworks
 
-Este componente está configurado como un **OAuth2 Resource Server**. En lugar de emitir sus propios tokens de autenticación, el BFF delega la validación de tokens a **Microsoft Entra ID (Azure AD)**.
+El proyecto está desarrollado utilizando el ecosistema de Java y Spring:
 
-### Características Clave
-- **Validación JWT Asimétrica:** Valida automáticamente el token (Bearer) enviado por el Frontend utilizando las claves públicas (JWKS) del Tenant de Azure AD.
-- **Mapeo de Roles:** Utiliza un `JwtAuthenticationConverter` para transformar el *claim* `roles` del token emitido por Azure en autoridades de Spring Security (ej. `ROLE_Admin`).
-- **Control de Acceso basado en Roles (RBAC):** Protege los *endpoints* a nivel de método con anotaciones como `@PreAuthorize("hasRole('Admin')")`.
-- **CORS Configurado:** Permite orígenes específicos (`http://localhost:4200` y S3 para producción) garantizando que solo el frontend autorizado pueda interactuar con el backend.
+- **Java**: Versión 17/18 (Configurado con compatibilidad para Release 17).
+- **Spring Boot**: 3.3.4 (Framework principal para la creación del microservicio).
+- **Spring Security**: Para el manejo de seguridad, autenticación y autorización.
+- **Spring Cloud Azure**: Integración nativa con los servicios de Microsoft Azure.
+- **Azure Active Directory (AAD)**: Autenticación OAuth2 delegada y Resource Server (validación de tokens JWT).
+- **Maven**: Herramienta de gestión de dependencias y construcción del proyecto.
 
-## Ejecución Local
+## 🚀 Requisitos Previos
 
-Para ejecutar este microservicio en entorno de desarrollo, asegúrate de tener configuradas las credenciales de Azure AD en el archivo `application.properties`:
+- Java Development Kit (JDK) 17 o superior.
+- Maven 3.8+ (Aunque el proyecto cuenta con el Maven Wrapper `mvnw`).
 
-- **Tenant ID:** `753ae9df-d5ec-4c6b-8227-b334fc775087`
-- **Client ID (API):** `749dc676-d557-460a-b138-dac9a6744b6e`
+## ⚙️ Configuración y Ejecución
 
-### Comandos de Ejecución
-
-Utiliza el Maven Wrapper incluido en la raíz del proyecto para compilar y ejecutar:
+Para iniciar el servidor de desarrollo, ejecuta el siguiente comando en la raíz del backend:
 
 ```bash
-# Limpiar y compilar el proyecto
-./mvnw clean compile
-
-# Ejecutar el servidor de Spring Boot (Puerto 8080)
 ./mvnw spring-boot:run
 ```
+
+El servidor arrancará por defecto en el puerto `8080`.
+
+### Seguridad (CORS y JWT)
+
+La aplicación implementa políticas estrictas de CORS para permitir peticiones del frontend en modo desarrollo y producción (`http://localhost:4200`, `http://localhost:5173`, y entornos S3). 
+Asimismo, expone un Resource Server que valida tokens de acceso provenientes de Azure AD mediante un `JwtAuthenticationConverter` personalizado para inyectar roles al contexto de seguridad de Spring.
