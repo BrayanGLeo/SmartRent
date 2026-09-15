@@ -1,59 +1,26 @@
-# FrontendSmartrent
+# SmartRent Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.8.
+Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-cli) versión 18.2.0.
+Es la aplicación web Frontend de la plataforma **SmartRent** (arriendo de maquinaria), configurada con autenticación a través de Microsoft Entra ID (Azure AD) usando MSAL.
 
-## Development server
+## Servidor de desarrollo
 
-To start a local development server, run:
+Ejecuta `npm start` o `ng serve` para iniciar el servidor de desarrollo. Navega a `http://localhost:4200/`. La aplicación se recargará automáticamente si realizas cambios en los archivos fuente.
 
-```bash
-ng serve
-```
+## Construcción (Build)
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Ejecuta `npm run build` o `ng build` para compilar el proyecto. Los artefactos de construcción se almacenarán en el directorio `dist/`.
 
-## Code scaffolding
+## Características Principales
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+- **Diseño Moderno:** Interfaz estilizada con CSS puro y efectos de *glassmorphism*.
+- **Autenticación (MSAL):** Integración con Microsoft Entra ID para proteger rutas y la aplicación.
+- **Intercepción de peticiones (Interceptor):** Inyección automática de token de autorización (`Bearer token`) para llamadas a la API del backend.
 
-```bash
-ng generate component component-name
-```
+## Ejecución de pruebas unitarias
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Ejecuta `ng test` para correr las pruebas unitarias a través de [Karma](https://karma-runner.github.io).
 
-```bash
-ng generate --help
-```
+## Más ayuda sobre Angular CLI
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Para obtener más ayuda sobre el CLI de Angular, usa `ng help` o revisa el [Repositorio de Angular CLI y su documentación](https://github.com/angular/angular-cli).
