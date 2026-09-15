@@ -1,0 +1,7 @@
+# Documentos de planificación del agente
+plan_*.md
+
+# Entornos IDE
+.vscode/
+.idea/
+*.swp
