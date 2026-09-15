@@ -25,7 +25,7 @@ public class SecurityConfig {
 
     @SuppressWarnings("java:S4502")
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationConverter conv) {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationConverter conv) throws Exception {
         http.csrf(csrf -> csrf.disable());
         http.cors(Customizer.withDefaults());
         http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
