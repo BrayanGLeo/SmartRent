@@ -2,9 +2,9 @@
 *Por favor, incluye un resumen de los cambios y qué tarea del plan has completado.*
 
 **Rol que completó la tarea:**
-- [ ] Integrante 1 (Frontend & BFF)
-- [ ] Integrante 2 (Core Backend)
-- [ ] Integrante 3 (Data & Async)
+- [ ] Fernando Soto (Frontend)
+- [ ] Brayan Godoy (BFF & Core Backend)
+- [ ] Daniel Godoy (Data & Async)
 
 ## Tipo de Cambio
 - [ ] ✨ Nueva característica (Feature)
