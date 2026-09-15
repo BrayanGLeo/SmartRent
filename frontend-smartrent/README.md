@@ -1,26 +1,27 @@
-# SmartRent Frontend
+# Frontend SmartRent (Angular SPA)
 
-Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-cli) versión 18.2.0.
-Es la aplicación web Frontend de la plataforma **SmartRent** (arriendo de maquinaria), configurada con autenticación a través de Microsoft Entra ID (Azure AD) usando MSAL.
+Este directorio contiene la aplicación Single Page Application (SPA) desarrollada en **Angular** para el proyecto SmartRent. Esta aplicación sirve como el portal principal para los usuarios (Arrendatarios, Jefes de Bodega, y Administradores).
 
-## Servidor de desarrollo
+## Arquitectura y Autenticación
 
-Ejecuta `npm start` o `ng serve` para iniciar el servidor de desarrollo. Navega a `http://localhost:4200/`. La aplicación se recargará automáticamente si realizas cambios en los archivos fuente.
+El frontend utiliza **MSAL (Microsoft Authentication Library)** para integrarse directamente con el portal de **Microsoft Entra ID (Azure AD)**. 
 
-## Construcción (Build)
+### Flujo de Autenticación (Auth Code Flow con PKCE)
+1. Cuando un usuario no autenticado intenta acceder al portal, es redirigido a la página de inicio de sesión de Microsoft.
+2. Al iniciar sesión correctamente, el usuario recibe un **Access Token** (JWT).
+3. El Access Token se adjunta automáticamente en la cabecera `Authorization: Bearer <token>` para todas las peticiones enviadas al Backend (BFF).
 
-Ejecuta `npm run build` o `ng build` para compilar el proyecto. Los artefactos de construcción se almacenarán en el directorio `dist/`.
+## Comandos Útiles
 
-## Características Principales
+Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-cli) versión 17 o superior.
 
-- **Diseño Moderno:** Interfaz estilizada con CSS puro y efectos de *glassmorphism*.
-- **Autenticación (MSAL):** Integración con Microsoft Entra ID para proteger rutas y la aplicación.
-- **Intercepción de peticiones (Interceptor):** Inyección automática de token de autorización (`Bearer token`) para llamadas a la API del backend.
+### Servidor de Desarrollo
+Ejecuta `npm start` o `ng serve` para iniciar el servidor de desarrollo. Navega a `http://localhost:4200/`. La aplicación se recargará automáticamente si cambias alguno de los archivos fuente.
 
-## Ejecución de pruebas unitarias
+### Construcción (Build)
+Ejecuta `npm run build` o `ng build` para compilar el proyecto. Los artefactos compilados se almacenarán en el directorio `dist/`.
 
-Ejecuta `ng test` para correr las pruebas unitarias a través de [Karma](https://karma-runner.github.io).
-
-## Más ayuda sobre Angular CLI
-
-Para obtener más ayuda sobre el CLI de Angular, usa `ng help` o revisa el [Repositorio de Angular CLI y su documentación](https://github.com/angular/angular-cli).
+### Configuración MSAL requerida
+Para que la aplicación funcione correctamente con Azure, se debe tener el siguiente Client ID en el `app.config.ts` o los environments:
+- **Client ID (Frontend):** `f5890cb5-fba6-429e-b886-323d05ea886c`
+- **Tenant ID:** `753ae9df-d5ec-4c6b-8227-b334fc775087`

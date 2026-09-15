@@ -2,44 +2,32 @@
 
 Repositorio principal para el sistema **SmartRent**, desarrollado como parte de la Evaluación 1 de Desarrollo en Cloud Native. 
 
-El proyecto consta de una arquitectura moderna basada en la nube, separando el Frontend (Angular SPA) del Backend (Spring Boot BFF) e integrando seguridad mediante **Microsoft Entra ID (Azure AD)**.
+El proyecto consta de una arquitectura moderna basada en la nube, separando el Frontend del Backend e integrando seguridad empresarial mediante **Microsoft Entra ID (Azure AD)**.
 
-## Arquitectura
+## Estructura del Proyecto
 
-- **Frontend (`frontend-smartrent`):** Aplicación Angular que utiliza MSAL para la autenticación delegada contra Azure AD. 
-- **Backend BFF (`ms-smartrent-bff`):** Microservicio en Spring Boot 3 + Java 21 que actúa como *Resource Server* validando tokens JWT.
+El repositorio está dividido en dos grandes componentes, cada uno con su propio entorno de desarrollo y dependencias:
+
+### 1. [Frontend (Angular SPA)](./frontend-smartrent/)
+Aplicación cliente desarrollada en Angular. 
+- Utiliza **MSAL (Microsoft Authentication Library)** para manejar el inicio de sesión contra Azure AD.
+- Se encarga de la interfaz gráfica y de enviar el Access Token (JWT) al backend en cada solicitud.
+- Entra al directorio `frontend-smartrent` y consulta el [README del Frontend](./frontend-smartrent/README.md) para ver instrucciones de instalación y ejecución.
+
+### 2. [Backend (Spring Boot BFF)](./ms-smartrent-bff/)
+Servidor de recursos desarrollado en Java 21 y Spring Boot 3.
+- Actúa como **Backend For Frontend (BFF)** y **OAuth2 Resource Server**.
+- Intercepta las peticiones del frontend, valida criptográficamente el JWT emitido por Azure y aplica control de acceso con Base en Roles (RBAC).
+- Entra al directorio `ms-smartrent-bff` y consulta el [README del Backend](./ms-smartrent-bff/README.md) para ver detalles de los IDs de configuración y comandos de compilación.
 
 ---
 
-## 🛠 Backend (ms-smartrent-bff)
+## Seguridad (Azure AD)
 
-El Backend for Frontend (BFF) está construido con **Spring Boot** y **Spring Security**. Su responsabilidad principal es interceptar las peticiones del frontend, verificar la validez criptográfica del Access Token de Azure AD y aplicar reglas de autorización basadas en **Scopes** y **Roles**.
+Toda la plataforma está securizada bajo la suite de identidad de Microsoft. Se han configurado dos App Registrations en Azure:
+- Un **Client ID Público** para el frontend, que gestiona el login interactivo.
+- Un **Client ID Privado** para la API del backend, que define los Roles de la aplicación (Admin, JefeBodega, Arrendatario) y los Scopes delegados.
 
-### Características Técnicas
-
-*   **Java 21** y **Spring Boot 3.4+**
-*   **OAuth2 Resource Server:** Validación de JWT asimétrica mediante JWKS (JSON Web Key Set) obtenidos directamente del Tenant de Azure AD.
-*   **Conversión de Claims:** Se implementó un `JwtAuthenticationConverter` personalizado para extraer el claim `roles` de Azure y convertirlo en `GrantedAuthority` reconocibles por Spring (`ROLE_Admin`, `ROLE_JefeBodega`, etc.).
-*   **Defensa en Profundidad:** Rutas protegidas a nivel de método con `@PreAuthorize`.
-
-### Variables de Entorno y Configuración (`application.properties`)
-
-El backend requiere conocer a quién debe confiarle la emisión de tokens. Esto se configura con los IDs generados en Azure:
-
-*   **Tenant ID:** `753ae9df-d5ec-4c6b-8227-b334fc775087`
-*   **Client ID (API):** `749dc676-d557-460a-b138-dac9a6744b6e`
-
-### Endpoints Base y Reglas de Acceso (Matriz)
-
-*   `GET /api/rentals`: Requiere el permiso (scope) delegado `Arriendos.Leer`.
-*   `PUT /api/rentals/{id}/status`: Requiere el permiso (scope) `Arriendos.Escribir` **Y** tener asignado el rol de `Admin` o `JefeBodega`.
-*   `GET /api/reportes/kpis`: Exclusivo para el rol `Admin`.
-
-### Ejecución Local
-
-Para ejecutar el backend en entorno de desarrollo:
-```bash
-cd ms-smartrent-bff
-./mvnw spring-boot:run
-```
-El servidor se iniciará en `http://localhost:8080`. Se espera recibir un token portador (Bearer) en la cabecera `Authorization` para acceder a las rutas de `/api/*`.
+## Dependencias Globales
+- **Frontend:** Node.js, Angular CLI 17+.
+- **Backend:** Java 21, Maven (incluido mediante wrapper).
