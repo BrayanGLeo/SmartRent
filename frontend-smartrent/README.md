@@ -1,27 +1,49 @@
-# Frontend SmartRent (Angular SPA)
+# SmartRent - Frontend Application
 
-Este directorio contiene la aplicación Single Page Application (SPA) desarrollada en **Angular** para el proyecto SmartRent. Esta aplicación sirve como el portal principal para los usuarios (Arrendatarios, Jefes de Bodega, y Administradores).
+Esta es la aplicación cliente (SPA - Single Page Application) del proyecto SmartRent, diseñada para ofrecer a los usuarios una interfaz dinámica, rápida y segura para la gestión y acceso de recursos.
 
-## Arquitectura y Autenticación
+## 🛠️ Tecnologías y Herramientas
 
-El frontend utiliza **MSAL (Microsoft Authentication Library)** para integrarse directamente con el portal de **Microsoft Entra ID (Azure AD)**. 
+El proyecto está desarrollado con tecnología moderna para aplicaciones web escalables:
 
-### Flujo de Autenticación (Auth Code Flow con PKCE)
-1. Cuando un usuario no autenticado intenta acceder al portal, es redirigido a la página de inicio de sesión de Microsoft.
-2. Al iniciar sesión correctamente, el usuario recibe un **Access Token** (JWT).
-3. El Access Token se adjunta automáticamente en la cabecera `Authorization: Bearer <token>` para todas las peticiones enviadas al Backend (BFF).
+- **Angular**: Versión 22.x (Framework progresivo para la construcción de interfaces de usuario).
+- **TypeScript**: Superset de JavaScript que añade tipado estático fuerte (v6.0).
+- **Microsoft Authentication Library (MSAL)**: `@azure/msal-angular` y `@azure/msal-browser` para la autenticación Single Sign-On (SSO) mediante Azure Active Directory.
+- **RxJS**: Programación reactiva y manejo asíncrono de flujos de datos.
+- **Vitest & JSDOM**: Framework de testing ultrarrápido empleado para pruebas unitarias.
+- **Prettier**: Formateador de código para mantener estilos consistentes.
+- **Node.js y NPM**: Entorno de ejecución y gestor de paquetes.
 
-## Comandos Útiles
+## 🚀 Requisitos Previos
 
-Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-cli) versión 17 o superior.
+- Node.js (v18 o superior recomendado).
+- Gestor de paquetes NPM (v11.x).
 
-### Servidor de Desarrollo
-Ejecuta `npm start` o `ng serve` para iniciar el servidor de desarrollo. Navega a `http://localhost:4200/`. La aplicación se recargará automáticamente si cambias alguno de los archivos fuente.
+## ⚙️ Configuración y Ejecución
 
-### Construcción (Build)
-Ejecuta `npm run build` o `ng build` para compilar el proyecto. Los artefactos compilados se almacenarán en el directorio `dist/`.
+Primero, instala las dependencias del proyecto:
 
-### Configuración MSAL requerida
-Para que la aplicación funcione correctamente con Azure, se debe tener el siguiente Client ID en el `app.config.ts` o los environments:
-- **Client ID (Frontend):** `f5890cb5-fba6-429e-b886-323d05ea886c`
-- **Tenant ID:** `753ae9df-d5ec-4c6b-8227-b334fc775087`
+```bash
+npm install
+```
+
+Para iniciar el servidor de desarrollo con recarga en vivo (hot-reload), ejecuta:
+
+```bash
+npm start
+```
+O de manera equivalente:
+```bash
+ng serve
+```
+
+La aplicación estará disponible de forma predeterminada en `http://localhost:4200/`.
+
+## 📦 Construcción para Producción
+
+Para empaquetar la aplicación en un formato optimizado y listo para producción, ejecuta:
+
+```bash
+npm run build
+```
+Los artefactos generados se guardarán en la carpeta de distribución, listos para ser desplegados en un servidor estático como AWS S3 o Azure Blob Storage.
