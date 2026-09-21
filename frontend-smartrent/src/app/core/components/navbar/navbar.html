@@ -1,0 +1,38 @@
+<nav class="navbar">
+  <div class="logo">
+    <a routerLink="/">SmartRent</a>
+  </div>
+  
+  <ul class="nav-links">
+    <!-- Links públicos o básicos -->
+    <li><a routerLink="/catalog" routerLinkActive="active">Catálogo</a></li>
+
+    <!-- Links de Arrendatario -->
+    <li *ngIf="authService.userRole() === 'Arrendatario' || authService.userRole() === 'Admin'">
+      <a routerLink="/rentals" routerLinkActive="active">Mis Arriendos</a>
+    </li>
+
+    <!-- Links de Jefe de Bodega -->
+    <li *ngIf="authService.userRole() === 'JefeBodega' || authService.userRole() === 'Admin'">
+      <a routerLink="/rentals" routerLinkActive="active">Gestión Arriendos</a>
+    </li>
+
+    <!-- Links de Auditoria y Reportes -->
+    <li *ngIf="authService.userRole() === 'Auditor' || authService.userRole() === 'Admin'">
+      <a routerLink="/audit" routerLinkActive="active">Auditoría</a>
+    </li>
+    <li *ngIf="authService.userRole() === 'Admin' || authService.userRole() === 'Auditor'">
+      <a routerLink="/reports" routerLinkActive="active">Reportes</a>
+    </li>
+  </ul>
+
+  <div class="auth-buttons">
+    <ng-container *ngIf="authService.account(); else loggedOut">
+      <span class="user-info">{{ authService.account()?.name }} ({{ authService.userRole() }})</span>
+      <button (click)="authService.logout()">Cerrar Sesión</button>
+    </ng-container>
+    <ng-template #loggedOut>
+      <button (click)="authService.login()">Iniciar Sesión</button>
+    </ng-template>
+  </div>
+</nav>
