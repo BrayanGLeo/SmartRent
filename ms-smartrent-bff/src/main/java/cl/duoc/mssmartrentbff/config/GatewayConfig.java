@@ -10,6 +10,7 @@ import static org.springframework.cloud.gateway.server.mvc.handler.HandlerFuncti
 import static org.springframework.web.servlet.function.RequestPredicates.path;
 
 @Configuration
+@SuppressWarnings("null")
 public class GatewayConfig {
 
     @Bean
