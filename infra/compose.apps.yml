@@ -15,43 +15,69 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  # --- Microservices (Para habilitar cuando estén dockerizados) ---
-  
-  # ms-smartrent-notify:
-  #   build: ../ms-smartrent-notify
-  #   container_name: smartrent-notify
-  #   environment:
-  #     - SPRING_RABBITMQ_HOST=rabbitmq
-  #   depends_on:
-  #     - rabbitmq
-  #   networks:
-  #     - smartrent-network
+  smartrent-catalog:
+    build: ../ms-smartrent-catalog
+    container_name: smartrent-catalog
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/smartrent_audit
+    depends_on:
+      - postgres
+    networks:
+      - smartrent-network
 
-  # ms-smartrent-audit:
-  #   build: ../ms-smartrent-audit
-  #   container_name: smartrent-audit
-  #   ports:
-  #     - "8081:8080"
-  #   environment:
-  #     - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092
-  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/smartrent_audit
-  #   depends_on:
-  #     - kafka
-  #     - postgres
-  #   networks:
-  #     - smartrent-network
+  smartrent-rentals:
+    build: ../ms-smartrent-rentals
+    container_name: smartrent-rentals
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/smartrent_audit
+      - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST}
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST}:9092
+      - CATALOG_URL=http://smartrent-catalog:8081
+    depends_on:
+      - postgres
+      - smartrent-catalog
+    networks:
+      - smartrent-network
 
-  # ms-smartrent-report:
-  #   build: ../ms-smartrent-report
-  #   container_name: smartrent-report
-  #   ports:
-  #     - "8082:8080"
-  #   environment:
-  #     - SPRING_KAFKA_BOOTSTRAP-SERVERS=kafka:29092
-  #   depends_on:
-  #     - kafka
-  #   networks:
-  #     - smartrent-network
+  smartrent-notify:
+    build: ../ms-smartrent-notify
+    container_name: smartrent-notify
+    environment:
+      - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST}
+    networks:
+      - smartrent-network
+
+  smartrent-audit:
+    build: ../ms-smartrent-audit
+    container_name: smartrent-audit
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/smartrent_audit
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST}:9092
+    depends_on:
+      - postgres
+    networks:
+      - smartrent-network
+
+  smartrent-report:
+    build: ../ms-smartrent-report
+    container_name: smartrent-report
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST}:9092
+    networks:
+      - smartrent-network
+
+  smartrent-bff:
+    build: ../ms-smartrent-bff
+    container_name: smartrent-bff
+    ports:
+      - "8080:8080"
+    depends_on:
+      - smartrent-catalog
+      - smartrent-rentals
+      - smartrent-report
+      - smartrent-audit
+    networks:
+      - smartrent-network
 
 volumes:
   pgdata:
