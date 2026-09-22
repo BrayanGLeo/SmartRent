@@ -17,7 +17,6 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -79,5 +78,46 @@ class CatalogControllerTest {
         ResponseEntity<Machine> response = catalogController.updateAvailability(99L, false);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+    @Test
+    void getMachineById_ShouldReturnMachineWhenFound() {
+        when(catalogService.getMachineById(1L)).thenReturn(java.util.Optional.of(testMachine));
+
+        ResponseEntity<Machine> response = catalogController.getMachineById(1L);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1L, java.util.Objects.requireNonNull(response.getBody()).getId());
+    }
+
+    @Test
+    void getMachineById_ShouldReturnNotFoundWhenMissing() {
+        when(catalogService.getMachineById(99L)).thenReturn(java.util.Optional.empty());
+
+        ResponseEntity<Machine> response = catalogController.getMachineById(99L);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void getAllCatalog_ShouldReturnAllMachines() {
+        when(catalogService.getAllMachines()).thenReturn(List.of(testMachine));
+
+        ResponseEntity<List<Machine>> response = catalogController.getAllCatalog();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertFalse(java.util.Objects.requireNonNull(response.getBody()).isEmpty());
+    }
+
+    @Test
+    void createMachine_ShouldMapRequestWithNullIsAvailable() {
+        MachineRequest request = new MachineRequest("Grúa", "SN123", 1L, 50000.0, null);
+        when(catalogService.createMachine(any(Machine.class))).thenReturn(testMachine);
+
+        ResponseEntity<Machine> response = catalogController.createMachine(request);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(catalogService, times(1)).createMachine(any(Machine.class));
     }
 }

@@ -1,8 +1,0 @@
-cl\duoc\mssmartrentcatalog\MsSmartrentCatalogApplication.class
-cl\duoc\mssmartrentcatalog\repositories\MachineRepository.class
-cl\duoc\mssmartrentcatalog\entities\Category.class
-cl\duoc\mssmartrentcatalog\entities\Machine.class
-cl\duoc\mssmartrentcatalog\repositories\CategoryRepository.class
-cl\duoc\mssmartrentcatalog\controllers\CatalogController.class
-cl\duoc\mssmartrentcatalog\config\SecurityConfig.class
-cl\duoc\mssmartrentcatalog\services\CatalogService.class

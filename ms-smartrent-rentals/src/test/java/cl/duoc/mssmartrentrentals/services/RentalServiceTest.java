@@ -97,4 +97,103 @@ class RentalServiceTest {
 
         assertTrue(exception.getMessage().contains("Transición de estado inválida"));
     }
+
+    @Test
+    void changeRentalStatus_ShouldThrowExceptionWhenNotFound() {
+        when(rentalRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> {
+            rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "test@test.com");
+        });
+    }
+
+    @Test
+    void changeRentalStatus_ToEnTerreno_ShouldOnlyPublishAudit() {
+        testRental.setStatus(RentalStatus.EN_PREPARACION);
+        when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
+        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+
+        rentalService.changeRentalStatus(1L, RentalStatus.EN_TERRENO, "test@test.com");
+
+        verify(eventPublisher).publishAuditAndReportEvent(eq(1L), any(), eq("EN_TERRENO"));
+        verifyNoInteractions(catalogClient);
+    }
+
+    @Test
+    void changeRentalStatus_ToDevuelto_ShouldUpdateAvailabilityAndEmail() {
+        testRental.setStatus(RentalStatus.EN_TERRENO);
+        when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
+        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+
+        rentalService.changeRentalStatus(1L, RentalStatus.DEVUELTO, "test@test.com");
+
+        verify(catalogClient).updateAvailability(100L, true);
+        verify(eventPublisher).publishEmailEvent(1L, "test@test.com", "DEVUELTO");
+    }
+
+    @Test
+    void changeRentalStatus_ToCancelado_FromAprobado_ShouldUpdateAvailabilityAndEmail() {
+        testRental.setStatus(RentalStatus.APROBADO);
+        when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
+        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+
+        rentalService.changeRentalStatus(1L, RentalStatus.CANCELADO, "test@test.com");
+
+        verify(catalogClient).updateAvailability(100L, true);
+        verify(eventPublisher).publishEmailEvent(1L, "test@test.com", "CANCELADO");
+    }
+
+    @Test
+    void changeRentalStatus_ToCancelado_FromSolicitado_ShouldNotUpdateAvailability() {
+        testRental.setStatus(RentalStatus.SOLICITADO);
+        when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
+        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+
+        rentalService.changeRentalStatus(1L, RentalStatus.CANCELADO, "test@test.com");
+
+        verify(catalogClient, never()).updateAvailability(anyLong(), anyBoolean());
+        verify(eventPublisher).publishEmailEvent(1L, "test@test.com", "CANCELADO");
+    }
+    @Test
+    void changeRentalStatus_ToCancelado_FromEnPreparacion_ShouldUpdateAvailability() {
+        testRental.setStatus(RentalStatus.EN_PREPARACION);
+        when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
+        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+
+        rentalService.changeRentalStatus(1L, RentalStatus.CANCELADO, "test@test.com");
+
+        verify(catalogClient).updateAvailability(100L, true);
+    }
+
+
+
+    @Test
+    void changeRentalStatus_SameStatus_ShouldDoNothing() {
+        testRental.setStatus(RentalStatus.APROBADO);
+        when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
+
+        Rental result = rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "test@test.com");
+        assertEquals(RentalStatus.APROBADO, result.getStatus());
+        verify(catalogClient, never()).updateAvailability(anyLong(), anyBoolean());
+    }
+
+    @Test
+    void validateTransition_FromDevuelto_ShouldThrowException() {
+        testRental.setStatus(RentalStatus.DEVUELTO);
+        when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
+
+        assertThrows(IllegalStateException.class, () -> {
+            rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "test@test.com");
+        });
+    }
+
+    @Test
+    void validateTransition_FromCancelado_ShouldThrowException() {
+        testRental.setStatus(RentalStatus.CANCELADO);
+        when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
+
+        assertThrows(IllegalStateException.class, () -> {
+            rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "test@test.com");
+        });
+    }
 }

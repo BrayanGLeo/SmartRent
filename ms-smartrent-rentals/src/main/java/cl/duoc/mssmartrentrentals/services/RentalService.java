@@ -45,6 +45,10 @@ public class RentalService {
 
         RentalStatus currentStatus = rental.getStatus();
 
+        if (currentStatus == newStatus) {
+            return rental;
+        }
+
         // Máquina de estados básica
         validateTransition(currentStatus, newStatus);
 
@@ -68,7 +72,7 @@ public class RentalService {
                 eventPublisher.publishEmailEvent(rental.getId(), userEmail, "DEVUELTO");
                 break;
             case CANCELADO:
-                if (currentStatus == RentalStatus.APROBADO || currentStatus == RentalStatus.EN_PREPARACION || currentStatus == RentalStatus.EN_TERRENO) {
+                if (currentStatus == RentalStatus.APROBADO || currentStatus == RentalStatus.EN_PREPARACION) {
                     catalogClient.updateAvailability(rental.getMachineId(), true);
                 }
                 eventPublisher.publishEmailEvent(rental.getId(), userEmail, "CANCELADO");

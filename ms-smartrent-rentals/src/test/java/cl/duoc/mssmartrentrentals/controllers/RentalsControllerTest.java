@@ -22,7 +22,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -69,7 +68,7 @@ class RentalsControllerTest {
 
     @Test
     void updateRentalStatus_ShouldReturnUpdatedRental() {
-        when(rentalService.changeRentalStatus(eq(1L), eq(RentalStatus.APROBADO), eq("user123@test.com")))
+        when(rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "user123@test.com"))
                 .thenReturn(testRental);
 
         ResponseEntity<Rental> response = rentalsController.updateRentalStatus(1L, RentalStatus.APROBADO);
@@ -88,5 +87,65 @@ class RentalsControllerTest {
         List<Rental> body = java.util.Objects.requireNonNull(response.getBody());
         assertFalse(body.isEmpty());
         assertEquals(100L, body.get(0).getMachineId());
+    }
+    @Test
+    void updateRentalStatus_ShouldReturnBadRequestOnIllegalState() {
+        when(rentalService.changeRentalStatus(anyLong(), any(RentalStatus.class), anyString()))
+                .thenThrow(new IllegalStateException("Invalid state"));
+
+        ResponseEntity<Rental> response = rentalsController.updateRentalStatus(1L, RentalStatus.APROBADO);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void updateRentalStatus_ShouldReturnNotFoundOnRuntimeException() {
+        when(rentalService.changeRentalStatus(anyLong(), any(RentalStatus.class), anyString()))
+                .thenThrow(new RuntimeException("Not found"));
+
+        ResponseEntity<Rental> response = rentalsController.updateRentalStatus(99L, RentalStatus.APROBADO);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void updateRentalStatus_WithPreferredUsernameClaim() {
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Jwt jwt = Jwt.withTokenValue("token").header("alg", "none").claim("preferred_username", "pref@test.com").build();
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt);
+        when(securityContext.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "pref@test.com"))
+                .thenReturn(testRental);
+
+        ResponseEntity<Rental> response = rentalsController.updateRentalStatus(1L, RentalStatus.APROBADO);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void updateRentalStatus_WithNoEmailClaim() {
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Jwt jwt = Jwt.withTokenValue("token").header("alg", "none").claim("other", "value").build();
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt);
+        when(securityContext.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "unknown@user.com"))
+                .thenReturn(testRental);
+
+        ResponseEntity<Rental> response = rentalsController.updateRentalStatus(1L, RentalStatus.APROBADO);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void updateRentalStatus_WithNoJwtAuth() {
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(null);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "unknown@user.com"))
+                .thenReturn(testRental);
+
+        ResponseEntity<Rental> response = rentalsController.updateRentalStatus(1L, RentalStatus.APROBADO);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 }
