@@ -54,8 +54,11 @@ npm-debug.log
 yarn-error.log
 
 # Backend (Spring Boot)
-ms-smartrent-bff/target/
-ms-smartrent-bff/.mvn/wrapper/maven-wrapper.jar
+*/target/
+target/
+**/.mvn/wrapper/maven-wrapper.jar
+*.jar
+HELP.md
 !**/src/main/**/target/
 !**/src/test/**/target/
 /nbproject/private/
@@ -69,3 +72,9 @@ build/
 
 # Documentos de planificación del agente
 plan_*.md
+implementation_plan.md
+task.md
+walkthrough.md
+
+# Ignorar la carpeta .vscode completa
+.vscode/
