@@ -1,10 +1,5 @@
 # IDEs and Editors
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/mcp.json
+.vscode/
 .idea/
 *.suo
 *.ntvs*
@@ -52,6 +47,10 @@ frontend-smartrent/typings/
 frontend-smartrent/__screenshots__/
 npm-debug.log
 yarn-error.log
+
+# Frontend Generated Assets
+frontend-smartrent/src/assets/images/*.jpg
+frontend-smartrent/src/assets/images/*.png
 
 # Backend (Spring Boot)
 ms-smartrent-bff/target/

@@ -6,6 +6,7 @@
   <ul class="nav-links">
     <!-- Links públicos o básicos -->
     <li><a routerLink="/catalog" routerLinkActive="active">Catálogo</a></li>
+    <li><a routerLink="/about" routerLinkActive="active">Sobre Nosotros</a></li>
 
     <!-- Links de Arrendatario -->
     <li *ngIf="authService.userRole() === 'Arrendatario' || authService.userRole() === 'Admin'">

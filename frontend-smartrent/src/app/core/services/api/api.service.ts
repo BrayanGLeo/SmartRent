@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { delay } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface Machine {
@@ -41,13 +42,43 @@ export class ApiService {
   private http = inject(HttpClient);
   private baseUrl = environment.apiBaseUrl; // e.g. http://localhost:8080/api
 
+  private mockCatalog: Machine[] = [
+    {
+      id: '1',
+      name: 'Excavadora Caterpillar 320',
+      description: 'Excavadora sobre orugas de 20 toneladas, ideal para construcción pesada.',
+      category: 'Excavación',
+      status: 'DISPONIBLE',
+      pricePerDay: 180000
+    },
+    {
+      id: '2',
+      name: 'Retroexcavadora John Deere 310L',
+      description: 'Retroexcavadora versátil para trabajos urbanos y agrícolas.',
+      category: 'Excavación',
+      status: 'DISPONIBLE',
+      pricePerDay: 120000
+    },
+    {
+      id: '3',
+      name: 'Grúa Horquilla Komatsu 3 Ton',
+      description: 'Grúa horquilla diésel de 3 toneladas para movimiento de materiales.',
+      category: 'Carga',
+      status: 'ARRENDADO',
+      pricePerDay: 65000
+    }
+  ];
+
   // Catalog
   getCatalog(): Observable<Machine[]> {
-    return this.http.get<Machine[]>(`${this.baseUrl}/catalog`);
+    // Return mock data since the catalog microservice is not yet implemented
+    return of(this.mockCatalog).pipe(delay(800));
   }
 
   addMachine(machine: Partial<Machine>): Observable<Machine> {
-    return this.http.post<Machine>(`${this.baseUrl}/catalog`, machine);
+    const newMachine = { ...machine, id: Math.random().toString() } as Machine;
+    this.mockCatalog.push(newMachine);
+    return of(newMachine).pipe(delay(800));
   }
 
   // Rentals

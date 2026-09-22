@@ -1,26 +1,48 @@
-<div class="catalog-header">
-  <h2>Catálogo de Maquinaria</h2>
-  <button *ngIf="isAdmin" class="btn btn-primary" (click)="addMachine()">
-    + Agregar Máquina
-  </button>
-</div>
-
-<div class="catalog-grid">
-  <div class="card machine-card" *ngFor="let m of machines">
-    <div class="machine-image-placeholder">
-      {{ m.category[0] | uppercase }}
+<div class="catalog-container">
+  <!-- Banner -->
+  <div class="catalog-banner">
+    <div class="catalog-banner-content">
+      <h1>Catálogo de Maquinaria</h1>
+      <p>Encuentra el equipo perfecto para tu próximo proyecto. Disponibilidad inmediata y precios competitivos.</p>
     </div>
-    <div class="machine-details">
-      <h3>{{ m.name }}</h3>
-      <p class="description">{{ m.description }}</p>
-      <div class="tags">
-        <span class="tag status" [ngClass]="m.status.toLowerCase()">{{ m.status }}</span>
-        <span class="tag price">${{ m.pricePerDay | number }} / día</span>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="catalog-toolbar">
+    <div class="catalog-count">
+      <span class="count-badge">{{ machines.length }}</span> máquinas disponibles
+    </div>
+    <button *ngIf="isAdmin" class="btn btn-primary" (click)="addMachine()">
+      + Agregar Máquina
+    </button>
+  </div>
+
+  <!-- Grid -->
+  <div class="catalog-grid">
+    <div class="machine-card" *ngFor="let m of machines; let i = index" [style.animation-delay]="i * 0.1 + 's'">
+      <div class="machine-image-placeholder">
+        <span class="machine-category-icon">{{ m.category === 'Excavación' ? '🚜' : (m.category === 'Carga' ? '📦' : '🏗️') }}</span>
+      </div>
+      <div class="machine-details">
+        <div class="machine-header">
+          <h3>{{ m.name }}</h3>
+          <span class="tag status" [ngClass]="m.status.toLowerCase()">
+            <span class="status-dot"></span>
+            {{ m.status === 'DISPONIBLE' ? 'Disponible' : (m.status === 'ARRENDADO' ? 'Arrendado' : 'Mantención') }}
+          </span>
+        </div>
+        <p class="description">{{ m.description }}</p>
+        <div class="machine-footer">
+          <span class="category-tag">{{ m.category }}</span>
+          <span class="price-tag">${{ m.pricePerDay | number }} <small>/ día</small></span>
+        </div>
       </div>
     </div>
   </div>
-  
+
   <div *ngIf="machines.length === 0" class="empty-state">
-    No hay maquinaria disponible por el momento.
+    <span class="empty-icon">🔍</span>
+    <h3>Sin maquinaria disponible</h3>
+    <p>No hay maquinaria registrada por el momento. Vuelve a intentar más tarde.</p>
   </div>
 </div>
