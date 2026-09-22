@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(MockitoExtension.class)
 class AuditControllerTest {
@@ -38,8 +37,8 @@ class AuditControllerTest {
         ResponseEntity<List<AuditTimeline>> response = auditController.getAuditHistory();
 
         assertEquals(200, response.getStatusCode().value());
-        assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().size());
-        assertEquals("test event", response.getBody().get(0).getEventPayload());
+        List<AuditTimeline> body = java.util.Objects.requireNonNull(response.getBody());
+        assertEquals(1, body.size());
+        assertEquals("test event", body.get(0).getEventPayload());
     }
 }
