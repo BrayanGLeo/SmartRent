@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "catalog-client", url = "${CATALOG_URL:http://localhost:8081}")
+@FeignClient(name = "catalog-client", url = "${CATALOG_URL:http://smartrent-catalog:8081}")
 public interface CatalogClient {
 
     @PutMapping("/api/catalog/services/{id}/availability")
