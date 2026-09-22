@@ -1,6 +1,6 @@
 package com.smartrent.report.service;
 
-import org.junit.jupiter.api.BeforeEach;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -10,12 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ReportServiceTest {
 
-    private ReportService reportService;
-
-    @BeforeEach
-    void setUp() {
-        reportService = new ReportService();
-    }
+    private final ReportService reportService = new ReportService();
 
     @Test
     void recordRentalEvent_incrementsDailyRentals() {

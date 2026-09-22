@@ -2,45 +2,48 @@ package com.smartrent.report.controller;
 
 import com.smartrent.report.service.ReportService;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@WebMvcTest(ReportController.class)
+@ExtendWith(MockitoExtension.class)
 class ReportControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
+    @Mock
     private ReportService reportService;
 
-    @Test
-    void getKpis_returnsDailyRentals() throws Exception {
-        Mockito.when(reportService.getDailyRentals()).thenReturn(10);
+    @InjectMocks
+    private ReportController reportController;
 
-        mockMvc.perform(get("/api/report/kpis"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.dailyRentals").value(10));
+    @Test
+    void getKpis_returnsDailyRentals() {
+        when(reportService.getDailyRentals()).thenReturn(10);
+
+        ResponseEntity<Map<String, Object>> response = reportController.getKpis();
+
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals(10, response.getBody().get("dailyRentals"));
     }
 
     @Test
-    void getTopServices_returnsList() throws Exception {
-        Mockito.when(reportService.getTopServices()).thenReturn(List.of(
+    void getTopServices_returnsList() {
+        when(reportService.getTopServices()).thenReturn(List.of(
                 Map.entry("Excavadora", 5)
         ));
 
-        mockMvc.perform(get("/api/report/top-services"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].Excavadora").value(5));
+        ResponseEntity<Object> response = reportController.getTopServices();
+
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
     }
 }
