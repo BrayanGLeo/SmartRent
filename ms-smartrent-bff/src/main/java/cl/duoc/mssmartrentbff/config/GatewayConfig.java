@@ -16,28 +16,28 @@ public class GatewayConfig {
     @Bean
     public RouterFunction<ServerResponse> catalogRoute() {
         return route("catalog_route")
-                .route(path("/api/catalog/**"), http("http://localhost:8081"))
+                .route(path("/api/catalog/**"), http("http://smartrent-catalog:8081"))
                 .build();
     }
 
     @Bean
     public RouterFunction<ServerResponse> rentalsRoute() {
         return route("rentals_route")
-                .route(path("/api/rentals/**"), http("http://localhost:8082"))
+                .route(path("/api/rentals/**"), http("http://smartrent-rentals:8082"))
                 .build();
     }
 
     @Bean
     public RouterFunction<ServerResponse> reportsRoute() {
         return route("reports_route")
-                .route(path("/api/reports/**"), http("http://localhost:8083"))
+                .route(path("/api/reports/**"), http("http://smartrent-report:8083"))
                 .build();
     }
 
     @Bean
     public RouterFunction<ServerResponse> auditRoute() {
         return route("audit_route")
-                .route(path("/api/audit/**"), http("http://localhost:8084"))
+                .route(path("/api/audit/**"), http("http://smartrent-audit:8084"))
                 .build();
     }
 }

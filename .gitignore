@@ -75,5 +75,4 @@ implementation_plan.md
 task.md
 walkthrough.md
 
-# Ignorar la carpeta .vscode completa
-.vscode/
+*.pdf
