@@ -55,6 +55,10 @@ frontend-smartrent/src/assets/images/*.png
 # Backend (Spring Boot)
 ms-smartrent-bff/target/
 ms-smartrent-bff/.mvn/wrapper/maven-wrapper.jar
+ms-smartrent-catalog/target/
+ms-smartrent-catalog/.mvn/wrapper/maven-wrapper.jar
+ms-smartrent-rentals/target/
+ms-smartrent-rentals/.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 /nbproject/private/
