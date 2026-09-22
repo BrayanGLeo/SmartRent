@@ -76,3 +76,7 @@ task.md
 walkthrough.md
 
 *.pdf
+
+# Secrets and Environment Variables
+.env
+.env.*
