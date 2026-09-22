@@ -12,7 +12,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -86,8 +85,8 @@ class RentalsControllerTest {
         ResponseEntity<List<Rental>> response = rentalsController.getMyRentals("user123");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertFalse(response.getBody().isEmpty());
-        assertEquals(100L, response.getBody().get(0).getMachineId());
+        List<Rental> body = java.util.Objects.requireNonNull(response.getBody());
+        assertFalse(body.isEmpty());
+        assertEquals(100L, body.get(0).getMachineId());
     }
 }

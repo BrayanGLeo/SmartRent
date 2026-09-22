@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,9 +45,9 @@ class CatalogControllerTest {
         ResponseEntity<List<Machine>> response = catalogController.getCatalog();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertFalse(response.getBody().isEmpty());
-        assertEquals("Grúa", response.getBody().get(0).getName());
+        List<Machine> body = Objects.requireNonNull(response.getBody());
+        assertFalse(body.isEmpty());
+        assertEquals("Grúa", body.get(0).getName());
     }
 
     @Test
@@ -64,7 +64,7 @@ class CatalogControllerTest {
 
     @Test
     void updateAvailability_ShouldReturnUpdatedMachine() {
-        when(catalogService.updateMachineAvailability(eq(1L), eq(false))).thenReturn(testMachine);
+        when(catalogService.updateMachineAvailability(1L, false)).thenReturn(testMachine);
 
         ResponseEntity<Machine> response = catalogController.updateAvailability(1L, false);
 
@@ -74,7 +74,7 @@ class CatalogControllerTest {
     
     @Test
     void updateAvailability_ShouldReturnNotFoundWhenExceptionThrown() {
-        when(catalogService.updateMachineAvailability(eq(99L), eq(false))).thenThrow(new RuntimeException("Not found"));
+        when(catalogService.updateMachineAvailability(99L, false)).thenThrow(new RuntimeException("Not found"));
 
         ResponseEntity<Machine> response = catalogController.updateAvailability(99L, false);
 
