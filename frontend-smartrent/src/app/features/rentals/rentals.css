@@ -1,0 +1,47 @@
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-group-row .form-group {
+  flex: 1;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.select-sm {
+  padding: 4px 8px;
+  width: auto;
+}
+
+.mt-4 {
+  margin-top: 1.5rem;
+}
+
+.tag {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.tag.solicitado { background-color: #fef3c7; color: #92400e; }
+.tag.aprobado { background-color: #dbeafe; color: #1e40af; }
+.tag.en_preparacion { background-color: #e0e7ff; color: #3730a3; }
+.tag.en_terreno { background-color: #dcfce7; color: #166534; }
+.tag.devuelto { background-color: #f3f4f6; color: #374151; }
+.tag.rechazado { background-color: #fee2e2; color: #991b1b; }
+
+.text-center {
+  text-align: center;
+}
