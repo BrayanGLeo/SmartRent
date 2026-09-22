@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 
 @ExtendWith(MockitoExtension.class)
 class ReportControllerTest {
@@ -31,8 +31,8 @@ class ReportControllerTest {
         ResponseEntity<Map<String, Object>> response = reportController.getKpis();
 
         assertEquals(200, response.getStatusCode().value());
-        assertNotNull(response.getBody());
-        assertEquals(10, response.getBody().get("dailyRentals"));
+        Map<String, Object> body = java.util.Objects.requireNonNull(response.getBody());
+        assertEquals(10, body.get("dailyRentals"));
     }
 
     @Test
@@ -44,6 +44,6 @@ class ReportControllerTest {
         ResponseEntity<Object> response = reportController.getTopServices();
 
         assertEquals(200, response.getStatusCode().value());
-        assertNotNull(response.getBody());
+        java.util.Objects.requireNonNull(response.getBody());
     }
 }

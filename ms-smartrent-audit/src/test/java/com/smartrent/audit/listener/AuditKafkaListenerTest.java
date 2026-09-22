@@ -23,6 +23,7 @@ class AuditKafkaListenerTest {
     private AuditKafkaListener auditKafkaListener;
 
     @Test
+    @SuppressWarnings("null")
     void consumeEvent_savesAuditTimeline() {
         String message = "Rental accepted event";
 
