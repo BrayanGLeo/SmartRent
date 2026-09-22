@@ -1,1 +1,19 @@
-<p>audit works!</p>
+<div class="card">
+  <h2>Línea de Tiempo de Auditoría</h2>
+  
+  <div class="timeline">
+    <div class="timeline-item" *ngFor="let ev of events">
+      <div class="timeline-dot"></div>
+      <div class="timeline-content">
+        <span class="timeline-date">{{ ev.timestamp | date:'medium' }}</span>
+        <h4>{{ ev.action }}</h4>
+        <p><strong>Usuario:</strong> {{ ev.user }}</p>
+        <p>{{ ev.details }}</p>
+      </div>
+    </div>
+    
+    <div *ngIf="events.length === 0" class="text-center mt-4">
+      No hay eventos de auditoría registrados.
+    </div>
+  </div>
+</div>

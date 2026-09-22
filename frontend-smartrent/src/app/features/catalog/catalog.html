@@ -1,1 +1,26 @@
-<p>catalog works!</p>
+<div class="catalog-header">
+  <h2>Catálogo de Maquinaria</h2>
+  <button *ngIf="isAdmin" class="btn btn-primary" (click)="addMachine()">
+    + Agregar Máquina
+  </button>
+</div>
+
+<div class="catalog-grid">
+  <div class="card machine-card" *ngFor="let m of machines">
+    <div class="machine-image-placeholder">
+      {{ m.category[0] | uppercase }}
+    </div>
+    <div class="machine-details">
+      <h3>{{ m.name }}</h3>
+      <p class="description">{{ m.description }}</p>
+      <div class="tags">
+        <span class="tag status" [ngClass]="m.status.toLowerCase()">{{ m.status }}</span>
+        <span class="tag price">${{ m.pricePerDay | number }} / día</span>
+      </div>
+    </div>
+  </div>
+  
+  <div *ngIf="machines.length === 0" class="empty-state">
+    No hay maquinaria disponible por el momento.
+  </div>
+</div>

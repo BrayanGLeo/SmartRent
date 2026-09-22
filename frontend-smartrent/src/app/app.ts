@@ -4,10 +4,11 @@ import { MsalService, MsalBroadcastService, MSAL_GUARD_CONFIG, MsalGuardConfigur
 import { InteractionStatus, RedirectRequest } from '@azure/msal-browser';
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
-import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';import { NavbarComponent } from './core/components/navbar/navbar';
+import { LoadingService } from './core/services/loading/loading.service';
 
 @Component({
-  imports: [RouterOutlet, RouterModule, CommonModule],
+  imports: [RouterOutlet, RouterModule, CommonModule, NavbarComponent],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -21,7 +22,8 @@ export class App implements OnInit, OnDestroy {
   constructor(
     @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
     private authService: MsalService,
-    private broadcastService: MsalBroadcastService
+    private broadcastService: MsalBroadcastService,
+    public loadingService: LoadingService
   ) {}
 
   ngOnInit(): void {

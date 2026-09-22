@@ -1,0 +1,75 @@
+.catalog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.machine-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.machine-image-placeholder {
+  height: 150px;
+  background-color: #e2e8f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3rem;
+  color: #94a3b8;
+  font-weight: bold;
+}
+
+.machine-details {
+  padding: 1.5rem;
+}
+
+.machine-details h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.description {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.tags {
+  display: flex;
+  justify-content: space-between;
+}
+
+.tag {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.tag.status.disponible { background-color: #dcfce7; color: #166534; }
+.tag.status.arrendado { background-color: #fee2e2; color: #991b1b; }
+.tag.status.en_mantencion { background-color: #fef9c3; color: #854d0e; }
+
+.tag.price {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+  background: white;
+  border-radius: 8px;
+}

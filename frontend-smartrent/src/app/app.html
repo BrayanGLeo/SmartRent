@@ -1,18 +1,9 @@
-<nav class="navbar">
-  <div class="nav-container">
-    <a class="brand" routerLink="/">SmartRent</a>
-    
-    <div class="nav-links">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Inicio</a>
-      <a *ngIf="loginDisplay" routerLink="/dashboard" routerLinkActive="active">Panel</a>
-    </div>
+<app-navbar></app-navbar>
 
-    <div class="auth-buttons">
-      <button *ngIf="!loginDisplay" class="btn-primary" (click)="login()">Iniciar Sesión</button>
-      <button *ngIf="loginDisplay" class="btn-outline" (click)="logout()">Cerrar Sesión</button>
-    </div>
-  </div>
-</nav>
+<!-- Global Loading Spinner -->
+<div class="spinner-overlay" *ngIf="loadingService.isLoading()">
+  <div class="spinner"></div>
+</div>
 
 <main class="main-content">
   <router-outlet></router-outlet>

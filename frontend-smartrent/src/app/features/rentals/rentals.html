@@ -1,1 +1,66 @@
-<p>rentals works!</p>
+<h2>Gestión de Arriendos</h2>
+
+<!-- Vista Arrendatario: Solicitar Arriendo -->
+<div *ngIf="isArrendatario" class="card">
+  <h3>Solicitar Nuevo Arriendo</h3>
+  <div class="form-group">
+    <label>Máquina:</label>
+    <select [(ngModel)]="newRental.machineId" class="form-control">
+      <option value="">Seleccione una máquina...</option>
+      <option *ngFor="let m of machines" [value]="m.id">{{ m.name }} ({{ m.category }})</option>
+    </select>
+  </div>
+  
+  <div class="form-group-row">
+    <div class="form-group">
+      <label>Fecha Inicio:</label>
+      <input type="date" [(ngModel)]="newRental.startDate" class="form-control" />
+    </div>
+    <div class="form-group">
+      <label>Fecha Fin:</label>
+      <input type="date" [(ngModel)]="newRental.endDate" class="form-control" />
+    </div>
+  </div>
+
+  <button class="btn btn-primary" (click)="requestRental()">Solicitar Arriendo</button>
+</div>
+
+<!-- Vista General (Ambos): Lista de Arriendos -->
+<div class="card mt-4">
+  <h3>{{ isJefeBodega ? 'Todos los Arriendos' : 'Mis Arriendos' }}</h3>
+  
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID Arriendo</th>
+        <th>Máquina ID</th>
+        <th>Fechas</th>
+        <th>Estado</th>
+        <th *ngIf="isJefeBodega">Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of rentals">
+        <td>{{ r.id }}</td>
+        <td>{{ r.machineId }}</td>
+        <td>{{ r.startDate }} - {{ r.endDate }}</td>
+        <td>
+          <span class="tag" [ngClass]="r.status.toLowerCase()">{{ r.status }}</span>
+        </td>
+        <td *ngIf="isJefeBodega">
+          <select [value]="r.status" (change)="updateStatus(r.id, $event)" class="form-control select-sm">
+            <option value="SOLICITADO">Solicitado</option>
+            <option value="APROBADO">Aprobado</option>
+            <option value="EN_PREPARACION">En Preparación</option>
+            <option value="EN_TERRENO">En Terreno</option>
+            <option value="DEVUELTO">Devuelto</option>
+            <option value="RECHAZADO">Rechazado</option>
+          </select>
+        </td>
+      </tr>
+      <tr *ngIf="rentals.length === 0">
+        <td colspan="5" class="text-center">No hay arriendos registrados.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
