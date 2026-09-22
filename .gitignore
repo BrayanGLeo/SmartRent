@@ -53,12 +53,11 @@ frontend-smartrent/src/assets/images/*.jpg
 frontend-smartrent/src/assets/images/*.png
 
 # Backend (Spring Boot)
-ms-smartrent-bff/target/
-ms-smartrent-bff/.mvn/wrapper/maven-wrapper.jar
-ms-smartrent-catalog/target/
-ms-smartrent-catalog/.mvn/wrapper/maven-wrapper.jar
-ms-smartrent-rentals/target/
-ms-smartrent-rentals/.mvn/wrapper/maven-wrapper.jar
+*/target/
+target/
+**/.mvn/wrapper/maven-wrapper.jar
+*.jar
+HELP.md
 !**/src/main/**/target/
 !**/src/test/**/target/
 /nbproject/private/
@@ -72,3 +71,9 @@ build/
 
 # Documentos de planificación del agente
 plan_*.md
+implementation_plan.md
+task.md
+walkthrough.md
+
+# Ignorar la carpeta .vscode completa
+.vscode/
