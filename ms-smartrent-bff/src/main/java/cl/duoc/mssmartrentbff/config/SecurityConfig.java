@@ -28,7 +28,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationConverter conv) throws Exception {
         http.csrf(csrf -> csrf.disable());
         http.cors(Customizer.withDefaults());
-        http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+        http.authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/catalog/**").permitAll()
+            .anyRequest().authenticated()
+        );
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(conv)));
         return http.build();
     }

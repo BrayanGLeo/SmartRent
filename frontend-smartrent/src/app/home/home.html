@@ -1,6 +1,81 @@
-<div class="hero-section">
-  <div class="hero-content">
-    <h1 class="hero-title">SmartRent</h1>
-    <p class="hero-subtitle">La mejor plataforma para el arriendo de maquinaria pesada. Eficiencia y control al alcance de tu mano.</p>
-  </div>
+<div class="home-container">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <span class="hero-badge">🏗️ Plataforma Cloud Native</span>
+      <h1 class="hero-title">Arrienda Maquinaria<br>Pesada sin Complicaciones</h1>
+      <p class="hero-subtitle">SmartRent digitaliza la gestión de tu flota industrial. Solicita, aprueba y controla arriendos en tiempo real desde cualquier dispositivo.</p>
+      <div class="hero-actions">
+        <a routerLink="/catalog" class="btn btn-primary btn-hero">Ver Catálogo</a>
+        <button *ngIf="!authService.account()" class="btn btn-outline btn-hero" (click)="authService.login()">Iniciar Sesión</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="stat-item">
+      <span class="stat-number">150+</span>
+      <span class="stat-label">Máquinas Disponibles</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">500+</span>
+      <span class="stat-label">Arriendos Realizados</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">98%</span>
+      <span class="stat-label">Satisfacción del Cliente</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">24/7</span>
+      <span class="stat-label">Soporte Técnico</span>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section">
+    <div class="section-header">
+      <h2>¿Por qué elegir SmartRent?</h2>
+      <p>Nuestra plataforma cloud te ofrece todo lo que necesitas para gestionar tu maquinaria de forma inteligente.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <span class="feature-icon">🚜</span>
+        </div>
+        <h3 class="feature-title">Catálogo Completo</h3>
+        <p class="feature-desc">Explora nuestra amplia variedad de maquinaria de última generación, disponible para cualquier tipo de proyecto.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <span class="feature-icon">⚡</span>
+        </div>
+        <h3 class="feature-title">Gestión Inmediata</h3>
+        <p class="feature-desc">Solicita, aprueba y haz seguimiento a tus arriendos en tiempo real con nuestra plataforma en la nube.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <span class="feature-icon">📊</span>
+        </div>
+        <h3 class="feature-title">Control Total</h3>
+        <p class="feature-desc">Métricas y reportes detallados para que los jefes de bodega y auditores optimicen el uso de recursos.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon-wrapper">
+          <span class="feature-icon">🔒</span>
+        </div>
+        <h3 class="feature-title">Seguridad Empresarial</h3>
+        <p class="feature-desc">Autenticación Azure AD, auditoría completa y control de acceso basado en roles para máxima protección.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="cta-content">
+      <h2>¿Listo para optimizar tu operación?</h2>
+      <p>Únete a cientos de empresas que ya confían en SmartRent para gestionar su maquinaria pesada.</p>
+      <a routerLink="/catalog" class="btn btn-primary btn-hero">Explorar Catálogo</a>
+    </div>
+  </section>
 </div>
