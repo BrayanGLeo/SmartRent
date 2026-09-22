@@ -1,26 +1,49 @@
-# SmartRent Frontend
+# SmartRent - Frontend Application
 
-Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-cli) versión 18.2.0.
-Es la aplicación web Frontend de la plataforma **SmartRent** (arriendo de maquinaria), configurada con autenticación a través de Microsoft Entra ID (Azure AD) usando MSAL.
+Esta es la aplicación cliente (SPA - Single Page Application) del proyecto SmartRent, diseñada para ofrecer a los usuarios una interfaz dinámica, rápida y segura para la gestión y acceso de recursos.
 
-## Servidor de desarrollo
+## 🛠️ Tecnologías y Herramientas
 
-Ejecuta `npm start` o `ng serve` para iniciar el servidor de desarrollo. Navega a `http://localhost:4200/`. La aplicación se recargará automáticamente si realizas cambios en los archivos fuente.
+El proyecto está desarrollado con tecnología moderna para aplicaciones web escalables:
 
-## Construcción (Build)
+- **Angular**: Versión 22.x (Framework progresivo para la construcción de interfaces de usuario).
+- **TypeScript**: Superset de JavaScript que añade tipado estático fuerte (v6.0).
+- **Microsoft Authentication Library (MSAL)**: `@azure/msal-angular` y `@azure/msal-browser` para la autenticación Single Sign-On (SSO) mediante Azure Active Directory.
+- **RxJS**: Programación reactiva y manejo asíncrono de flujos de datos.
+- **Vitest & JSDOM**: Framework de testing ultrarrápido empleado para pruebas unitarias.
+- **Prettier**: Formateador de código para mantener estilos consistentes.
+- **Node.js y NPM**: Entorno de ejecución y gestor de paquetes.
 
-Ejecuta `npm run build` o `ng build` para compilar el proyecto. Los artefactos de construcción se almacenarán en el directorio `dist/`.
+## 🚀 Requisitos Previos
 
-## Características Principales
+- Node.js (v18 o superior recomendado).
+- Gestor de paquetes NPM (v11.x).
 
-- **Diseño Moderno:** Interfaz estilizada con CSS puro y efectos de *glassmorphism*.
-- **Autenticación (MSAL):** Integración con Microsoft Entra ID para proteger rutas y la aplicación.
-- **Intercepción de peticiones (Interceptor):** Inyección automática de token de autorización (`Bearer token`) para llamadas a la API del backend.
+## ⚙️ Configuración y Ejecución
 
-## Ejecución de pruebas unitarias
+Primero, instala las dependencias del proyecto:
 
-Ejecuta `ng test` para correr las pruebas unitarias a través de [Karma](https://karma-runner.github.io).
+```bash
+npm install
+```
 
-## Más ayuda sobre Angular CLI
+Para iniciar el servidor de desarrollo con recarga en vivo (hot-reload), ejecuta:
 
-Para obtener más ayuda sobre el CLI de Angular, usa `ng help` o revisa el [Repositorio de Angular CLI y su documentación](https://github.com/angular/angular-cli).
+```bash
+npm start
+```
+O de manera equivalente:
+```bash
+ng serve
+```
+
+La aplicación estará disponible de forma predeterminada en `http://localhost:4200/`.
+
+## 📦 Construcción para Producción
+
+Para empaquetar la aplicación en un formato optimizado y listo para producción, ejecuta:
+
+```bash
+npm run build
+```
+Los artefactos generados se guardarán en la carpeta de distribución, listos para ser desplegados en un servidor estático como AWS S3 o Azure Blob Storage.

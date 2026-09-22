@@ -1,7 +1,71 @@
+# IDEs and Editors
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/mcp.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+*.iws
+*.iml
+*.ipr
+*.launch
+*.sublime-workspace
+.c9/
+.history/*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Frontend (Angular)
+frontend-smartrent/dist/
+frontend-smartrent/tmp/
+frontend-smartrent/out-tsc/
+frontend-smartrent/bazel-out/
+frontend-smartrent/node_modules/
+frontend-smartrent/.angular/cache/
+frontend-smartrent/.sass-cache/
+frontend-smartrent/connect.lock
+frontend-smartrent/coverage/
+frontend-smartrent/libpeerconnection.log
+frontend-smartrent/testem.log
+frontend-smartrent/typings/
+frontend-smartrent/__screenshots__/
+npm-debug.log
+yarn-error.log
+
+# Backend (Spring Boot)
+ms-smartrent-bff/target/
+ms-smartrent-bff/.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
 # Documentos de planificación del agente
 plan_*.md
-
-# Entornos IDE
-.vscode/
-.idea/
-*.swp
