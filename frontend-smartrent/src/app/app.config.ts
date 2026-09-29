@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection, APP_INITIALIZER } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS, withInterceptors } from '@angular/common/http';
@@ -54,9 +54,19 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
   };
 }
 
+export function MSALInitializerFactory(msalService: MsalService) {
+  return () => msalService.initialize();
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: MSALInitializerFactory,
+      deps: [MsalService],
+      multi: true
+    },
     provideRouter(routes, withEnabledBlockingInitialNavigation()),
     provideHttpClient(withInterceptors([errorInterceptor, loadingInterceptor]), withInterceptorsFromDi()),
     provideCharts(withDefaultRegisterables()),
