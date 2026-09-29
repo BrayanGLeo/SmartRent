@@ -37,7 +37,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
 export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   const protectedResourceMap = new Map<string, Array<string>>();
   // Protege las rutas que van al backend
-  protectedResourceMap.set('http://localhost:8080/api/*', [environment.azure.apiScope]);
+  protectedResourceMap.set(`${environment.apiBaseUrl}/*`, [environment.azure.apiScope]);
 
   return {
     interactionType: InteractionType.Redirect,
