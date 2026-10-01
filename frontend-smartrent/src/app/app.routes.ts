@@ -11,6 +11,7 @@ export const routes: Routes = [
   { path: 'cart', loadComponent: () => import('./features/cart/cart').then(m => m.Cart) },
   { path: 'reports', loadComponent: () => import('./features/reports/reports').then(m => m.Reports), canActivate: [MsalGuard] },
   { path: 'audit', loadComponent: () => import('./features/audit/audit').then(m => m.Audit), canActivate: [MsalGuard] },
+  { path: 'checkout', loadComponent: () => import('./features/checkout/checkout').then(m => m.CheckoutComponent), canActivate: [MsalGuard] },
   { path: '**', redirectTo: '' }
 ];
 
