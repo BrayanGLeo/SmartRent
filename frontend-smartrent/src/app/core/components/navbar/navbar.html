@@ -25,6 +25,11 @@
     <li *ngIf="authService.userRole() === 'Admin' || authService.userRole() === 'Auditor'">
       <a routerLink="/reports" routerLinkActive="active">Reportes</a>
     </li>
+
+    <!-- Link de Admin Panel -->
+    <li *ngIf="authService.userRole() === 'Admin'">
+      <a routerLink="/admin" routerLinkActive="active">Panel Admin</a>
+    </li>
   </ul>
 
   <div class="auth-buttons">
