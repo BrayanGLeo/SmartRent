@@ -29,7 +29,11 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable());
         http.cors(Customizer.withDefaults());
         http.authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/catalog/**", "/v1/api/catalog/**", "/v2/api/catalog/**").permitAll()
+            .requestMatchers(
+                org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher("/api/catalog/**"),
+                org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher("/v1/api/catalog/**"),
+                org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher("/v2/api/catalog/**")
+            ).permitAll()
             .anyRequest().authenticated()
         );
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(conv)));
