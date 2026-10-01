@@ -29,7 +29,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable());
         http.cors(Customizer.withDefaults());
         http.authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/catalog/**").permitAll()
+            .requestMatchers("/api/catalog/**", "/v1/api/catalog/**", "/v2/api/catalog/**").permitAll()
             .anyRequest().authenticated()
         );
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(conv)));
