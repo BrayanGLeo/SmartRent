@@ -70,17 +70,35 @@ export class ApiService {
   ];
 
   // Catalog
+  getMockCatalog(): Machine[] {
+    return [...this.mockCatalog];
+  }
+
   getCatalog(): Observable<Machine[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/catalog/services`).pipe(
-      map(data => data.map(m => ({
-        id: m.id ? m.id.toString() : crypto.randomUUID(),
-        name: m.name,
-        description: m.description || 'Sin descripción',
-        category: m.category?.name || 'General',
-        status: m.isAvailable ? 'DISPONIBLE' : 'ARRENDADO',
-        pricePerDay: m.dailyPrice || 0
-      })))
-    );
+    // Usamos fetch() nativo para bypasear el MsalInterceptor de Angular,
+    // ya que el catálogo es un endpoint público y no requiere token.
+    return new Observable<Machine[]>(observer => {
+      fetch(`${this.baseUrl}/catalog/services`)
+        .then(response => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.json();
+        })
+        .then((data: any[]) => {
+          const machines = data.map(m => ({
+            id: m.id ? m.id.toString() : crypto.randomUUID(),
+            name: m.name,
+            description: m.description || 'Sin descripción',
+            category: m.category?.name || 'General',
+            status: m.isAvailable ? 'DISPONIBLE' : 'ARRENDADO',
+            pricePerDay: m.dailyPrice || 0
+          }));
+          observer.next(machines);
+          observer.complete();
+        })
+        .catch(err => {
+          observer.error(err);
+        });
+    });
   }
 
   addMachine(machine: Partial<Machine>): Observable<Machine> {

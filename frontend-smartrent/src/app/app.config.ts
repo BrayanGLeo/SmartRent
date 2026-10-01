@@ -42,15 +42,10 @@ export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   protectedResourceMap.set(`${environment.apiBaseUrl}/reports/*`, [environment.azure.apiScope]);
   protectedResourceMap.set(`${environment.apiBaseUrl}/audit/*`, [environment.azure.apiScope]);
   
-  // Catálogo: GET público, POST/PUT privados
-  protectedResourceMap.set(`${environment.apiBaseUrl}/catalog/services`, [
-    { httpMethod: 'POST', scopes: [environment.azure.apiScope] },
-    { httpMethod: 'PUT', scopes: [environment.azure.apiScope] }
-  ]);
-  protectedResourceMap.set(`${environment.apiBaseUrl}/catalog/services/*`, [
-    { httpMethod: 'PUT', scopes: [environment.azure.apiScope] },
-    { httpMethod: 'DELETE', scopes: [environment.azure.apiScope] }
-  ]);
+  // Catálogo: endpoint público, no se registra en protectedResourceMap
+  // para que MSAL no intente adjuntar tokens a las peticiones GET.
+  // Las operaciones de escritura (POST/PUT/DELETE) se manejan desde
+  // componentes protegidos con MsalGuard donde el usuario ya está autenticado.
 
   return {
     interactionType: InteractionType.Redirect,

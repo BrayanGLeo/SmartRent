@@ -12,7 +12,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         errorMessage = `Error: ${error.error.message}`;
       } else {
         // Server-side error
-        if (error.status === 403) {
+        if (error.status === 401) {
+          // 401 se maneja silenciosamente: el componente que hizo la petición
+          // decide qué hacer (ej: fallback a datos locales en catálogo).
+          return throwError(() => new Error('No autorizado'));
+        } else if (error.status === 403) {
           errorMessage = 'No tienes permisos para realizar esta acción (403 Forbidden).';
         } else if (error.status === 500) {
           errorMessage = 'Error interno del servidor (500 Server Error). Intenta más tarde.';
