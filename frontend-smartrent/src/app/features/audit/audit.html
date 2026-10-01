@@ -1,19 +1,33 @@
-<div class="card">
-  <h2>Línea de Tiempo de Auditoría</h2>
-  
-  <div class="timeline">
-    <div class="timeline-item" *ngFor="let ev of events">
-      <div class="timeline-dot"></div>
-      <div class="timeline-content">
-        <span class="timeline-date">{{ ev.timestamp | date:'medium' }}</span>
-        <h4>{{ ev.action }}</h4>
-        <p><strong>Usuario:</strong> {{ ev.user }}</p>
-        <p>{{ ev.details }}</p>
-      </div>
-    </div>
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h2>Centro de Auditoría</h2>
+    <p class="subtitle">Monitoreo de seguridad, trazabilidad de eventos y registro inmutable de acciones del sistema.</p>
+  </div>
+
+  <div class="premium-card">
+    <h3>Línea de Tiempo Operativa</h3>
     
-    <div *ngIf="events.length === 0" class="text-center mt-4">
-      No hay eventos de auditoría registrados.
+    <div class="timeline">
+      <div class="timeline-item" *ngFor="let ev of events">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <h4>{{ ev.action }}</h4>
+            <span class="timeline-date">{{ ev.timestamp | date:'medium' }}</span>
+          </div>
+          <div class="timeline-body">
+            <div class="user-info">
+              <span class="icon">👤</span> <strong>Responsable:</strong> {{ ev.user }}
+            </div>
+            <p class="details">{{ ev.details }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="events.length === 0" class="empty-state-mini">
+        <span class="empty-icon">🛡️</span>
+        <p>No hay eventos de auditoría registrados en este período.</p>
+      </div>
     </div>
   </div>
 </div>
