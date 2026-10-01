@@ -183,6 +183,24 @@
   color: var(--text-secondary);
 }
 
+.machine-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 1rem !important;
+}
+
+.btn-block {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* ===== STATUS TAGS ===== */
 .tag.status {
   display: inline-flex;

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { delay, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface Machine {
@@ -39,10 +39,10 @@ export interface AuditEvent {
   providedIn: 'root'
 })
 export class ApiService {
-  private http = inject(HttpClient);
-  private baseUrl = environment.apiBaseUrl; // e.g. http://localhost:8080/api
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = environment.apiBaseUrl; // e.g. http://localhost:8080/api
 
-  private mockCatalog: Machine[] = [
+  private readonly mockCatalog: Machine[] = [
     {
       id: '1',
       name: 'Excavadora Caterpillar 320',
@@ -71,12 +71,20 @@ export class ApiService {
 
   // Catalog
   getCatalog(): Observable<Machine[]> {
-    // Return mock data since the catalog microservice is not yet implemented
-    return of(this.mockCatalog).pipe(delay(800));
+    return this.http.get<any[]>(`${this.baseUrl}/catalog/services`).pipe(
+      map(data => data.map(m => ({
+        id: m.id ? m.id.toString() : crypto.randomUUID(),
+        name: m.name,
+        description: m.description || 'Sin descripción',
+        category: m.category?.name || 'General',
+        status: m.isAvailable ? 'DISPONIBLE' : 'ARRENDADO',
+        pricePerDay: m.dailyPrice || 0
+      })))
+    );
   }
 
   addMachine(machine: Partial<Machine>): Observable<Machine> {
-    const newMachine = { ...machine, id: Math.random().toString() } as Machine;
+    const newMachine = { ...machine, id: crypto.randomUUID() } as Machine;
     this.mockCatalog.push(newMachine);
     return of(newMachine).pipe(delay(800));
   }
@@ -102,5 +110,18 @@ export class ApiService {
   // Audit
   getAuditTimeline(): Observable<AuditEvent[]> {
     return this.http.get<AuditEvent[]>(`${this.baseUrl}/audit/events`);
+  }
+
+  // Cart
+  syncCart(items: any[]): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/cart/sync`, items);
+  }
+
+  checkoutCart(type: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/cart/checkout/${type}`, {});
+  }
+
+  processCheckout(request: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/checkout/process`, request);
   }
 }
