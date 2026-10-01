@@ -81,7 +81,8 @@ export class Cart implements OnInit {
       this.msalService.loginRedirect();
       return;
     }
-    this.syncAndCheckout('express');
+    if (this.expressItems.length === 0) return;
+    void this.router.navigate(['/checkout'], { queryParams: { type: 'express' } });
   }
 
   requestQuote() {
@@ -90,7 +91,8 @@ export class Cart implements OnInit {
       this.msalService.loginRedirect();
       return;
     }
-    this.syncAndCheckout('quote');
+    if (this.quoteItems.length === 0) return;
+    void this.router.navigate(['/checkout'], { queryParams: { type: 'quote' } });
   }
 
   get totalExpress() {

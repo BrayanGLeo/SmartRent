@@ -75,6 +75,18 @@ services:
     networks:
       - smartrent-network
 
+  smartrent-checkout:
+    build: ../ms-smartrent-checkout
+    restart: unless-stopped
+    container_name: smartrent-checkout
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/smartrent_audit
+      - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST}
+    depends_on:
+      - postgres
+    networks:
+      - smartrent-network
+
   smartrent-report:
     build: ../ms-smartrent-report
     restart: unless-stopped
@@ -96,6 +108,7 @@ services:
       - smartrent-report
       - smartrent-audit
       - smartrent-cart
+      - smartrent-checkout
     networks:
       - smartrent-network
 

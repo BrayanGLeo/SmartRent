@@ -47,4 +47,11 @@ public class GatewayConfig {
                 .route(path("/api/cart/**"), http("http://smartrent-cart:8085"))
                 .build();
     }
+
+    @Bean
+    public RouterFunction<ServerResponse> checkoutRoute() {
+        return route("checkout_route")
+                .route(path("/api/checkout/**"), http("http://smartrent-checkout:8086"))
+                .build();
+    }
 }

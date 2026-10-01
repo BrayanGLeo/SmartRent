@@ -120,4 +120,8 @@ export class ApiService {
   checkoutCart(type: string): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/cart/checkout/${type}`, {});
   }
+
+  processCheckout(request: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/checkout/process`, request);
+  }
 }
