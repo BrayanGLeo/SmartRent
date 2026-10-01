@@ -36,6 +36,17 @@
           <span class="category-tag">{{ m.category }}</span>
           <span class="price-tag">${{ m.pricePerDay | number }} <small>/ día</small></span>
         </div>
+        
+        <!-- Carrito Híbrido: Cotización vs Express -->
+        <div class="machine-actions mt-3" *ngIf="m.status === 'DISPONIBLE'">
+          <button *ngIf="isHeavyMachinery(m.category)" class="btn btn-outline btn-block" (click)="requestQuote(m)">
+            📝 Solicitar Cotización
+          </button>
+          
+          <button *ngIf="!isHeavyMachinery(m.category)" class="btn btn-primary btn-block" (click)="rentDirect(m)">
+            🛒 Arrendar Ahora
+          </button>
+        </div>
       </div>
     </div>
   </div>
