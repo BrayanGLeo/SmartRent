@@ -1,66 +1,89 @@
-<h2>Gestión de Arriendos</h2>
-
-<!-- Vista Arrendatario: Solicitar Arriendo -->
-<div *ngIf="isArrendatario" class="card">
-  <h3>Solicitar Nuevo Arriendo</h3>
-  <div class="form-group">
-    <label>Máquina:</label>
-    <select [(ngModel)]="newRental.machineId" class="form-control">
-      <option value="">Seleccione una máquina...</option>
-      <option *ngFor="let m of machines" [value]="m.id">{{ m.name }} ({{ m.category }})</option>
-    </select>
-  </div>
-  
-  <div class="form-group-row">
-    <div class="form-group">
-      <label>Fecha Inicio:</label>
-      <input type="date" [(ngModel)]="newRental.startDate" class="form-control" />
-    </div>
-    <div class="form-group">
-      <label>Fecha Fin:</label>
-      <input type="date" [(ngModel)]="newRental.endDate" class="form-control" />
-    </div>
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h2>{{ isJefeBodega ? 'Panel de Control: Flota y Arriendos' : 'Mis Solicitudes de Arriendo' }}</h2>
+    <p class="subtitle">{{ isJefeBodega ? 'Gestiona y actualiza el estado de la maquinaria arrendada en tiempo real.' : 'Solicita maquinaria y haz seguimiento al estado de tus arriendos operativos.' }}</p>
   </div>
 
-  <button class="btn btn-primary" (click)="requestRental()">Solicitar Arriendo</button>
-</div>
+  <!-- Vista Arrendatario: Solicitar Arriendo -->
+  <div *ngIf="isArrendatario" class="premium-card">
+    <h3>Generar Nueva Solicitud</h3>
+    <div class="form-grid">
+      <div class="form-group full-width">
+        <label for="machineSelect">Maquinaria Requerida</label>
+        <select id="machineSelect" [(ngModel)]="newRental.machineId" class="premium-input">
+          <option value="">Seleccione un equipo del catálogo de maquinarias...</option>
+          <option *ngFor="let m of machines" [value]="m.id">{{ m.name }} ({{ m.category }})</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="startDate">Fecha de Inicio del Proyecto</label>
+        <input id="startDate" type="date" [(ngModel)]="newRental.startDate" class="premium-input" />
+      </div>
+      <div class="form-group">
+        <label for="endDate">Fecha de Devolución Estimada</label>
+        <input id="endDate" type="date" [(ngModel)]="newRental.endDate" class="premium-input" />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary btn-large" (click)="requestRental()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        Confirmar Solicitud
+      </button>
+    </div>
+  </div>
 
-<!-- Vista General (Ambos): Lista de Arriendos -->
-<div class="card mt-4">
-  <h3>{{ isJefeBodega ? 'Todos los Arriendos' : 'Mis Arriendos' }}</h3>
-  
-  <table class="table">
-    <thead>
-      <tr>
-        <th>ID Arriendo</th>
-        <th>Máquina ID</th>
-        <th>Fechas</th>
-        <th>Estado</th>
-        <th *ngIf="isJefeBodega">Acción</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let r of rentals">
-        <td>{{ r.id }}</td>
-        <td>{{ r.machineId }}</td>
-        <td>{{ r.startDate }} - {{ r.endDate }}</td>
-        <td>
-          <span class="tag" [ngClass]="r.status.toLowerCase()">{{ r.status }}</span>
-        </td>
-        <td *ngIf="isJefeBodega">
-          <select [value]="r.status" (change)="updateStatus(r.id, $event)" class="form-control select-sm">
-            <option value="SOLICITADO">Solicitado</option>
-            <option value="APROBADO">Aprobado</option>
-            <option value="EN_PREPARACION">En Preparación</option>
-            <option value="EN_TERRENO">En Terreno</option>
-            <option value="DEVUELTO">Devuelto</option>
-            <option value="RECHAZADO">Rechazado</option>
-          </select>
-        </td>
-      </tr>
-      <tr *ngIf="rentals.length === 0">
-        <td colspan="5" class="text-center">No hay arriendos registrados.</td>
-      </tr>
-    </tbody>
-  </table>
+  <!-- Vista General: Lista de Arriendos -->
+  <div class="premium-card">
+    <h3>{{ isJefeBodega ? 'Registro Histórico de Operaciones' : 'Historial de mis Solicitudes' }}</h3>
+    
+    <div class="table-responsive">
+      <table class="premium-table">
+        <thead>
+          <tr>
+            <th>ID Operación</th>
+            <th>Equipo Identificador</th>
+            <th>Período de Arriendo</th>
+            <th>Estado Actual</th>
+            <th *ngIf="isJefeBodega">Gestión de Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of rentals" class="table-row">
+            <td class="font-mono">#RNT-{{ r.id }}</td>
+            <td class="font-bold">Máquina {{ r.machineId }}</td>
+            <td>
+              <div class="date-range">
+                <span class="date-badge start">{{ r.startDate }}</span>
+                <span class="date-arrow">→</span>
+                <span class="date-badge end">{{ r.endDate }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="r.status.toLowerCase()">
+                <span class="pulse-dot"></span>
+                {{ r.status.replace('_', ' ') }}
+              </span>
+            </td>
+            <td *ngIf="isJefeBodega">
+              <select [value]="r.status" (change)="updateStatus(r.id, $event)" class="status-select" aria-label="Modificar estado del arriendo">
+                <option value="SOLICITADO">Solicitado</option>
+                <option value="APROBADO">Aprobado</option>
+                <option value="EN_PREPARACION">En Preparación</option>
+                <option value="EN_TERRENO">En Terreno</option>
+                <option value="DEVUELTO">Devuelto</option>
+                <option value="RECHAZADO">Rechazado</option>
+              </select>
+            </td>
+          </tr>
+          <tr *ngIf="rentals.length === 0">
+            <td [attr.colspan]="isJefeBodega ? 5 : 4" style="text-align: center; padding: 4rem 2rem; color: #94a3b8;">
+              <div style="font-size: 3.5rem; margin-bottom: 1rem; opacity: 0.5;">📋</div>
+              <p style="font-size: 1.15rem; font-weight: 500;">No hay registros de arriendos en el sistema.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
