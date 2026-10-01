@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, provideAppInitializer, inject } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation } from '@angular/router';
 import { routes } from './app.routes';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS, withInterceptors } from '@angular/common/http';
@@ -7,7 +7,7 @@ import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 
 import { IPublicClientApplication, PublicClientApplication, InteractionType, BrowserCacheLocation, LogLevel } from '@azure/msal-browser';
-import { MsalInterceptor, MSAL_INSTANCE, MsalInterceptorConfiguration, MsalGuardConfiguration, MSAL_GUARD_CONFIG, MSAL_INTERCEPTOR_CONFIG, MsalService, MsalGuard, MsalBroadcastService } from '@azure/msal-angular';
+import { MsalInterceptor, MSAL_INSTANCE, MsalInterceptorConfiguration, MsalGuardConfiguration, MSAL_GUARD_CONFIG, MSAL_INTERCEPTOR_CONFIG, MsalService, MsalGuard, MsalBroadcastService, ProtectedResourceScopes } from '@azure/msal-angular';
 
 import { environment } from '../environments/environment';
 
@@ -35,9 +35,22 @@ export function MSALInstanceFactory(): IPublicClientApplication {
 }
 
 export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
-  const protectedResourceMap = new Map<string, Array<string>>();
-  // Protege las rutas que van al backend
-  protectedResourceMap.set(`${environment.apiBaseUrl}/*`, [environment.azure.apiScope]);
+  const protectedResourceMap = new Map<string, Array<string | ProtectedResourceScopes>>();
+  // Rutas privadas que siempre requieren token
+  protectedResourceMap.set(`${environment.apiBaseUrl}/rentals`, [environment.azure.apiScope]);
+  protectedResourceMap.set(`${environment.apiBaseUrl}/rentals/*`, [environment.azure.apiScope]);
+  protectedResourceMap.set(`${environment.apiBaseUrl}/reports/*`, [environment.azure.apiScope]);
+  protectedResourceMap.set(`${environment.apiBaseUrl}/audit/*`, [environment.azure.apiScope]);
+  
+  // Catálogo: GET público, POST/PUT privados
+  protectedResourceMap.set(`${environment.apiBaseUrl}/catalog/services`, [
+    { httpMethod: 'POST', scopes: [environment.azure.apiScope] },
+    { httpMethod: 'PUT', scopes: [environment.azure.apiScope] }
+  ]);
+  protectedResourceMap.set(`${environment.apiBaseUrl}/catalog/services/*`, [
+    { httpMethod: 'PUT', scopes: [environment.azure.apiScope] },
+    { httpMethod: 'DELETE', scopes: [environment.azure.apiScope] }
+  ]);
 
   return {
     interactionType: InteractionType.Redirect,
@@ -54,9 +67,17 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
   };
 }
 
+export function MSALInitializerFactory(msalService: MsalService) {
+  return () => msalService.initialize();
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
+    provideAppInitializer(() => {
+      const initializer = MSALInitializerFactory(inject(MsalService));
+      return initializer();
+    }),
     provideRouter(routes, withEnabledBlockingInitialNavigation()),
     provideHttpClient(withInterceptors([errorInterceptor, loadingInterceptor]), withInterceptorsFromDi()),
     provideCharts(withDefaultRegisterables()),

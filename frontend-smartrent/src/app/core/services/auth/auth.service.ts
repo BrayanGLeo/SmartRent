@@ -1,6 +1,7 @@
-import { Injectable, computed, inject } from '@angular/core';
-import { MsalService } from '@azure/msal-angular';
-import { AccountInfo } from '@azure/msal-browser';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { MsalService, MsalBroadcastService } from '@azure/msal-angular';
+import { AccountInfo, InteractionStatus } from '@azure/msal-browser';
+import { filter } from 'rxjs/operators';
 
 export type UserRole = 'Admin' | 'JefeBodega' | 'Arrendatario' | 'Auditor' | 'None';
 
@@ -9,12 +10,26 @@ export type UserRole = 'Admin' | 'JefeBodega' | 'Arrendatario' | 'Auditor' | 'No
 })
 export class AuthService {
   private msalService = inject(MsalService);
+  private broadcastService = inject(MsalBroadcastService);
 
-  // Computed signal to get the active account
-  public account = computed<AccountInfo | null>(() => {
+  private accountSignal = signal<AccountInfo | null>(this.getActiveAccount());
+  public isAuthBusy = signal<boolean>(false);
+
+  constructor() {
+    this.broadcastService.inProgress$.subscribe((status: InteractionStatus) => {
+      this.isAuthBusy.set(status !== InteractionStatus.None);
+      if (status === InteractionStatus.None) {
+        this.accountSignal.set(this.getActiveAccount());
+      }
+    });
+  }
+
+  private getActiveAccount(): AccountInfo | null {
     const accounts = this.msalService.instance.getAllAccounts();
     return accounts.length > 0 ? accounts[0] : null;
-  });
+  }
+
+  public account = computed(() => this.accountSignal());
 
   // Computed signal to determine the user's role from JWT claims
   public userRole = computed<UserRole>(() => {

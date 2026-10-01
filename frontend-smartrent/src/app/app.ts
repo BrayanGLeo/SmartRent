@@ -29,6 +29,20 @@ export class App implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.isIframe = window !== window.parent && !window.opener;
 
+    this.authService.handleRedirectObservable().subscribe({
+      next: () => {
+        // Limpia la basura de la URL (como el ?state=) que deja el logout
+        if (window.location.search.includes('state=')) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      },
+      error: (err) => {
+        console.error('Error de MSAL:', err);
+        // Si hay error de state_mismatch, limpiamos la URL para poder volver a intentar
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    });
+
     this.broadcastService.inProgress$
       .pipe(
         filter((status: InteractionStatus) => status === InteractionStatus.None),
