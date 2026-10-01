@@ -1,0 +1,83 @@
+<div class="cart-container fade-in">
+  <div class="header">
+    <h1><i class="fas fa-shopping-cart"></i> Tu Carrito</h1>
+    <p>Revisa tus herramientas listas para arriendo y tus cotizaciones de maquinaria pesada.</p>
+  </div>
+
+  <div class="cart-content">
+    <!-- Sección de Arriendo Rápido -->
+    <div class="cart-section express-section">
+      <div class="section-header">
+        <h2><i class="fas fa-bolt"></i> Arriendo Express</h2>
+        <span class="badge badge-express">{{expressItems.length}} items</span>
+      </div>
+      
+      <div class="empty-state" *ngIf="expressItems.length === 0">
+        <i class="fas fa-box-open"></i>
+        <p>No tienes herramientas para arriendo rápido.</p>
+      </div>
+
+      <div class="cart-items" *ngIf="expressItems.length > 0">
+        <div class="cart-item" *ngFor="let item of expressItems">
+          <div class="item-info">
+            <h3>{{item.machine.name}}</h3>
+            <span class="category">{{item.machine.category.name || item.machine.category}}</span>
+          </div>
+          <div class="item-actions">
+            <span class="price">{{item.machine.dailyPrice | currency:'CLP':'symbol-narrow':'1.0-0'}} /día</span>
+            <button class="btn-icon" (click)="removeItem(item)" title="Eliminar">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-footer" *ngIf="expressItems.length > 0">
+        <div class="total-row">
+          <span>Total diario estimado:</span>
+          <span class="total-price">{{totalExpress | currency:'CLP':'symbol-narrow':'1.0-0'}}</span>
+        </div>
+        <button class="btn btn-primary btn-block" (click)="proceedToCheckout()">
+          Proceder al Pago <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sección de Cotización -->
+    <div class="cart-section quote-section">
+      <div class="section-header">
+        <h2><i class="fas fa-hard-hat"></i> Cotizaciones Pendientes</h2>
+        <span class="badge badge-quote">{{quoteItems.length}} items</span>
+      </div>
+      
+      <div class="empty-state" *ngIf="quoteItems.length === 0">
+        <i class="fas fa-clipboard-list"></i>
+        <p>No has agregado maquinaria pesada para cotizar.</p>
+      </div>
+
+      <div class="cart-items" *ngIf="quoteItems.length > 0">
+        <div class="cart-item" *ngFor="let item of quoteItems">
+          <div class="item-info">
+            <h3>{{item.machine.name}}</h3>
+            <span class="category">{{item.machine.category.name || item.machine.category}}</span>
+          </div>
+          <div class="item-actions">
+            <span class="status-badge">Requiere Cotización</span>
+            <button class="btn-icon" (click)="removeItem(item)" title="Eliminar">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-footer" *ngIf="quoteItems.length > 0">
+        <p class="quote-notice">
+          <i class="fas fa-info-circle"></i> La maquinaria pesada requiere evaluación de traslado y operador.
+        </p>
+        <button class="btn btn-secondary btn-block" (click)="requestQuote()">
+          Solicitar Cotización <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

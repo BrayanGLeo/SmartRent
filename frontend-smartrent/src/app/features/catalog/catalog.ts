@@ -60,7 +60,7 @@ export class Catalog implements OnInit {
     localStorage.setItem('smartrent_cart', JSON.stringify(cart));
     
     alert(`Máquina agregada al portafolio de cotización: ${machine.name}`);
-    // await this.router.navigate(['/cart']); // Se implementará en la nueva rama
+    await this.router.navigate(['/cart']);
   }
 
   async rentDirect(machine: Machine) {
@@ -70,6 +70,6 @@ export class Catalog implements OnInit {
     localStorage.setItem('smartrent_cart', JSON.stringify(cart));
     
     alert(`Herramienta agregada al carrito de arriendo rápido: ${machine.name}`);
-    // await this.router.navigate(['/cart']); // Se implementará en la nueva rama
+    await this.router.navigate(['/cart']);
   }
 }

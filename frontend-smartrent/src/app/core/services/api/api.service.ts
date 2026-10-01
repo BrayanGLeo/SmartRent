@@ -111,4 +111,13 @@ export class ApiService {
   getAuditTimeline(): Observable<AuditEvent[]> {
     return this.http.get<AuditEvent[]>(`${this.baseUrl}/audit/events`);
   }
+
+  // Cart
+  syncCart(items: any[]): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/cart/sync`, items);
+  }
+
+  checkoutCart(type: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/cart/checkout/${type}`, {});
+  }
 }

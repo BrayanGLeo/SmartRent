@@ -7,5 +7,5 @@ export const environment = {
     redirectUri: window.location.origin + window.location.pathname,
     apiScope: 'api://749dc676-d557-460a-b138-dac9a6744b6e/Arriendos.Leer'
   },
-  apiBaseUrl: 'https://hnws3rgb6i.execute-api.us-east-1.amazonaws.com/v1/api'
+  apiBaseUrl: 'https://hnws3rgb6i.execute-api.us-east-1.amazonaws.com/v2/api'
 };
