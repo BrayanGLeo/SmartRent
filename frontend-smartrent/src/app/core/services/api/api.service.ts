@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { delay, map } from 'rxjs/operators';
@@ -40,7 +40,8 @@ export interface AuditEvent {
 })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = environment.apiBaseUrl; // e.g. http://localhost:8080/api
+  private readonly ngZone = inject(NgZone);
+  private readonly baseUrl = environment.apiBaseUrl;
 
   private readonly mockCatalog: Machine[] = [
     {
@@ -69,14 +70,11 @@ export class ApiService {
     }
   ];
 
-  // Catalog
   getMockCatalog(): Machine[] {
     return [...this.mockCatalog];
   }
 
   getCatalog(): Observable<Machine[]> {
-    // Usamos fetch() nativo para bypasear el MsalInterceptor de Angular,
-    // ya que el catálogo es un endpoint público y no requiere token.
     return new Observable<Machine[]>(observer => {
       fetch(`${this.baseUrl}/catalog/services`)
         .then(response => {
@@ -84,19 +82,23 @@ export class ApiService {
           return response.json();
         })
         .then((data: any[]) => {
-          const machines = data.map(m => ({
-            id: m.id ? m.id.toString() : crypto.randomUUID(),
-            name: m.name,
-            description: m.description || 'Sin descripción',
-            category: m.category?.name || 'General',
-            status: m.isAvailable ? 'DISPONIBLE' : 'ARRENDADO',
-            pricePerDay: m.dailyPrice || 0
-          }));
-          observer.next(machines);
-          observer.complete();
+          this.ngZone.run(() => {
+            const machines = data.map(m => ({
+              id: m.id ? m.id.toString() : crypto.randomUUID(),
+              name: m.name,
+              description: m.description || 'Sin descripción',
+              category: m.category?.name || 'General',
+              status: m.isAvailable ? 'DISPONIBLE' : 'ARRENDADO',
+              pricePerDay: m.dailyPrice || 0
+            }));
+            observer.next(machines);
+            observer.complete();
+          });
         })
         .catch(err => {
-          observer.error(err);
+          this.ngZone.run(() => {
+            observer.error(err);
+          });
         });
     });
   }
