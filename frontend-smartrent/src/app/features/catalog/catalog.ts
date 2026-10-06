@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService, Machine } from '../../core/services/api/api.service';
@@ -14,6 +14,7 @@ export class Catalog implements OnInit {
   apiService = inject(ApiService);
   authService = inject(AuthService);
   router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
   
   machines: Machine[] = [];
 
@@ -21,11 +22,13 @@ export class Catalog implements OnInit {
     this.apiService.getCatalog().subscribe({
       next: (data) => {
         this.machines = data;
+        this.cdr.detectChanges();
       },
       error: () => {
         // Si la API falla (ej: 401 del API Gateway sin autenticación),
         // usamos datos mock para que el catálogo sea visible sin login.
         this.machines = this.apiService.getMockCatalog();
+        this.cdr.detectChanges();
       }
     });
   }
