@@ -18,11 +18,16 @@ export class Catalog implements OnInit {
   machines: Machine[] = [];
 
   ngOnInit() {
-    this.apiService.getCatalog().subscribe(
-      data => {
+    this.apiService.getCatalog().subscribe({
+      next: (data) => {
         this.machines = data;
+      },
+      error: () => {
+        // Si la API falla (ej: 401 del API Gateway sin autenticación),
+        // usamos datos mock para que el catálogo sea visible sin login.
+        this.machines = this.apiService.getMockCatalog();
       }
-    );
+    });
   }
 
   get isAdmin(): boolean {
