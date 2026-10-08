@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@SuppressWarnings("null")
 public class RabbitMQConfig {
 
     public static final String EXCHANGE = "smartrent.exchange";

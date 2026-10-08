@@ -6,7 +6,7 @@ import cl.duoc.mssmartrentcheckout.dto.OrderCreatedEvent;
 import cl.duoc.mssmartrentcheckout.model.Order;
 import cl.duoc.mssmartrentcheckout.model.OrderItem;
 import cl.duoc.mssmartrentcheckout.repository.OrderRepository;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +16,9 @@ import java.util.List;
 public class CheckoutService {
 
     private final OrderRepository orderRepository;
-    private final RabbitTemplate rabbitTemplate;
+    private final AmqpTemplate rabbitTemplate;
 
-    public CheckoutService(OrderRepository orderRepository, RabbitTemplate rabbitTemplate) {
+    public CheckoutService(OrderRepository orderRepository, AmqpTemplate rabbitTemplate) {
         this.orderRepository = orderRepository;
         this.rabbitTemplate = rabbitTemplate;
     }
