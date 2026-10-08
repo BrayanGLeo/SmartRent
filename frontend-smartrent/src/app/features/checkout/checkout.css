@@ -1,12 +1,10 @@
 .checkout-container {
     min-height: calc(100vh - 80px);
-    background-color: var(--dark-bg);
+    background-color: var(--bg-color);
     padding: 3rem 1rem;
-    color: var(--text-light);
+    color: var(--text-primary);
     display: flex;
     justify-content: center;
-    background-image: radial-gradient(circle at top right, rgba(138, 43, 226, 0.1), transparent 40%),
-                      radial-gradient(circle at bottom left, rgba(0, 212, 255, 0.1), transparent 40%);
 }
 
 .checkout-wrapper {
@@ -23,14 +21,11 @@
     font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #fff, #a5b4fc);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--primary-color);
 }
 
 .checkout-header p {
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 /* Stepper */
@@ -46,52 +41,51 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     transition: all 0.3s ease;
 }
 
 .step.active {
-    color: var(--text-light);
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
 .step-circle {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
+    background: #e2e8f0;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.9rem;
     font-weight: bold;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--text-secondary);
 }
 
 .step.active .step-circle {
-    background: var(--accent-gradient);
-    border: none;
-    box-shadow: 0 0 15px rgba(138, 43, 226, 0.5);
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
 }
 
 .step-line {
     width: 100px;
     height: 2px;
-    background: rgba(255, 255, 255, 0.1);
+    background: #e2e8f0;
 }
 
 .step-line.active {
-    background: var(--accent-gradient);
+    background: var(--primary-color);
 }
 
-/* Glassmorphism Container */
+/* Container */
 .checkout-step {
-    background: rgba(30, 41, 59, 0.4);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: white;
+    border: 1px solid rgba(226, 232, 240, 0.8);
     border-radius: 20px;
     padding: 2.5rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-md);
     max-width: 600px;
     margin: 0 auto;
 }
@@ -112,7 +106,7 @@
 .toggle-container {
     display: flex;
     gap: 1rem;
-    background: rgba(0, 0, 0, 0.2);
+    background: #f1f5f9;
     padding: 0.5rem;
     border-radius: 12px;
     margin-bottom: 2rem;
@@ -126,7 +120,7 @@
     cursor: pointer;
     font-weight: 500;
     transition: all 0.3s ease;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 .toggle-option input {
@@ -134,9 +128,9 @@
 }
 
 .toggle-option.active {
-    background: var(--accent-gradient);
+    background: var(--primary-color);
     color: white;
-    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+    box-shadow: var(--shadow-sm);
 }
 
 .form-group {
@@ -146,7 +140,8 @@
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    color: var(--text-muted);
+    color: var(--text-primary);
+    font-weight: 500;
     font-size: 0.9rem;
 }
 
@@ -159,25 +154,24 @@
 .input-wrapper i {
     position: absolute;
     left: 1rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 .input-wrapper input {
     width: 100%;
     padding: 1rem 1rem 1rem 2.8rem;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.2);
-    color: var(--text-light);
+    border: 1px solid #cbd5e1;
+    background: white;
+    color: var(--text-primary);
     font-size: 1rem;
     transition: all 0.3s ease;
 }
 
 .input-wrapper input:focus {
     outline: none;
-    border-color: rgba(138, 43, 226, 0.5);
-    background: rgba(0, 0, 0, 0.4);
-    box-shadow: 0 0 0 4px rgba(138, 43, 226, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
 }
 
 .error-msg {
@@ -192,7 +186,7 @@
     padding: 1rem;
     border-radius: 10px;
     border: none;
-    background: var(--accent-gradient);
+    background: var(--primary-color);
     color: white;
     font-size: 1.1rem;
     font-weight: 600;
@@ -207,7 +201,8 @@
 
 .btn-next:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(138, 43, 226, 0.4);
+    background-color: var(--primary-hover);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .btn-next:disabled {
@@ -221,25 +216,26 @@
     padding: 1rem;
     border: none;
     background: transparent;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     cursor: pointer;
     margin-top: 0.5rem;
+    font-weight: 500;
 }
-.btn-text:hover { color: white; }
+.btn-text:hover { color: var(--text-primary); }
 
 /* Step 2 Styles */
 .logistics-section {
-    background: rgba(30, 41, 59, 0.4);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: white;
+    border: 1px solid rgba(226, 232, 240, 0.8);
     border-radius: 20px;
     padding: 2rem;
+    box-shadow: var(--shadow-md);
 }
 
 .logistics-section h3 {
     font-size: 1.2rem;
     margin-bottom: 1rem;
-    color: white;
+    color: var(--text-primary);
 }
 
 .mt-3 { margin-top: 1.5rem; }
@@ -252,8 +248,8 @@
 }
 
 .selectable-card {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: white;
+    border: 1px solid #cbd5e1;
     border-radius: 12px;
     padding: 1.2rem;
     display: flex;
@@ -269,48 +265,49 @@
 
 .selectable-card i {
     font-size: 1.5rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
     transition: color 0.3s;
 }
 
 .card-text h4 {
     margin: 0 0 0.3rem 0;
     font-size: 1rem;
-    color: var(--text-light);
+    color: var(--text-primary);
 }
 
 .card-text p {
     margin: 0;
     font-size: 0.8rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 .selectable-card.selected {
-    border-color: rgba(138, 43, 226, 0.8);
-    background: rgba(138, 43, 226, 0.1);
-    box-shadow: 0 0 15px rgba(138, 43, 226, 0.2);
+    border-color: var(--primary-color);
+    background: #eef2ff;
+    box-shadow: 0 0 0 1px var(--primary-color);
 }
 
 .selectable-card.selected i {
-    color: #a5b4fc;
+    color: var(--primary-color);
 }
 
 /* Summary Card */
 .summary-card {
-    background: rgba(30, 41, 59, 0.4);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: white;
+    border: 1px solid rgba(226, 232, 240, 0.8);
     border-radius: 20px;
     padding: 2rem;
     position: sticky;
     top: 100px;
+    box-shadow: var(--shadow-md);
 }
 
 .summary-card h3 {
     margin-top: 0;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #e2e8f0;
+    color: var(--text-primary);
 }
 
 .summary-items {
@@ -322,15 +319,16 @@
     align-items: center;
     gap: 1rem;
     margin-bottom: 1rem;
-    background: rgba(0, 0, 0, 0.2);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
     padding: 0.8rem;
     border-radius: 10px;
 }
 
 .item-icon {
     font-size: 1.5rem;
-    color: #e0e7ff;
-    background: rgba(138, 43, 226, 0.2);
+    color: var(--primary-color);
+    background: #eef2ff;
     padding: 0.5rem;
     border-radius: 8px;
 }
@@ -344,19 +342,21 @@
 .item-name {
     font-weight: 500;
     font-size: 0.9rem;
+    color: var(--text-primary);
 }
 
 .item-qty {
     font-size: 0.8rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 .item-price {
     font-weight: 600;
+    color: var(--text-primary);
 }
 
 .summary-totals {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid #e2e8f0;
     padding-top: 1.5rem;
     margin-bottom: 1.5rem;
 }
@@ -365,16 +365,16 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 0.8rem;
-    color: var(--text-muted);
+    color: var(--text-secondary);
 }
 
 .final-total {
-    color: var(--text-light);
+    color: var(--text-primary);
     font-size: 1.2rem;
     font-weight: 700;
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 1px dashed rgba(255, 255, 255, 0.2);
+    border-top: 1px dashed #cbd5e1;
 }
 
 @media (max-width: 768px) {
