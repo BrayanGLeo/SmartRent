@@ -36,6 +36,15 @@ export class Cart implements OnInit {
     this.quoteItems = cart.filter(item => item.type === 'quote');
   }
 
+  getImageUrl(machine: any): string {
+    if (!machine || !machine.category) return 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&q=80&w=800';
+    const cat = machine.category.toLowerCase();
+    if (cat.includes('excavación')) return 'https://images.unsplash.com/photo-1579730691238-ebbc2fec68b8?auto=format&fit=crop&q=80&w=800';
+    if (cat.includes('carga')) return 'https://images.unsplash.com/photo-1600860570390-c116bebc4eef?auto=format&fit=crop&q=80&w=800';
+    if (cat.includes('elevación') || cat.includes('grúa')) return 'https://images.unsplash.com/photo-1504307651254-35680f356f67?auto=format&fit=crop&q=80&w=800';
+    return 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&q=80&w=800';
+  }
+
   removeItem(item: CartItem) {
     let cart: CartItem[] = JSON.parse(localStorage.getItem('smartrent_cart') || '[]');
     cart = cart.filter(c => c.machine.id !== item.machine.id);

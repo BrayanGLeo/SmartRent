@@ -15,7 +15,7 @@
   text-align: center;
   padding: 6rem 2rem;
   border-radius: 24px;
-  background: var(--navy-900);
+  background: url('https://images.unsplash.com/photo-1541888081622-67899f196726?auto=format&fit=crop&q=80&w=2000') center center / cover no-repeat;
   overflow: hidden;
   box-shadow: var(--shadow-xl);
   margin-bottom: 0;
@@ -25,25 +25,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse at 20% 80%, rgba(245, 158, 11, 0.15), transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(22, 52, 86, 0.8), transparent 50%),
-    linear-gradient(160deg, var(--navy-900) 0%, var(--navy-800) 50%, rgba(245, 158, 11, 0.08) 100%);
-  z-index: 1;
-}
-
-/* Subtle diagonal stripes (industrial hazard pattern) */
-.hero-section::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 60px,
-    rgba(245, 158, 11, 0.03) 60px,
-    rgba(245, 158, 11, 0.03) 62px
-  );
+  background: linear-gradient(135deg, rgba(11, 29, 58, 0.9), rgba(11, 29, 58, 0.5));
   z-index: 1;
 }
 
@@ -159,6 +141,44 @@
   font-weight: 600;
   text-align: center;
   opacity: 0.8;
+}
+
+/* ===== BRANDS ===== */
+.brands-section {
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.brands-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  margin-bottom: 2rem;
+}
+
+.brands-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3rem;
+  opacity: 0.5;
+  filter: grayscale(100%);
+  transition: all 0.3s ease;
+}
+
+.brands-logos:hover {
+  opacity: 0.8;
+  filter: grayscale(50%);
+}
+
+.brand-logo {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--navy-900);
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: -1px;
 }
 
 /* ===== FEATURES ===== */

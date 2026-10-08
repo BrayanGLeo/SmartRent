@@ -135,7 +135,7 @@
             
             <div class="summary-items">
               <div class="summary-item" *ngFor="let item of cartItems">
-                <i class="bi bi-tools item-icon"></i>
+                <img [src]="getImageUrl(item.machine)" [alt]="item.machine.name" class="item-thumbnail">
                 <div class="item-details">
                   <span class="item-name">{{ item.machine.name }}</span>
                   <span class="item-qty">Qty: 1</span>

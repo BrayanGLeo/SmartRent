@@ -61,6 +61,14 @@ export class Catalog implements OnInit {
     return heavyCategories.includes(category);
   }
 
+  getImageUrl(machine: Machine): string {
+    const cat = machine.category.toLowerCase();
+    if (cat.includes('excavación')) return 'https://images.unsplash.com/photo-1579730691238-ebbc2fec68b8?auto=format&fit=crop&q=80&w=800';
+    if (cat.includes('carga')) return 'https://images.unsplash.com/photo-1600860570390-c116bebc4eef?auto=format&fit=crop&q=80&w=800';
+    if (cat.includes('elevación') || cat.includes('grúa')) return 'https://images.unsplash.com/photo-1504307651254-35680f356f67?auto=format&fit=crop&q=80&w=800';
+    return 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&q=80&w=800'; // Default heavy machinery
+  }
+
   async requestQuote(machine: Machine) {
     // Guardar en el carrito (localStorage temporalmente hasta construir el microservicio)
     const cart = JSON.parse(localStorage.getItem('smartrent_cart') || '[]');

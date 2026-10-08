@@ -329,12 +329,12 @@
     border-radius: 10px;
 }
 
-.item-icon {
-    font-size: 1.5rem;
-    color: var(--amber-600);
-    background: var(--amber-50);
-    padding: 0.5rem;
+.item-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
     border-radius: 8px;
+    background: white;
 }
 
 .item-details {

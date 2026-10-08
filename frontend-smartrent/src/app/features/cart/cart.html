@@ -19,6 +19,7 @@
 
       <div class="cart-items" *ngIf="expressItems.length > 0">
         <div class="cart-item" *ngFor="let item of expressItems">
+          <img [src]="getImageUrl(item.machine)" [alt]="item.machine.name" class="cart-item-img">
           <div class="item-info">
             <h3>{{item.machine.name}}</h3>
             <span class="category">{{item.machine.category.name || item.machine.category}}</span>
@@ -57,6 +58,7 @@
 
       <div class="cart-items" *ngIf="quoteItems.length > 0">
         <div class="cart-item" *ngFor="let item of quoteItems">
+          <img [src]="getImageUrl(item.machine)" [alt]="item.machine.name" class="cart-item-img">
           <div class="item-info">
             <h3>{{item.machine.name}}</h3>
             <span class="category">{{item.machine.category.name || item.machine.category}}</span>
