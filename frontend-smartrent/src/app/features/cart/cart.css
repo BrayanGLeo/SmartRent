@@ -11,12 +11,13 @@
 
 .header h1 {
   font-size: 2.5rem;
-  color: var(--primary-color);
+  color: var(--navy-900);
   margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
+  font-weight: 800;
 }
 
 .header p {
@@ -38,12 +39,26 @@
 
 .cart-section {
   background: white;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 2rem;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-md);
+  transition: box-shadow 0.3s ease;
+}
+
+.cart-section:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Section-specific top accent bar */
+.express-section {
+  border-top: 4px solid var(--accent-color);
+}
+
+.quote-section {
+  border-top: 4px solid var(--navy-700);
 }
 
 .section-header {
@@ -52,39 +67,42 @@
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .section-header h2 {
   font-size: 1.5rem;
-  color: var(--text-primary);
+  color: var(--navy-900);
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin: 0;
+  font-weight: 700;
 }
 
 .badge {
   padding: 0.25rem 0.75rem;
   border-radius: 999px;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .badge-express {
-  background-color: #e0f2fe;
-  color: #0369a1;
+  background-color: var(--amber-50);
+  color: var(--amber-700);
+  border: 1px solid var(--amber-300);
 }
 
 .badge-quote {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: #EFF6FF;
+  color: var(--navy-700);
+  border: 1px solid #BFDBFE;
 }
 
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
-  color: #64748b;
+  color: var(--text-secondary);
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -95,7 +113,7 @@
 .empty-state i {
   font-size: 3rem;
   margin-bottom: 1rem;
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 .cart-items {
@@ -107,8 +125,8 @@
 }
 
 .cart-item {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
   padding: 1.25rem;
   border-radius: 12px;
   display: flex;
@@ -118,15 +136,16 @@
 }
 
 .cart-item:hover {
-  transform: translateY(-2px);
-  border-color: var(--primary-color);
+  transform: translateX(4px);
+  border-color: var(--accent-color);
   box-shadow: var(--shadow-sm);
 }
 
 .item-info h3 {
   margin: 0 0 0.25rem 0;
-  color: var(--text-primary);
+  color: var(--navy-900);
   font-size: 1.1rem;
+  font-weight: 700;
 }
 
 .category {
@@ -141,18 +160,19 @@
 }
 
 .price {
-  font-weight: 600;
-  color: var(--primary-color);
+  font-weight: 700;
+  color: var(--navy-900);
   font-size: 1.1rem;
 }
 
 .status-badge {
-  color: #92400e;
+  color: var(--navy-700);
   font-size: 0.875rem;
-  font-weight: 500;
-  background-color: #fef3c7;
+  font-weight: 600;
+  background-color: #EFF6FF;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
+  border: 1px solid #BFDBFE;
 }
 
 .btn-icon {
@@ -170,14 +190,14 @@
 }
 
 .btn-icon:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: #fecaca;
   transform: scale(1.05);
 }
 
 .section-footer {
   margin-top: auto;
   padding-top: 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
 }
 
 .total-row {
@@ -190,8 +210,8 @@
 }
 
 .total-price {
-  font-weight: 700;
-  color: var(--text-primary);
+  font-weight: 800;
+  color: var(--navy-900);
   font-size: 1.5rem;
 }
 
@@ -210,7 +230,7 @@
   border: none;
   border-radius: 12px;
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -220,27 +240,26 @@
 }
 
 .btn-primary {
-  background-color: #1d4ed8;
-  background-image: linear-gradient(135deg, #0284c7, #1e40af);
-  color: #ffffff;
-  box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+  background: var(--accent-gradient);
+  color: var(--navy-900);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
 }
 
 .btn-secondary {
-  background-color: #b45309;
-  background-image: linear-gradient(135deg, #b45309, #9a3412);
-  color: #ffffff;
-  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
+  background: var(--navy-900);
+  color: white;
+  box-shadow: 0 4px 15px rgba(11, 29, 58, 0.2);
 }
 
 .btn-secondary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.4);
+  background: var(--navy-800);
+  box-shadow: 0 6px 20px rgba(11, 29, 58, 0.3);
 }
 
 .fade-in {

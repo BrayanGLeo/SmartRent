@@ -19,9 +19,9 @@
 
 .checkout-header h2 {
     font-size: 2.5rem;
-    font-weight: 700;
+    font-weight: 800;
     margin-bottom: 0.5rem;
-    color: var(--primary-color);
+    color: var(--navy-900);
 }
 
 .checkout-header p {
@@ -46,43 +46,45 @@
 }
 
 .step.active {
-    color: var(--primary-color);
+    color: var(--navy-900);
     font-weight: 600;
 }
 
 .step-circle {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
-    background: #e2e8f0;
+    background: var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.9rem;
     font-weight: bold;
     color: var(--text-secondary);
+    border: 2px solid transparent;
 }
 
 .step.active .step-circle {
-    background: var(--primary-color);
+    background: var(--navy-900);
     color: white;
-    box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+    border-color: var(--amber-400);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
 }
 
 .step-line {
     width: 100px;
     height: 2px;
-    background: #e2e8f0;
+    background: var(--border-color);
 }
 
 .step-line.active {
-    background: var(--primary-color);
+    background: var(--accent-gradient);
 }
 
 /* Container */
 .checkout-step {
     background: white;
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border: 1px solid var(--border-color);
     border-radius: 20px;
     padding: 2.5rem;
     box-shadow: var(--shadow-md);
@@ -106,10 +108,11 @@
 .toggle-container {
     display: flex;
     gap: 1rem;
-    background: #f1f5f9;
+    background: var(--bg-color);
     padding: 0.5rem;
     border-radius: 12px;
     margin-bottom: 2rem;
+    border: 1px solid var(--border-color);
 }
 
 .toggle-option {
@@ -128,7 +131,7 @@
 }
 
 .toggle-option.active {
-    background: var(--primary-color);
+    background: var(--navy-900);
     color: white;
     box-shadow: var(--shadow-sm);
 }
@@ -140,8 +143,8 @@
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    color: var(--text-primary);
-    font-weight: 500;
+    color: var(--navy-900);
+    font-weight: 600;
     font-size: 0.9rem;
 }
 
@@ -161,7 +164,7 @@
     width: 100%;
     padding: 1rem 1rem 1rem 2.8rem;
     border-radius: 10px;
-    border: 1px solid #cbd5e1;
+    border: 1.5px solid var(--border-color);
     background: white;
     color: var(--text-primary);
     font-size: 1rem;
@@ -170,8 +173,8 @@
 
 .input-wrapper input:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    border-color: var(--navy-700);
+    box-shadow: 0 0 0 4px rgba(11, 29, 58, 0.08);
 }
 
 .error-msg {
@@ -186,10 +189,10 @@
     padding: 1rem;
     border-radius: 10px;
     border: none;
-    background: var(--primary-color);
-    color: white;
+    background: var(--accent-gradient);
+    color: var(--navy-900);
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     margin-top: 1rem;
@@ -201,8 +204,7 @@
 
 .btn-next:hover {
     transform: translateY(-2px);
-    background-color: var(--primary-hover);
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
 }
 
 .btn-next:disabled {
@@ -221,12 +223,12 @@
     margin-top: 0.5rem;
     font-weight: 500;
 }
-.btn-text:hover { color: var(--text-primary); }
+.btn-text:hover { color: var(--navy-900); }
 
 /* Step 2 Styles */
 .logistics-section {
     background: white;
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border: 1px solid var(--border-color);
     border-radius: 20px;
     padding: 2rem;
     box-shadow: var(--shadow-md);
@@ -235,7 +237,8 @@
 .logistics-section h3 {
     font-size: 1.2rem;
     margin-bottom: 1rem;
-    color: var(--text-primary);
+    color: var(--navy-900);
+    font-weight: 700;
 }
 
 .mt-3 { margin-top: 1.5rem; }
@@ -249,7 +252,7 @@
 
 .selectable-card {
     background: white;
-    border: 1px solid #cbd5e1;
+    border: 1.5px solid var(--border-color);
     border-radius: 12px;
     padding: 1.2rem;
     display: flex;
@@ -282,19 +285,19 @@
 }
 
 .selectable-card.selected {
-    border-color: var(--primary-color);
-    background: #eef2ff;
-    box-shadow: 0 0 0 1px var(--primary-color);
+    border-color: var(--navy-700);
+    background: #EFF6FF;
+    box-shadow: 0 0 0 1px var(--navy-700);
 }
 
 .selectable-card.selected i {
-    color: var(--primary-color);
+    color: var(--navy-700);
 }
 
 /* Summary Card */
 .summary-card {
     background: white;
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    border: 1px solid var(--border-color);
     border-radius: 20px;
     padding: 2rem;
     position: sticky;
@@ -306,8 +309,9 @@
     margin-top: 0;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #e2e8f0;
-    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--navy-900);
+    font-weight: 700;
 }
 
 .summary-items {
@@ -319,16 +323,16 @@
     align-items: center;
     gap: 1rem;
     margin-bottom: 1rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
     padding: 0.8rem;
     border-radius: 10px;
 }
 
 .item-icon {
     font-size: 1.5rem;
-    color: var(--primary-color);
-    background: #eef2ff;
+    color: var(--amber-600);
+    background: var(--amber-50);
     padding: 0.5rem;
     border-radius: 8px;
 }
@@ -340,9 +344,9 @@
 }
 
 .item-name {
-    font-weight: 500;
+    font-weight: 600;
     font-size: 0.9rem;
-    color: var(--text-primary);
+    color: var(--navy-900);
 }
 
 .item-qty {
@@ -351,12 +355,12 @@
 }
 
 .item-price {
-    font-weight: 600;
-    color: var(--text-primary);
+    font-weight: 700;
+    color: var(--navy-900);
 }
 
 .summary-totals {
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--border-color);
     padding-top: 1.5rem;
     margin-bottom: 1.5rem;
 }
@@ -369,12 +373,17 @@
 }
 
 .final-total {
-    color: var(--text-primary);
+    color: var(--navy-900);
     font-size: 1.2rem;
-    font-weight: 700;
+    font-weight: 800;
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 1px dashed #cbd5e1;
+    border-top: 2px dashed var(--border-color);
+}
+
+.btn-confirm {
+    background: var(--accent-gradient) !important;
+    color: var(--navy-900) !important;
 }
 
 @media (max-width: 768px) {
