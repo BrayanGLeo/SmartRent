@@ -3,7 +3,7 @@
     <div class="checkout-header">
       <h2>{{ checkoutType === 'quote' ? 'Cotización' : 'Checkout' }}: Datos del Cliente</h2>
       <p>Asegura tu {{ checkoutType === 'quote' ? 'solicitud' : 'compra' }} en pocos pasos</p>
-      
+
       <div class="stepper">
         <div class="step active">
           <div class="step-circle">1</div>
@@ -21,13 +21,15 @@
       <!-- STEP 1: CUSTOMER INFO -->
       <div class="checkout-step" *ngIf="step === 1">
         <form [formGroup]="customerForm" (ngSubmit)="nextStep()">
-          
+
           <div class="toggle-container">
-            <label class="toggle-option" [class.active]="customerForm.get('customerType')?.value === 'PERSON'" for="customerTypePerson">
+            <label class="toggle-option" [class.active]="customerForm.get('customerType')?.value === 'PERSON'"
+              for="customerTypePerson">
               <input type="radio" id="customerTypePerson" formControlName="customerType" value="PERSON">
               <i class="bi bi-person"></i> Persona Natural
             </label>
-            <label class="toggle-option" [class.active]="customerForm.get('customerType')?.value === 'COMPANY'" for="customerTypeCompany">
+            <label class="toggle-option" [class.active]="customerForm.get('customerType')?.value === 'COMPANY'"
+              for="customerTypeCompany">
               <input type="radio" id="customerTypeCompany" formControlName="customerType" value="COMPANY">
               <i class="bi bi-building"></i> Empresa
             </label>
@@ -45,7 +47,8 @@
           </div>
 
           <div class="form-group">
-            <label for="nameInput">{{ customerForm.get('customerType')?.value === 'COMPANY' ? 'Razón Social' : 'Nombre Completo' }}</label>
+            <label for="nameInput">{{ customerForm.get('customerType')?.value === 'COMPANY' ? 'Razón Social' : 'Nombre
+              Completo' }}</label>
             <div class="input-wrapper">
               <i class="bi bi-person-circle"></i>
               <input type="text" id="nameInput" formControlName="name" placeholder="Nombre completo">
@@ -76,10 +79,11 @@
       <div class="checkout-step step-two-layout" *ngIf="step === 2">
         <div class="logistics-section">
           <form [formGroup]="logisticsForm" (ngSubmit)="submitOrder()">
-            
+
             <h3>1. Elegir Método de Entrega</h3>
             <div class="cards-grid">
-              <label class="selectable-card" [class.selected]="logisticsForm.get('deliveryType')?.value === 'PICKUP'" for="deliveryPickup">
+              <label class="selectable-card" [class.selected]="logisticsForm.get('deliveryType')?.value === 'PICKUP'"
+                for="deliveryPickup">
                 <input type="radio" id="deliveryPickup" formControlName="deliveryType" value="PICKUP">
                 <i class="bi bi-shop"></i>
                 <div class="card-text">
@@ -88,7 +92,8 @@
                 </div>
               </label>
 
-              <label class="selectable-card" [class.selected]="logisticsForm.get('deliveryType')?.value === 'DISPATCH'" for="deliveryDispatch">
+              <label class="selectable-card" [class.selected]="logisticsForm.get('deliveryType')?.value === 'DISPATCH'"
+                for="deliveryDispatch">
                 <input type="radio" id="deliveryDispatch" formControlName="deliveryType" value="DISPATCH">
                 <i class="bi bi-truck"></i>
                 <div class="card-text">
@@ -102,13 +107,15 @@
               <label for="deliveryAddressInput">Dirección de Envío</label>
               <div class="input-wrapper">
                 <i class="bi bi-geo-alt"></i>
-                <input type="text" id="deliveryAddressInput" formControlName="deliveryAddress" placeholder="Ej: Av. Providencia 1234">
+                <input type="text" id="deliveryAddressInput" formControlName="deliveryAddress"
+                  placeholder="Ej: Av. Providencia 1234">
               </div>
             </div>
 
             <h3 class="mt-4">2. Método de Pago</h3>
             <div class="cards-grid">
-              <label class="selectable-card" [class.selected]="logisticsForm.get('paymentMethod')?.value === 'TRANSFER'" for="paymentTransfer">
+              <label class="selectable-card" [class.selected]="logisticsForm.get('paymentMethod')?.value === 'TRANSFER'"
+                for="paymentTransfer">
                 <input type="radio" id="paymentTransfer" formControlName="paymentMethod" value="TRANSFER">
                 <i class="bi bi-bank"></i>
                 <div class="card-text">
@@ -117,7 +124,8 @@
                 </div>
               </label>
 
-              <label class="selectable-card" [class.selected]="logisticsForm.get('paymentMethod')?.value === 'CARD'" for="paymentCard">
+              <label class="selectable-card" [class.selected]="logisticsForm.get('paymentMethod')?.value === 'CARD'"
+                for="paymentCard">
                 <input type="radio" id="paymentCard" formControlName="paymentMethod" value="CARD">
                 <i class="bi bi-credit-card"></i>
                 <div class="card-text">
@@ -132,7 +140,7 @@
         <div class="summary-section">
           <div class="summary-card">
             <h3>Resumen del Pedido</h3>
-            
+
             <div class="summary-items">
               <div class="summary-item" *ngFor="let item of cartItems">
                 <img [src]="getImageUrl(item.machine)" [alt]="item.machine.name" class="item-thumbnail">
@@ -140,7 +148,8 @@
                   <span class="item-name">{{ item.machine.name }}</span>
                   <span class="item-qty">Qty: 1</span>
                 </div>
-                <span class="item-price">{{ (item.machine.dailyPrice || item.machine.pricePerDay) | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+                <span class="item-price">{{ (item.machine.dailyPrice || item.machine.pricePerDay) |
+                  currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
               </div>
             </div>
 
@@ -168,7 +177,7 @@
           </div>
         </div>
       </div>
-      
+
     </div>
   </div>
 </div>
