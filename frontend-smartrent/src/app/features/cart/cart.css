@@ -11,7 +11,7 @@
 
 .header h1 {
   font-size: 2.5rem;
-  color: #fff;
+  color: var(--primary-color);
   margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
@@ -20,7 +20,7 @@
 }
 
 .header p {
-  color: #a0aec0;
+  color: var(--text-secondary);
   font-size: 1.1rem;
 }
 
@@ -37,13 +37,13 @@
 }
 
 .cart-section {
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 2rem;
-  backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
+  box-shadow: var(--shadow-md);
 }
 
 .section-header {
@@ -52,12 +52,12 @@
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .section-header h2 {
   font-size: 1.5rem;
-  color: #fff;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -107,8 +107,8 @@
 }
 
 .cart-item {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   padding: 1.25rem;
   border-radius: 12px;
   display: flex;
@@ -119,18 +119,18 @@
 
 .cart-item:hover {
   transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .item-info h3 {
   margin: 0 0 0.25rem 0;
-  color: #f8fafc;
+  color: var(--text-primary);
   font-size: 1.1rem;
 }
 
 .category {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
@@ -142,7 +142,7 @@
 
 .price {
   font-weight: 600;
-  color: #38bdf8;
+  color: var(--primary-color);
   font-size: 1.1rem;
 }
 
@@ -177,7 +177,7 @@
 .section-footer {
   margin-top: auto;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid #e2e8f0;
 }
 
 .total-row {
@@ -186,17 +186,17 @@
   align-items: center;
   margin-bottom: 1.5rem;
   font-size: 1.25rem;
-  color: #e2e8f0;
+  color: var(--text-secondary);
 }
 
 .total-price {
   font-weight: 700;
-  color: #38bdf8;
+  color: var(--text-primary);
   font-size: 1.5rem;
 }
 
 .quote-notice {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.875rem;
   margin: 0 0 1rem 0;
   display: flex;
