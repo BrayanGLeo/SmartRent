@@ -48,14 +48,14 @@ public class RentalsController {
 
     // Jefe de Bodega o Admin ve todos los arriendos
     @GetMapping
-    @PreAuthorize("hasAnyRole('Admin', 'JefeBodega')")
+    @PreAuthorize("hasAnyRole('Administrador', 'Admin', 'JefeBodega')")
     public ResponseEntity<List<Rental>> getAllRentals() {
         return ResponseEntity.ok(rentalService.getAllRentals());
     }
 
     // Jefe de Bodega cambia el estado del arriendo
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('Admin', 'JefeBodega')")
+    @PreAuthorize("hasAnyRole('Administrador', 'Admin', 'JefeBodega')")
     public ResponseEntity<Rental> updateRentalStatus(@org.springframework.lang.NonNull @PathVariable Long id, @RequestParam RentalStatus status) {
         String userEmail = getUserEmailFromToken();
         try {
