@@ -41,10 +41,10 @@ export class AuthService {
     const claims = currentAccount.idTokenClaims as any;
     const roles: string[] = claims.roles || [];
 
-    if (roles.includes('Administrador') || roles.includes('Admin')) return 'Administrador';
-    if (roles.includes('Auditor')) return 'Auditor';
-    if (roles.includes('JefeBodega')) return 'JefeBodega';
-    if (roles.includes('Arrendatario')) return 'Arrendatario';
+    if (roles.includes('ROLE_ADMIN')) return 'Administrador';
+    if (roles.includes('ROLE_AUDITOR')) return 'Auditor';
+    if (roles.includes('ROLE_JEFEBODEGA')) return 'JefeBodega';
+    if (roles.includes('ROLE_ARRENDATARIO')) return 'Arrendatario';
 
     return 'None';
   });

@@ -9,22 +9,29 @@
     <li><a routerLink="/catalog" routerLinkActive="active">Catálogo</a></li>
     <li><a routerLink="/about" routerLinkActive="active">Sobre Nosotros</a></li>
 
-    <li *ngIf="authService.userRole() === 'Arrendatario' || authService.userRole() === 'Administrador'">
-      <a routerLink="/rentals" routerLinkActive="active">Mis Arriendos</a>
+    <!-- Gestión de Arriendos: Arrendatario y Jefe de Bodega -->
+    <li *ngIf="authService.userRole() === 'Arrendatario' || authService.userRole() === 'JefeBodega'">
+      <a routerLink="/rentals" routerLinkActive="active">
+        {{ authService.userRole() === 'JefeBodega' ? 'Gestión Arriendos' : 'Mis Arriendos' }}
+      </a>
     </li>
 
-    <li *ngIf="authService.userRole() === 'JefeBodega' || authService.userRole() === 'Administrador'">
-      <a routerLink="/rentals" routerLinkActive="active">Gestión Arriendos</a>
+    <!-- Carrito: Arrendatario -->
+    <li *ngIf="authService.userRole() === 'Arrendatario'">
+      <a routerLink="/cart" routerLinkActive="active">Carrito</a>
     </li>
 
-    <li *ngIf="authService.userRole() === 'Auditor' || authService.userRole() === 'Administrador'">
+    <!-- Auditoría: Solo Auditor -->
+    <li *ngIf="authService.userRole() === 'Auditor'">
       <a routerLink="/audit" routerLinkActive="active">Auditoría</a>
     </li>
-    <li *ngIf="authService.userRole() === 'Administrador' || authService.userRole() === 'Auditor'">
+
+    <!-- Reportería: Solo Administrador -->
+    <li *ngIf="authService.userRole() === 'Administrador'">
       <a routerLink="/reports" routerLinkActive="active">Reportes</a>
     </li>
 
-    <!-- Link de Admin Panel -->
+    <!-- Panel Admin (CRUD Catálogo): Solo Administrador -->
     <li *ngIf="authService.userRole() === 'Administrador'">
       <a routerLink="/admin" routerLinkActive="active">Panel Admin</a>
     </li>
