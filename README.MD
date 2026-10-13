@@ -37,6 +37,11 @@ Servidor de recursos y orquestador backend:
 - 🚦 **Propósito**: Exponer los *endpoints* de forma segura mediante políticas CORS estrictas y validación de roles (RBAC).
 - 📖 **Documentación**: Consulta el [README del Backend](./ms-smartrent-bff/README.md) para conocer comandos y configuraciones.
 
+### 3. ☁️ [Operaciones e Infraestructura AWS](./COMANDOS_AWS.md)
+Guía de comandos y operaciones para instancias EC2 y Docker:
+- 🛠️ **Comandos esenciales**: Diagnóstico de RAM/Disco, solución de espacio lleno, Docker Compose y base de datos PostgreSQL.
+- 📖 **Documentación**: Consulta la [Guía de Comandos AWS](./COMANDOS_AWS.md).
+
 ---
 
 ## 🛡️ Ecosistema de Seguridad (Azure AD)
