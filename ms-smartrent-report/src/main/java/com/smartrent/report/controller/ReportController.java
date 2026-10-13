@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.smartrent.report.service.ReportService;
 
 @RestController
-@RequestMapping("/api/report")
+@RequestMapping("/api/reports")
 public class ReportController {
 
     private final ReportService reportService;
