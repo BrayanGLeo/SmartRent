@@ -34,7 +34,7 @@ export class Catalog implements OnInit {
   }
 
   get isAdmin(): boolean {
-    return this.authService.userRole() === 'Admin';
+    return this.authService.userRole() === 'Administrador';
   }
 
   addMachine() {
