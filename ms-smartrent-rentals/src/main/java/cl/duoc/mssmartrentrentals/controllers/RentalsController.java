@@ -28,7 +28,7 @@ public class RentalsController {
 
     // Usuario final crea arriendo
     @PostMapping
-    @PreAuthorize("hasRole('Arrendatario')")
+    @PreAuthorize("hasAuthority('ROLE_ARRENDATARIO')")
     public ResponseEntity<Rental> createRental(@RequestBody RentalRequest request) {
         Rental rental = new Rental();
         rental.setMachineId(request.machineId());
@@ -41,21 +41,21 @@ public class RentalsController {
 
     // Usuario ve sus propios arriendos
     @GetMapping("/my-rentals")
-    @PreAuthorize("hasRole('Arrendatario')")
+    @PreAuthorize("hasAuthority('ROLE_ARRENDATARIO')")
     public ResponseEntity<List<Rental>> getMyRentals(@RequestParam String userId) {
         return ResponseEntity.ok(rentalService.getRentalsByUser(userId));
     }
 
     // Jefe de Bodega o Admin ve todos los arriendos
     @GetMapping
-    @PreAuthorize("hasAnyRole('Administrador', 'Admin', 'JefeBodega')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_JEFEBODEGA')")
     public ResponseEntity<List<Rental>> getAllRentals() {
         return ResponseEntity.ok(rentalService.getAllRentals());
     }
 
     // Jefe de Bodega cambia el estado del arriendo
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('Administrador', 'Admin', 'JefeBodega')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_JEFEBODEGA')")
     public ResponseEntity<Rental> updateRentalStatus(@org.springframework.lang.NonNull @PathVariable Long id, @RequestParam RentalStatus status) {
         String userEmail = getUserEmailFromToken();
         try {

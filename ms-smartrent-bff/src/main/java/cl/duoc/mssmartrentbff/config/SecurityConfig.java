@@ -51,7 +51,7 @@ public class SecurityConfig {
             var roles = jwt.getClaimAsStringList("roles");
             
             if (roles != null) {
-                roles.forEach(r -> autoridades.add(new SimpleGrantedAuthority("ROLE_" + r)));
+                roles.forEach(r -> autoridades.add(new SimpleGrantedAuthority(r)));
             }
             return autoridades;
         });

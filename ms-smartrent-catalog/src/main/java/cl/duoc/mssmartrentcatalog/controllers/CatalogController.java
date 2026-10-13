@@ -27,7 +27,7 @@ public class CatalogController {
     }
     
     @GetMapping("/all")
-    @PreAuthorize("hasAnyRole('Administrador', 'Admin', 'JefeBodega')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_JEFEBODEGA')")
     public ResponseEntity<List<Machine>> getAllCatalog() {
         return ResponseEntity.ok(catalogService.getAllMachines());
     }
@@ -43,7 +43,7 @@ public class CatalogController {
 
     // Admin crea una nueva máquina
     @PostMapping
-    @PreAuthorize("hasAnyRole('Administrador', 'Admin')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Machine> createMachine(@RequestBody MachineRequest request) {
         Machine machine = new Machine();
         machine.setName(request.name());
@@ -58,7 +58,7 @@ public class CatalogController {
 
     // Llamado interno o por JefeBodega para descontar/retornar disponibilidad
     @PutMapping("/{id}/availability")
-    @PreAuthorize("hasAnyRole('Administrador', 'Admin', 'JefeBodega')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_JEFEBODEGA')")
     public ResponseEntity<Machine> updateAvailability(@org.springframework.lang.NonNull @PathVariable Long id, @RequestParam Boolean isAvailable) {
         try {
             return ResponseEntity.ok(catalogService.updateMachineAvailability(id, isAvailable));
