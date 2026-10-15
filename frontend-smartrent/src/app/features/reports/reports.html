@@ -1,11 +1,113 @@
-<div class="card">
-  <h2>Dashboard de Reportería</h2>
-  
-  <div class="chart-container">
-    <canvas baseChart
-      [data]="barChartData"
-      [options]="barChartOptions"
-      [type]="'bar'">
-    </canvas>
+<div class="reports-page-wrapper">
+  <div class="reports-container">
+    <!-- Header de Reportes Operacionales y Financieros -->
+    <header class="reports-header-bar">
+      <div>
+        <div class="breadcrumbs">
+          <span>SmartRent</span>
+          <span class="sep">/</span>
+          <span>Control Operativo</span>
+          <span class="sep">/</span>
+          <span class="current">Reportes de Flota y Rentabilidad</span>
+        </div>
+        <h1 class="page-title">Informe de Gestión y Utilización de Flota</h1>
+        <p class="page-subtitle">
+          Indicadores clave de rendimiento (KPIs), facturación acumulada neta e índice de disponibilidad en patio.
+        </p>
+      </div>
+
+      <div class="header-period-tag font-mono">
+        PERIODO: OCTUBRE 2026 • CIERRE OPERATIVO V1
+      </div>
+    </header>
+
+    <!-- Franja de KPIs Principales -->
+    <section class="kpi-grid">
+      <div class="kpi-card accent-amber">
+        <div class="kpi-label">Facturación Neta Acumulada</div>
+        <div class="kpi-value tabular-nums">${{ kpiSummary.netRevenueClp | number:'1.0-0' }}</div>
+        <div class="kpi-subtext">+14.2% vs periodo anterior • Excluye IVA</div>
+      </div>
+
+      <div class="kpi-card accent-green">
+        <div class="kpi-label">Tasa de Ocupación de Flota</div>
+        <div class="kpi-value tabular-nums">{{ kpiSummary.fleetUtilizationRate }}%</div>
+        <div class="kpi-subtext">{{ kpiSummary.activeFleetUnits }} de {{ kpiSummary.totalFleetUnits }} equipos operando en faena</div>
+      </div>
+
+      <div class="kpi-card accent-blue">
+        <div class="kpi-label">Garantías en Custodia</div>
+        <div class="kpi-value tabular-nums">${{ kpiSummary.guaranteesHeldClp | number:'1.0-0' }}</div>
+        <div class="kpi-subtext">Retención bancaria reembolsable tras check-list</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Flota en Taller / Mantención</div>
+        <div class="kpi-value tabular-nums">{{ kpiSummary.maintenanceUnits }} u.</div>
+        <div class="kpi-subtext">Pautas preventivas de 250h y 500h en ejecución</div>
+      </div>
+    </section>
+
+    <!-- Gráfico Operacional de Disponibilidad Diaria -->
+    <section class="chart-section-card">
+      <div class="card-header-industrial">
+        <div>
+          <h2 class="card-title-industrial">Disponibilidad y Actividad de Flota por Día</h2>
+          <span class="section-subtitle">Distribución semanal de máquinas en faena versus equipos en alistamiento de patio.</span>
+        </div>
+        <span class="badge badge-neutral font-mono">SEMANA EN CURSO</span>
+      </div>
+
+      <div class="chart-render-wrapper">
+        <canvas baseChart
+          [data]="barChartData"
+          [options]="barChartOptions"
+          [type]="'bar'">
+        </canvas>
+      </div>
+    </section>
+
+    <!-- Tabla de Alta Densidad: Rendimiento por Familia de Equipos -->
+    <section class="fleet-performance-section">
+      <div class="card-header-industrial">
+        <div>
+          <h2 class="card-title-industrial">Rendimiento Operativo por Línea Técnica</h2>
+          <span class="section-subtitle">Monitoreo de ocupación de flota, facturación neta y unidades activas.</span>
+        </div>
+      </div>
+
+      <div class="table-container-industrial">
+        <table class="table-industrial">
+          <thead>
+            <tr>
+              <th>Familia de Equipos</th>
+              <th class="num">Flota Total</th>
+              <th class="num">Unidades en Faena</th>
+              <th class="num">Tasa de Ocupación</th>
+              <th class="num">Facturación Acumulada</th>
+              <th>Estado de Demanda</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let f of fleetUtilization">
+              <td><strong>{{ f.category }}</strong></td>
+              <td class="num tabular-nums">{{ f.totalUnits }}</td>
+              <td class="num tabular-nums">{{ f.activeUnits }}</td>
+              <td class="num tabular-nums font-bold">
+                {{ f.utilizationRatePercent }}%
+              </td>
+              <td class="num tabular-nums font-bold">
+                ${{ f.revenueGeneratedClp | number:'1.0-0' }} CLP
+              </td>
+              <td>
+                <span class="badge" [ngClass]="f.utilizationRatePercent >= 80 ? 'badge-rented' : (f.utilizationRatePercent >= 70 ? 'badge-available' : 'badge-neutral')">
+                  {{ f.utilizationRatePercent >= 80 ? 'ALTA DEMANDA' : (f.utilizationRatePercent >= 70 ? 'OPERACIÓN ESTABLE' : 'STOCK EN PATIO') }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
 </div>

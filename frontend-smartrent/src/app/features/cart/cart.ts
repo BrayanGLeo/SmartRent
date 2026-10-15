@@ -2,13 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth/auth.service';
-import { MsalService } from '@azure/msal-angular';
-import { ApiService } from '../../core/services/api/api.service';
-
-interface CartItem {
-  machine: any;
-  type: 'express' | 'quote';
-}
+import { CartService } from '../../core/services/cart/cart.service';
+import { CartItem } from '../../core/models';
 
 @Component({
   standalone: true,
@@ -19,92 +14,60 @@ interface CartItem {
 })
 export class Cart implements OnInit {
   authService = inject(AuthService);
-  msalService = inject(MsalService);
+  cartService = inject(CartService);
   router = inject(Router);
-  apiService = inject(ApiService);
-
-  expressItems: CartItem[] = [];
-  quoteItems: CartItem[] = [];
 
   ngOnInit() {
-    this.loadCart();
+    // El servicio reactivo ya carga y sincroniza el estado
   }
 
-  loadCart() {
-    const cart: CartItem[] = JSON.parse(localStorage.getItem('smartrent_cart') || '[]');
-    this.expressItems = cart.filter(item => item.type === 'express');
-    this.quoteItems = cart.filter(item => item.type === 'quote');
+  get expressItems(): CartItem[] {
+    return this.cartService.expressItems();
   }
 
-  getImageUrl(machine: any): string {
-    if (!machine || !machine.category) return '/images/generator.jpg';
-    const cat = machine.category.toLowerCase();
-    if (cat.includes('excavación')) return '/images/excavator.jpg';
-    if (cat.includes('carga')) return '/images/loader.jpg';
-    if (cat.includes('elevación') || cat.includes('grúa')) return '/images/crane.jpg';
-    return '/images/generator.jpg';
+  get quoteItems(): CartItem[] {
+    return this.cartService.quoteItems();
   }
 
-  removeItem(item: CartItem) {
-    let cart: CartItem[] = JSON.parse(localStorage.getItem('smartrent_cart') || '[]');
-    cart = cart.filter(c => c.machine.id !== item.machine.id);
-    localStorage.setItem('smartrent_cart', JSON.stringify(cart));
-    this.loadCart();
+  get totalItemsCount(): number {
+    return this.cartService.totalItemsCount();
   }
 
-  private syncAndCheckout(type: 'express' | 'quote') {
-    const allItems = [...this.expressItems, ...this.quoteItems].map(item => ({
-      machineId: item.machine.id,
-      machineName: item.machine.name,
-      type: item.type,
-      dailyPrice: item.machine.dailyPrice || item.machine.pricePerDay
-    }));
-
-    this.apiService.syncCart(allItems).subscribe({
-      next: () => {
-        this.apiService.checkoutCart(type).subscribe({
-          next: (res) => {
-            alert(res.message);
-            // Remove checkout items from local storage
-            let cart: CartItem[] = JSON.parse(localStorage.getItem('smartrent_cart') || '[]');
-            cart = cart.filter(c => c.type !== type);
-            localStorage.setItem('smartrent_cart', JSON.stringify(cart));
-            this.loadCart();
-          },
-          error: (err) => {
-            console.error(err);
-            alert('Error al procesar el checkout');
-          }
-        });
-      },
-      error: (err) => {
-        console.error(err);
-        alert('Error al sincronizar el carrito con el servidor');
-      }
-    });
+  get summary() {
+    return this.cartService.summary();
   }
 
-  proceedToCheckout() {
+  getImageUrl(item: CartItem): string {
+    const m = item.machine;
+    const cat = (m?.category ? (typeof m.category === 'string' ? m.category : m.category.name || '') : '').toLowerCase();
+    if (cat.includes('pesada') || cat.includes('excav')) return '/images/excavator.jpg';
+    if (cat.includes('elevación') || cat.includes('grúa') || cat.includes('yale')) return '/images/crane.jpg';
+    if (cat.includes('generador') || cat.includes('energía') || cat.includes('compresor')) return '/images/generator.jpg';
+    return '/images/loader.jpg';
+  }
+
+  updateDays(machineId: number | string, delta: number, currentDays: number = 1): void {
+    const nextDays = Math.max(1, currentDays + delta);
+    this.cartService.updateRentalDays(machineId, nextDays);
+  }
+
+  removeItem(machineId: number | string): void {
+    this.cartService.removeItem(machineId);
+  }
+
+  proceedToCheckout(type: 'express' | 'quote'): void {
     if (!this.authService.account()) {
-      alert('Debes iniciar sesión para proceder al pago.');
-      this.msalService.loginRedirect();
+      alert('Se requiere autenticación o datos de empresa para formalizar el arriendo.');
+      this.authService.login();
       return;
     }
-    if (this.expressItems.length === 0) return;
-    void this.router.navigate(['/checkout'], { queryParams: { type: 'express' } });
+
+    void this.router.navigate(['/checkout'], { queryParams: { type } });
   }
 
-  requestQuote() {
-    if (!this.authService.account()) {
-      alert('Debes iniciar sesión para solicitar una cotización.');
-      this.msalService.loginRedirect();
-      return;
+  clearCart(): void {
+    if (confirm('¿Deseas vaciar todos los equipos seleccionados de tu cotización?')) {
+      this.cartService.clear();
     }
-    if (this.quoteItems.length === 0) return;
-    void this.router.navigate(['/checkout'], { queryParams: { type: 'quote' } });
-  }
-
-  get totalExpress() {
-    return this.expressItems.reduce((acc, item) => acc + item.machine.dailyPrice, 0);
   }
 }

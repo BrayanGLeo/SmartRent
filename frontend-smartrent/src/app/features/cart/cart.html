@@ -1,85 +1,240 @@
-<div class="cart-container fade-in">
-  <div class="header">
-    <h1><i class="fas fa-shopping-cart"></i> Tu Carrito</h1>
-    <p>Revisa tus herramientas listas para arriendo y tus cotizaciones de maquinaria pesada.</p>
-  </div>
-
-  <div class="cart-content">
-    <!-- Sección de Arriendo Rápido -->
-    <div class="cart-section express-section">
-      <div class="section-header">
-        <h2><i class="fas fa-bolt"></i> Arriendo Express</h2>
-        <span class="badge badge-express">{{expressItems.length}} items</span>
-      </div>
-      
-      <div class="empty-state" *ngIf="expressItems.length === 0">
-        <i class="fas fa-box-open"></i>
-        <p>No tienes herramientas para arriendo rápido.</p>
-      </div>
-
-      <div class="cart-items" *ngIf="expressItems.length > 0">
-        <div class="cart-item" *ngFor="let item of expressItems">
-          <img [src]="getImageUrl(item.machine)" [alt]="item.machine.name" class="cart-item-img">
-          <div class="item-info">
-            <h3>{{item.machine.name}}</h3>
-            <span class="category">{{item.machine.category.name || item.machine.category}}</span>
-          </div>
-          <div class="item-actions">
-            <span class="price">{{item.machine.dailyPrice | currency:'CLP':'symbol-narrow':'1.0-0'}} /día</span>
-            <button class="btn-icon" (click)="removeItem(item)" title="Eliminar">
-              <i class="fas fa-trash-alt"></i>
-            </button>
-          </div>
+<div class="cart-page-wrapper">
+  <div class="cart-container">
+    <!-- Header Técnico de la Orden -->
+    <header class="cart-header">
+      <div class="cart-header-title">
+        <div class="breadcrumbs">
+          <span>SmartRent</span>
+          <span class="sep">/</span>
+          <span>Flota</span>
+          <span class="sep">/</span>
+          <span class="current">Dossier de Arriendo y Cotización</span>
         </div>
+        <h1>Resumen de Equipos y Cotizaciones</h1>
+        <p>Valida los días de faena, tarifas netas diarias y garantías requeridas para el despacho a obra.</p>
       </div>
 
-      <div class="section-footer" *ngIf="expressItems.length > 0">
-        <div class="total-row">
-          <span>Total diario estimado:</span>
-          <span class="total-price">{{totalExpress | currency:'CLP':'symbol-narrow':'1.0-0'}}</span>
-        </div>
-        <button class="btn btn-primary btn-block" (click)="proceedToCheckout()">
-          Proceder al Pago <i class="fas fa-arrow-right"></i>
+      <div class="cart-header-actions" *ngIf="totalItemsCount > 0">
+        <button class="btn btn-outline btn-sm" (click)="clearCart()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          <span>Vaciar Selección</span>
         </button>
       </div>
+    </header>
+
+    <!-- Estado Vacío General -->
+    <div class="empty-state-industrial" *ngIf="totalItemsCount === 0">
+      <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <path d="M16 10a4 4 0 0 1-8 0"></path>
+      </svg>
+      <h3 class="empty-state-title">No hay maquinarias ni herramientas seleccionadas</h3>
+      <p class="empty-state-text">
+        Explora nuestro catálogo técnico para seleccionar equipos de movimiento de tierras, elevación, energía o herramientas de precisión.
+      </p>
+      <a routerLink="/catalog" class="btn btn-primary">
+        Ir al Catálogo de Flota
+      </a>
     </div>
 
-    <!-- Sección de Cotización -->
-    <div class="cart-section quote-section">
-      <div class="section-header">
-        <h2><i class="fas fa-hard-hat"></i> Cotizaciones Pendientes</h2>
-        <span class="badge badge-quote">{{quoteItems.length}} items</span>
-      </div>
-      
-      <div class="empty-state" *ngIf="quoteItems.length === 0">
-        <i class="fas fa-clipboard-list"></i>
-        <p>No has agregado maquinaria pesada para cotizar.</p>
+    <!-- Contenido del Carrito (Dividido por Flujo Express y Cotización B2B) -->
+    <div class="cart-grid-layout" *ngIf="totalItemsCount > 0">
+      <div class="cart-main-column">
+        <!-- 1. SECCIÓN ARRIENDO DIRECTO / EXPRESS (Herramientas y Equipos Menores) -->
+        <section class="cart-panel-industrial">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-tag express">FLUJO DIRECTO</span>
+              <h2>Herramientas y Arriendo Express</h2>
+            </div>
+            <span class="badge badge-neutral tabular-nums">{{ expressItems.length }} {{ expressItems.length === 1 ? 'equipo' : 'equipos' }}</span>
+          </div>
+
+          <div class="empty-panel-notice" *ngIf="expressItems.length === 0">
+            <p>No tienes herramientas livianas asignadas para arriendo directo.</p>
+          </div>
+
+          <div class="items-table-wrapper" *ngIf="expressItems.length > 0">
+            <div class="industrial-item-row" *ngFor="let item of expressItems">
+              <div class="item-visual">
+                <img [src]="getImageUrl(item)" [alt]="item.machineName" class="item-thumb">
+              </div>
+
+              <div class="item-specs-col">
+                <div class="item-sku font-mono">{{ item.machine?.sku || ('ID-' + item.machineId) }}</div>
+                <h3 class="item-title">{{ item.machineName }}</h3>
+                <span class="item-depot">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  {{ item.machine?.locationDepot || 'Patio Central Pudahuel' }}
+                </span>
+              </div>
+
+              <!-- Selector de Días de Arriendo -->
+              <div class="item-days-col">
+                <span class="col-caption">Días de Faena</span>
+                <div class="days-stepper">
+                  <button type="button" class="btn-step" (click)="updateDays(item.machineId, -1, item.days || 1)" [disabled]="(item.days || 1) <= 1">−</button>
+                  <span class="days-count tabular-nums">{{ item.days || 1 }}</span>
+                  <button type="button" class="btn-step" (click)="updateDays(item.machineId, 1, item.days || 1)">+</button>
+                </div>
+                <small class="rate-indicator tabular-nums">${{ item.dailyPrice | number:'1.0-0' }} / día</small>
+              </div>
+
+              <!-- Subtotal y Garantía -->
+              <div class="item-pricing-col">
+                <span class="col-caption">Subtotal Neto</span>
+                <span class="subtotal-val tabular-nums">${{ (item.dailyPrice * (item.days || 1)) | number:'1.0-0' }}</span>
+                <span class="deposit-val tabular-nums">Garantía: ${{ (item.warrantyDeposit || (item.dailyPrice * 1.5)) | number:'1.0-0' }}</span>
+              </div>
+
+              <!-- Acción Eliminar -->
+              <div class="item-action-col">
+                <button class="btn-remove-item" (click)="removeItem(item.machineId)" title="Quitar equipo">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. SECCIÓN MAQUINARIA PESADA / COTIZACIÓN FORMAL B2B -->
+        <section class="cart-panel-industrial">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-tag quote">EVALUACIÓN TÉCNICA</span>
+              <h2>Maquinaria Pesada en Cotización B2B</h2>
+            </div>
+            <span class="badge badge-neutral tabular-nums">{{ quoteItems.length }} {{ quoteItems.length === 1 ? 'equipo' : 'equipos' }}</span>
+          </div>
+
+          <div class="empty-panel-notice" *ngIf="quoteItems.length === 0">
+            <p>No tienes maquinaria de gran tonelaje asignada a cotización formal.</p>
+          </div>
+
+          <div class="items-table-wrapper" *ngIf="quoteItems.length > 0">
+            <div class="industrial-item-row" *ngFor="let item of quoteItems">
+              <div class="item-visual">
+                <img [src]="getImageUrl(item)" [alt]="item.machineName" class="item-thumb">
+              </div>
+
+              <div class="item-specs-col">
+                <div class="item-sku font-mono">{{ item.machine?.sku || ('ID-' + item.machineId) }}</div>
+                <h3 class="item-title">{{ item.machineName }}</h3>
+                <div class="quote-notice-text">
+                  Requiere confirmación de disponibilidad en cama baja y validación de operador en obra.
+                </div>
+              </div>
+
+              <div class="item-days-col">
+                <span class="col-caption">Días Estimados</span>
+                <div class="days-stepper">
+                  <button type="button" class="btn-step" (click)="updateDays(item.machineId, -1, item.days || 3)" [disabled]="(item.days || 3) <= 1">−</button>
+                  <span class="days-count tabular-nums">{{ item.days || 3 }}</span>
+                  <button type="button" class="btn-step" (click)="updateDays(item.machineId, 1, item.days || 3)">+</button>
+                </div>
+                <small class="rate-indicator tabular-nums">${{ item.dailyPrice | number:'1.0-0' }} / día ref.</small>
+              </div>
+
+              <div class="item-pricing-col">
+                <span class="col-caption">Tarifa Referencial</span>
+                <span class="subtotal-val tabular-nums">${{ (item.dailyPrice * (item.days || 3)) | number:'1.0-0' }}</span>
+                <span class="quote-status-badge">Sujeto a Cotización</span>
+              </div>
+
+              <div class="item-action-col">
+                <button class="btn-remove-item" (click)="removeItem(item.machineId)" title="Quitar equipo">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div class="cart-items" *ngIf="quoteItems.length > 0">
-        <div class="cart-item" *ngFor="let item of quoteItems">
-          <img [src]="getImageUrl(item.machine)" [alt]="item.machine.name" class="cart-item-img">
-          <div class="item-info">
-            <h3>{{item.machine.name}}</h3>
-            <span class="category">{{item.machine.category.name || item.machine.category}}</span>
+      <!-- SIDEBAR DE RESUMEN FINANCIERO Y PROCESAMIENTO -->
+      <aside class="cart-summary-sidebar">
+        <div class="summary-card-industrial">
+          <h3 class="summary-title">Resumen Financiero de la Orden</h3>
+
+          <div class="summary-lines">
+            <div class="summary-line">
+              <span class="label">Equipos seleccionados:</span>
+              <span class="val tabular-nums">{{ totalItemsCount }}</span>
+            </div>
+
+            <div class="summary-line">
+              <span class="label">Subtotal Neto Arriendo:</span>
+              <span class="val tabular-nums">${{ summary.estimatedNetClp | number:'1.0-0' }}</span>
+            </div>
+
+            <div class="summary-line">
+              <span class="label">IVA (19%):</span>
+              <span class="val tabular-nums">${{ summary.estimatedIvaClp | number:'1.0-0' }}</span>
+            </div>
+
+            <div class="summary-line highlight-deposit">
+              <span class="label">Garantía Reembolsable:</span>
+              <span class="val tabular-nums">${{ summary.totalDepositClp | number:'1.0-0' }}</span>
+            </div>
+
+            <div class="summary-total-line">
+              <div class="total-caption">Total Contrato Estimado:</div>
+              <div class="total-clp tabular-nums">${{ summary.estimatedTotalClp | number:'1.0-0' }} <small>CLP</small></div>
+            </div>
           </div>
-          <div class="item-actions">
-            <span class="status-badge">Requiere Cotización</span>
-            <button class="btn-icon" (click)="removeItem(item)" title="Eliminar">
-              <i class="fas fa-trash-alt"></i>
+
+          <!-- Acciones de Formalización -->
+          <div class="summary-cta-group">
+            <button 
+              *ngIf="expressItems.length > 0"
+              class="btn-checkout-primary"
+              (click)="proceedToCheckout('express')"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14"></path>
+                <path d="M12 5l7 7-7 7"></path>
+              </svg>
+              <span>Generar Orden Express ({{ expressItems.length }})</span>
+            </button>
+
+            <button 
+              *ngIf="quoteItems.length > 0"
+              class="btn-checkout-secondary"
+              (click)="proceedToCheckout('quote')"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span>Enviar Dossier para Cotización B2B ({{ quoteItems.length }})</span>
             </button>
           </div>
-        </div>
-      </div>
 
-      <div class="section-footer" *ngIf="quoteItems.length > 0">
-        <p class="quote-notice">
-          <i class="fas fa-info-circle"></i> La maquinaria pesada requiere evaluación de traslado y operador.
-        </p>
-        <button class="btn btn-secondary btn-block" (click)="requestQuote()">
-          Solicitar Cotización <i class="fas fa-paper-plane"></i>
-        </button>
-      </div>
+          <div class="guarantee-terms-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <p>
+              La garantía comercial se devuelve íntegramente tras la inspección de recepción en patio sin observaciones técnicas.
+            </p>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 </div>

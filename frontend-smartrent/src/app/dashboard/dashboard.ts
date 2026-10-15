@@ -1,47 +1,87 @@
-import { Component, OnInit } from '@angular/core';
-import { MsalService } from '@azure/msal-angular';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../environments/environment';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { AuthService } from '../core/services/auth/auth.service';
+import { ApiService, Rental, Machine } from '../core/services/api/api.service';
+import { CartService } from '../core/services/cart/cart.service';
+import { RENTAL_STATUS_MAP } from '../core/models';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.css']
+  styleUrl: './dashboard.css'
 })
 export class Dashboard implements OnInit {
-  userName: string = '';
-  userEmail: string = '';
-  userRoles: string[] = [];
-  apiResponse: string = '';
+  authService = inject(AuthService);
+  apiService = inject(ApiService);
+  cartService = inject(CartService);
 
-  constructor(private authService: MsalService, private http: HttpClient) {}
+  recentRentals: Rental[] = [];
+  fleetSummary = {
+    totalUnits: 36,
+    activeUnits: 28,
+    maintenanceUnits: 4,
+    availableUnits: 4,
+    utilizationRate: 77.8
+  };
+
+  readonly statusMap = RENTAL_STATUS_MAP;
 
   ngOnInit(): void {
-    const activeAccount = this.authService.instance.getAllAccounts()[0];
-    if (activeAccount) {
-      this.userName = activeAccount.name || 'Usuario';
-      this.userEmail = activeAccount.username || '';
-      
-      const claims: any = activeAccount.idTokenClaims;
-      if (claims && claims.roles) {
-        this.userRoles = claims.roles;
-      }
-    }
-  }
-
-  fetchRentals() {
-    this.apiResponse = 'Cargando...';
-    this.http.get(environment.apiBaseUrl + '/rentals').subscribe({
+    this.apiService.getRentals().subscribe({
       next: (data) => {
-        this.apiResponse = JSON.stringify(data, null, 2);
+        if (data && data.length > 0) {
+          this.recentRentals = data.slice(0, 5);
+        } else {
+          this.recentRentals = this.getMockRecentRentals();
+        }
       },
-      error: (error) => {
-        console.error('Error fetching rentals', error);
-        this.apiResponse = 'Error: ' + error.message + ' (Revisa la consola para más detalles y verifica la pestaña Network para ver el token).';
+      error: () => {
+        this.recentRentals = this.getMockRecentRentals();
       }
     });
+  }
+
+  private getMockRecentRentals(): Rental[] {
+    return [
+      {
+        id: 1042,
+        machineId: 1,
+        userId: 'usr_corp_01',
+        machineName: 'Excavadora Oruga Cat 320',
+        lesseeName: 'Constructora Echeverría Izquierdo S.A.',
+        startDate: '2026-10-10',
+        endDate: '2026-10-24',
+        status: 'EN_TERRENO',
+        dailyRate: 150000,
+        workSiteAddress: 'Autopista AVO II Tramo B'
+      },
+      {
+        id: 1043,
+        machineId: 2,
+        userId: 'usr_corp_02',
+        machineName: 'Retroexcavadora John Deere 310L',
+        lesseeName: 'Besalco Minería S.A.',
+        startDate: '2026-10-12',
+        endDate: '2026-10-19',
+        status: 'EN_TERRENO',
+        dailyRate: 120000,
+        workSiteAddress: 'Mina Los Pelambres'
+      },
+      {
+        id: 1044,
+        machineId: 7,
+        userId: 'usr_corp_03',
+        machineName: 'Plataforma Articulada JLG 450AJ',
+        lesseeName: 'Sigdo Koppers',
+        startDate: '2026-10-16',
+        endDate: '2026-10-23',
+        status: 'EN_PREPARACION',
+        dailyRate: 95000,
+        workSiteAddress: 'Planta Celulosa Arauco'
+      }
+    ];
   }
 }

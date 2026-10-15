@@ -1,70 +1,243 @@
-<div class="catalog-container">
-  <!-- Banner -->
-  <div class="catalog-banner">
-    <div class="catalog-banner-content">
-      <h1>Catálogo de Maquinaria</h1>
-      <p>Encuentra el equipo perfecto para tu próximo proyecto. Disponibilidad inmediata y precios competitivos.</p>
-    </div>
-  </div>
-
-  <!-- Toolbar -->
-  <div class="catalog-toolbar">
-    <div class="catalog-count">
-      <span class="count-badge">{{ machines.length }}</span> máquinas disponibles
-    </div>
-    <button *ngIf="isAdmin" class="btn btn-primary" (click)="addMachine()">
-      + Agregar Máquina
-    </button>
-  </div>
-
-  <!-- Grid -->
-  <div class="catalog-grid">
-    <div class="machine-card" *ngFor="let m of machines; let i = index" [style.animation-delay]="i * 0.1 + 's'">
-      <div class="machine-image-wrapper">
-        <img [src]="getImageUrl(m)" [alt]="m.name" class="machine-image">
+<div class="catalog-page-wrapper">
+  <!-- Toast Notificación Técnica -->
+  <div class="technical-toast" *ngIf="showNotification" [ngClass]="notificationType">
+    <div class="toast-content">
+      <div class="toast-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
       </div>
-      <div class="machine-details">
-        <div class="machine-header">
-          <h3>{{ m.name }}</h3>
-          <span class="tag status" [ngClass]="m.status.toLowerCase()">
-            <span class="status-dot"></span>
-            {{ m.status === 'DISPONIBLE' ? 'Disponible' : (m.status === 'ARRENDADO' ? 'Arrendado' : 'Mantención') }}
+      <div class="toast-text">
+        <span class="toast-title">{{ notificationType === 'quote' ? 'Item en Cotización Técnica' : 'Arriendo Express Asignado' }}</span>
+        <span class="toast-message">{{ notificationMessage }}</span>
+      </div>
+    </div>
+    <div class="toast-actions">
+      <a routerLink="/cart" class="btn-toast-view">Ver Orden ({{ cartService.totalItemsCount() }})</a>
+      <button class="btn-toast-close" (click)="dismissToast()">✕</button>
+    </div>
+  </div>
+
+  <div class="catalog-container">
+    <!-- Header Técnico y Parámetros Contractuales -->
+    <header class="catalog-header-bar">
+      <div>
+        <div class="catalog-breadcrumbs">
+          <span>SmartRent</span>
+          <span class="sep">/</span>
+          <span>Flota Activa</span>
+          <span class="sep">/</span>
+          <span class="current">Catálogo Técnico</span>
+        </div>
+        <h1 class="catalog-title">Catálogo de Equipos y Herramientas Industriales</h1>
+        <p class="catalog-subtitle">
+          Inventario verificado para minería, obras viales y edificación. Tarifas netas en pesos chilenos (CLP) sin IVA.
+        </p>
+      </div>
+
+      <!-- Control de Periodo Contractual -->
+      <div class="rental-period-card">
+        <div class="period-header">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span class="period-label">Periodo de Faena: <strong class="tabular-nums">{{ rentalDays }} {{ rentalDays === 1 ? 'Día' : 'Días' }}</strong></span>
+        </div>
+        <div class="period-inputs">
+          <div class="date-group">
+            <span class="date-tag">Inicio:</span>
+            <input type="date" class="date-input tabular-nums" [(ngModel)]="rentalStartDate">
+          </div>
+          <div class="date-group">
+            <span class="date-tag">Término:</span>
+            <input type="date" class="date-input tabular-nums" [(ngModel)]="rentalEndDate">
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Barra de Filtros Técnicos -->
+    <div class="filters-toolbar">
+      <!-- Buscador por SKU, Nombre o Marca -->
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          placeholder="Buscar por equipo, SKU (ej: CAT-320), marca o especificación..." 
+          [(ngModel)]="searchTerm"
+          class="search-input"
+        >
+        <button *ngIf="searchTerm" (click)="searchTerm = ''" class="clear-search">✕</button>
+      </div>
+
+      <!-- Selector de Categorías -->
+      <div class="category-pills">
+        <button 
+          *ngFor="let cat of categories" 
+          class="pill-btn" 
+          [class.active]="selectedCategory === cat"
+          (click)="selectedCategory = cat"
+        >
+          {{ cat }}
+        </button>
+      </div>
+
+      <!-- Controles de Disponibilidad y Orden -->
+      <div class="filter-controls-row">
+        <label class="toggle-control">
+          <input type="checkbox" [(ngModel)]="onlyAvailable">
+          <span class="toggle-label">Solo disponibles en patio</span>
+        </label>
+
+        <div class="sort-control">
+          <span class="sort-label">Ordenar:</span>
+          <select [(ngModel)]="sortBy" class="sort-select">
+            <option value="default">Relevancia técnica</option>
+            <option value="price_asc">Menor tarifa diaria</option>
+            <option value="price_desc">Mayor tarifa diaria</option>
+            <option value="name">Alfabético A-Z</option>
+          </select>
+        </div>
+
+        <div class="counter-display tabular-nums">
+          Mostrando <strong>{{ filteredMachines.length }}</strong> de {{ machines.length }} equipos
+        </div>
+      </div>
+    </div>
+
+    <!-- Grilla Técnica de Equipos -->
+    <div class="machines-grid" *ngIf="filteredMachines.length > 0; else noMachines">
+      <article class="machine-technical-card" *ngFor="let m of filteredMachines">
+        <!-- Cabecera de Tarjeta: SKU & Badge de Disponibilidad -->
+        <div class="card-meta-header">
+          <div class="sku-box font-mono">
+            {{ m.sku || m.serialNumber || ('ID-' + m.id) }}
+          </div>
+          <span class="badge" [ngClass]="m.isAvailable ? 'badge-available' : 'badge-rented'">
+            <span class="badge-dot"></span>
+            {{ m.isAvailable ? 'Disponible en Patio' : 'En Faena / Arrendado' }}
           </span>
         </div>
-        <p class="description">{{ m.description }}</p>
-        
-        <div class="machine-specs">
-          <div class="spec-item">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-            <span>Diésel Industrial</span>
-          </div>
-          <div class="spec-item">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            <span>Alto Rendimiento</span>
-          </div>
-        </div>
-        <div class="machine-footer">
-          <span class="category-tag">{{ m.category }}</span>
-          <span class="price-tag">${{ m.pricePerDay | number }} <small>/ día</small></span>
-        </div>
-        
-        <!-- Carrito Híbrido: Cotización vs Express -->
-        <div class="machine-actions mt-3" *ngIf="m.status === 'DISPONIBLE'">
-          <button *ngIf="isHeavyMachinery(m.category)" class="btn btn-outline btn-block" (click)="requestQuote(m)">
-            📝 Solicitar Cotización
-          </button>
-          
-          <button *ngIf="!isHeavyMachinery(m.category)" class="btn btn-primary btn-block" (click)="rentDirect(m)">
-            🛒 Arrendar Ahora
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div *ngIf="machines.length === 0" class="empty-state">
-    <span class="empty-icon">🔍</span>
-    <h3>Sin maquinaria disponible</h3>
-    <p>No hay maquinaria registrada por el momento. Vuelve a intentar más tarde.</p>
+        <!-- Imagen del Equipo -->
+        <div class="machine-photo-container">
+          <img [src]="getImageUrl(m)" [alt]="m.name" class="machine-photo" loading="lazy">
+          <span class="brand-tag" *ngIf="m.brand">{{ m.brand }}</span>
+        </div>
+
+        <!-- Cuerpo Técnico -->
+        <div class="card-technical-body">
+          <h3 class="machine-name">{{ m.name }}</h3>
+          <p class="machine-desc">{{ m.description }}</p>
+
+          <!-- Especificaciones Técnicas Clave -->
+          <div class="specs-grid">
+            <div class="spec-cell" *ngIf="m.specs?.operatingWeightKg">
+              <span class="spec-label">Peso Operativo</span>
+              <span class="spec-val tabular-nums">{{ (m.specs?.operatingWeightKg! / 1000).toFixed(1) }} Ton</span>
+            </div>
+            <div class="spec-cell" *ngIf="m.specs?.powerHp">
+              <span class="spec-label">Potencia Neta</span>
+              <span class="spec-val tabular-nums">{{ m.specs?.powerHp }} HP</span>
+            </div>
+            <div class="spec-cell" *ngIf="m.specs?.maxReachMeters">
+              <span class="spec-label">Alcance Máx.</span>
+              <span class="spec-val tabular-nums">{{ m.specs?.maxReachMeters }} m</span>
+            </div>
+            <div class="spec-cell" *ngIf="m.specs?.fuelType">
+              <span class="spec-label">Alimentación</span>
+              <span class="spec-val">{{ m.specs?.fuelType }}</span>
+            </div>
+          </div>
+
+          <!-- Sucursal / Ubicación de Patio -->
+          <div class="depot-info">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>{{ m.locationDepot || 'Patio Central Pudahuel' }}</span>
+          </div>
+
+          <!-- Bloque de Precios y Cotización -->
+          <div class="price-breakdown-box">
+            <div class="daily-rate-row">
+              <span class="rate-label">Tarifa Diaria Neta:</span>
+              <span class="rate-amount tabular-nums">${{ m.dailyPrice | number:'1.0-0' }} <small>/ día</small></span>
+            </div>
+            <div class="total-period-row">
+              <span class="period-calc-label">Total estimado ({{ rentalDays }} {{ rentalDays === 1 ? 'día' : 'días' }}):</span>
+              <span class="period-calc-val tabular-nums">${{ (m.dailyPrice * rentalDays) | number:'1.0-0' }}</span>
+            </div>
+            <div class="guarantee-note" *ngIf="m.warrantyDepositClp">
+              Garantía comercial requerida: <strong class="tabular-nums">${{ m.warrantyDepositClp | number:'1.0-0' }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones B2B / B2C -->
+        <div class="card-technical-footer">
+          <ng-container *ngIf="m.isAvailable; else notAvailableBtn">
+            <!-- Maquinaria Pesada -> Cotización Formal -->
+            <button 
+              *ngIf="isHeavyMachinery(m.category)" 
+              class="btn-action-primary"
+              (click)="requestQuote(m)"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span>Agregar a Cotización</span>
+            </button>
+
+            <!-- Herramienta / Equipo Ligero -> Arriendo Directo -->
+            <button 
+              *ngIf="!isHeavyMachinery(m.category)" 
+              class="btn-action-secondary"
+              (click)="rentDirect(m)"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>Arriendo Express</span>
+            </button>
+          </ng-container>
+
+          <ng-template #notAvailableBtn>
+            <button class="btn-action-disabled" disabled>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+              </svg>
+              <span>Equipo en Terreno (Sin Stock)</span>
+            </button>
+          </ng-template>
+        </div>
+      </article>
+    </div>
+
+    <!-- Estado Vacío Sobrio -->
+    <ng-template #noMachines>
+      <div class="empty-state-industrial">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <h3 class="empty-state-title">No se encontraron equipos para los criterios seleccionados</h3>
+        <p class="empty-state-text">
+          Prueba cambiando la familia técnica seleccionada o ampliando el término de búsqueda de SKU o marca.
+        </p>
+        <button class="btn btn-outline" (click)="selectedCategory = 'Todas'; searchTerm = ''; onlyAvailable = false">
+          Restablecer Filtros
+        </button>
+      </div>
+    </ng-template>
   </div>
 </div>

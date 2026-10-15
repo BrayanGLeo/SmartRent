@@ -9,6 +9,7 @@ export const routes: Routes = [
   { path: 'rentals', loadComponent: () => import('./features/rentals/rentals').then(m => m.Rentals), canActivate: [MsalGuard] },
   { path: 'catalog', loadComponent: () => import('./features/catalog/catalog').then(m => m.Catalog) },
   { path: 'cart', loadComponent: () => import('./features/cart/cart').then(m => m.Cart) },
+  { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard), canActivate: [MsalGuard] },
   { path: 'reports', loadComponent: () => import('./features/reports/reports').then(m => m.Reports), canActivate: [MsalGuard] },
   { path: 'audit', loadComponent: () => import('./features/audit/audit').then(m => m.Audit), canActivate: [MsalGuard] },
   { path: 'checkout', loadComponent: () => import('./features/checkout/checkout').then(m => m.CheckoutComponent), canActivate: [MsalGuard] },
