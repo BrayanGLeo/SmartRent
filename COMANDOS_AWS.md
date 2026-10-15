@@ -97,8 +97,8 @@ docker compose -f infra/compose.mq.yml up -d
 # Recompilar TODO el compose:
 docker compose -f infra/compose.apps.yml up -d --build
 
-# O recompilar ÚNICAMENTE los servicios modificados (ahorra mucho tiempo y disco):
-docker compose -f infra/compose.apps.yml up -d --build smartrent-bff smartrent-catalog smartrent-rentals
+# O recompilar los servicios modificados (BFF + microservicios):
+docker compose -f infra/compose.apps.yml up -d --build smartrent-bff smartrent-report smartrent-audit smartrent-cart smartrent-checkout
 ```
 
 

@@ -25,6 +25,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
+      // Evitar bloquear con alert en endpoints de consulta como reportes o auditoria
+      if (req.url.includes('/reports') || req.url.includes('/audit')) {
+        return throwError(() => error);
+      }
+
       // TODO: Usar un servicio de Toast o Snackbar, por ahora usaremos alert para que sea visible
       alert(errorMessage);
       
