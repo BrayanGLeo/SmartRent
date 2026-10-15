@@ -1,81 +1,210 @@
-<div class="home-container">
-  <!-- Hero Section -->
-  <section class="hero-section">
-    <div class="hero-content">
-      <span class="hero-badge">🏗️ Plataforma lider en arriendo de maquinaria pesada</span>
-      <h1 class="hero-title">Arrienda Maquinaria<br>Pesada sin Complicaciones</h1>
-      <p class="hero-subtitle">SmartRent digitaliza la gestión de tu flota industrial. Solicita, aprueba y controla arriendos en tiempo real desde cualquier dispositivo.</p>
-      <div class="hero-actions">
-        <a routerLink="/catalog" class="btn btn-primary btn-hero">Ver Catálogo</a>
-        <button *ngIf="!authService.account()" class="btn btn-outline btn-hero" (click)="authService.login()">Iniciar Sesión</button>
+<div class="home-wrapper">
+  <!-- Hero Section Industrial -->
+  <section class="hero-industrial">
+    <div class="hero-container">
+      <div class="hero-badge-industrial">
+        <span class="pulse-indicator"></span>
+        <span class="badge-text">RED NACIONAL DE PATIOS DE MAQUINARIA • CHILE</span>
+      </div>
+
+      <h1 class="hero-heading">
+        Arriendo de Maquinaria Pesada y Herramientas Industriales
+      </h1>
+      <p class="hero-lead">
+        Disponibilidad de flota garantizada en patio, despacho especializado en cama baja y tarificación técnica por periodo contractual para minería, obras viales y construcción civil.
+      </p>
+
+      <!-- Buscador Rápido de Equipos por Fecha y Categoría -->
+      <div class="search-widget-industrial">
+        <div class="widget-header">
+          <div class="widget-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Consultar Disponibilidad en Patio</span>
+          </div>
+          <span class="widget-subtitle">Tarifas netas en CLP y cálculo automático de días de faena</span>
+        </div>
+
+        <form class="search-form-grid" (ngSubmit)="onQuickSearch()">
+          <!-- Categoría -->
+          <div class="form-field">
+            <label class="field-label">Categoría Técnica</label>
+            <div class="field-input-wrapper">
+              <select class="field-select" [(ngModel)]="searchForm.category" name="category">
+                <option value="">Todas las Familias de Equipos</option>
+                <option value="Maquinaria Pesada">Maquinaria Pesada (Movimiento de Tierras)</option>
+                <option value="Equipos de Elevación">Equipos de Elevación y Altura</option>
+                <option value="Generadores y Energía">Generadores y Respaldo Eléctrico</option>
+                <option value="Herramientas Eléctricas">Herramientas Eléctricas y Demolición</option>
+                <option value="Jardinería y Paisajismo">Jardinería y Paisajismo Industrial</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Fecha Inicio -->
+          <div class="form-field">
+            <label class="field-label">Fecha Inicio Faena</label>
+            <input type="date" class="field-input tabular-nums" [(ngModel)]="searchForm.startDate" name="startDate" required>
+          </div>
+
+          <!-- Fecha Fin -->
+          <div class="form-field">
+            <label class="field-label">Fecha Devolución</label>
+            <input type="date" class="field-input tabular-nums" [(ngModel)]="searchForm.endDate" name="endDate" required>
+          </div>
+
+          <!-- Patio / Sucursal -->
+          <div class="form-field">
+            <label class="field-label">Patio de Despacho</label>
+            <select class="field-select" [(ngModel)]="searchForm.depot" name="depot">
+              <option *ngFor="let d of depots" [value]="d.id">{{ d.name }}</option>
+            </select>
+          </div>
+
+          <!-- Botón de Búsqueda -->
+          <div class="form-action">
+            <button type="submit" class="btn-submit-search">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>Consultar Flota</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Accesos Rápidos de Acción Secundaria -->
+      <div class="hero-actions-secondary">
+        <a routerLink="/catalog" class="link-catalog">
+          <span>Ver catálogo completo con fichas técnicas</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
       </div>
     </div>
   </section>
 
-  <!-- Stats Section -->
-  <section class="stats-section">
-    <div class="stat-item">
-      <span class="stat-number">150+</span>
-      <span class="stat-label">Máquinas Disponibles</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-number">500+</span>
-      <span class="stat-label">Arriendos Realizados</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-number">98%</span>
-      <span class="stat-label">Satisfacción del Cliente</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-number">24/7</span>
-      <span class="stat-label">Soporte Técnico</span>
-    </div>
-  </section>
+  <!-- Métricas Operativas de Flota (KPI Strip) -->
+  <section class="kpi-strip-section">
+    <div class="kpi-strip-container">
+      <div class="kpi-metric-box">
+        <div class="metric-number tabular-nums">150+</div>
+        <div class="metric-title">Equipos en Flota Activa</div>
+        <div class="metric-desc">Excavadoras, rodillos, elevación y generadores</div>
+      </div>
 
-  <!-- Features Section -->
-  <section class="features-section">
-    <div class="section-header">
-      <h2>¿Por qué elegir SmartRent?</h2>
-      <p>Nuestra plataforma cloud te ofrece todo lo que necesitas para gestionar tu maquinaria de forma inteligente.</p>
-    </div>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon-wrapper">
-          <span class="feature-icon">🚜</span>
-        </div>
-        <h3 class="feature-title">Catálogo Completo</h3>
-        <p class="feature-desc">Explora nuestra amplia variedad de maquinaria de última generación, disponible para cualquier tipo de proyecto.</p>
+      <div class="kpi-metric-box">
+        <div class="metric-number tabular-nums">99.2%</div>
+        <div class="metric-title">Disponibilidad Mecánica</div>
+        <div class="metric-desc">Pautas de mantenimiento preventivo al día</div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrapper">
-          <span class="feature-icon">⚡</span>
-        </div>
-        <h3 class="feature-title">Gestión Inmediata</h3>
-        <p class="feature-desc">Solicita, aprueba y haz seguimiento a tus arriendos en tiempo real con nuestra plataforma en la nube.</p>
+
+      <div class="kpi-metric-box">
+        <div class="metric-number tabular-nums">24 Horas</div>
+        <div class="metric-title">Compromiso en Faena</div>
+        <div class="metric-desc">Despacho en cama baja a faenas de la RM y norte</div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrapper">
-          <span class="feature-icon">📊</span>
-        </div>
-        <h3 class="feature-title">Control Total</h3>
-        <p class="feature-desc">Métricas y reportes detallados para que los jefes de bodega y auditores optimicen el uso de recursos.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon-wrapper">
-          <span class="feature-icon">🔒</span>
-        </div>
-        <h3 class="feature-title">Seguridad Empresarial</h3>
-        <p class="feature-desc">Autenticación Azure AD, auditoría completa y control de acceso basado en roles para máxima protección.</p>
+
+      <div class="kpi-metric-box">
+        <div class="metric-number tabular-nums">100%</div>
+        <div class="metric-title">Certificación SEC / Norma</div>
+        <div class="metric-desc">Certificados de calibración y check-list de salida</div>
       </div>
     </div>
   </section>
 
-  <!-- CTA Section -->
-  <section class="cta-section">
-    <div class="cta-content">
-      <h2>¿Listo para optimizar tu operación?</h2>
-      <p>Únete a cientos de empresas que ya confían en SmartRent para gestionar su maquinaria pesada.</p>
-      <a routerLink="/catalog" class="btn btn-primary btn-hero">Explorar Catálogo</a>
+  <!-- Categorías Técnicas Industriales -->
+  <section class="categories-section">
+    <div class="categories-container">
+      <div class="section-title-box">
+        <span class="section-tag">SEGMENTACIÓN DE EQUIPOS</span>
+        <h2 class="section-heading">Familias de Maquinaria y Herramientas</h2>
+        <p class="section-text">Selecciona la línea técnica para consultar especificaciones, capacidades de carga y tarifas netas por día.</p>
+      </div>
+
+      <div class="categories-grid">
+        <div class="category-card-industrial" *ngFor="let cat of categories">
+          <div class="card-top">
+            <span class="category-badge">{{ cat.badge }}</span>
+            <span class="units-count tabular-nums">{{ cat.count }} unidades</span>
+          </div>
+
+          <h3 class="category-name">{{ cat.name }}</h3>
+          <p class="category-spec">{{ cat.keySpec }}</p>
+
+          <div class="featured-list">
+            <span class="featured-label">Modelos representativos:</span>
+            <ul>
+              <li *ngFor="let machine of cat.featuredMachines">{{ machine }}</li>
+            </ul>
+          </div>
+
+          <button class="btn-category-action" (click)="filterByCategory(cat.slug)">
+            <span>Explorar {{ cat.name }}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Protocolo Operativo de Arriendo B2B / B2C -->
+  <section class="protocol-section">
+    <div class="protocol-container">
+      <div class="section-title-box dark">
+        <span class="section-tag">INGENIERÍA DE SERVICIO</span>
+        <h2 class="section-heading">Protocolo Operativo de Entrega</h2>
+        <p class="section-text">Trazabilidad completa desde la reserva hasta la recepción en obra.</p>
+      </div>
+
+      <div class="protocol-grid">
+        <div class="protocol-step">
+          <div class="step-num tabular-nums">01</div>
+          <h4 class="step-title">Inspección Pre-Operacional</h4>
+          <p class="step-desc">Revisión de 42 puntos mecánicos, fluidos, horómetro y sistema hidráulico en patio antes de cada asignación.</p>
+        </div>
+
+        <div class="protocol-step">
+          <div class="step-num tabular-nums">02</div>
+          <h4 class="step-title">Cotización y Garantía</h4>
+          <p class="step-desc">Definición de días de faena, garantía comercial y modalidad de despacho (retiro o transporte especializado).</p>
+        </div>
+
+        <div class="protocol-step">
+          <div class="step-num tabular-nums">03</div>
+          <h4 class="step-title">Despacho y Entrega Técnica</h4>
+          <p class="step-desc">Descarga en obra con acta de recepción firmada, inducción de seguridad y prueba de arranque con operador.</p>
+        </div>
+
+        <div class="protocol-step">
+          <div class="step-num tabular-nums">04</div>
+          <h4 class="step-title">Soporte y Cierre de Orden</h4>
+          <p class="step-desc">Asistencia técnica en terreno 24/7 y liberación de garantía al registrar la devolución conforme en patio.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Marcas y Fabricantes Homologados -->
+  <section class="brands-section">
+    <div class="brands-container">
+      <span class="brands-label">EQUIPOS HOMOLOGADOS DE FABRICANTES GLOBALES</span>
+      <div class="brands-grid">
+        <div class="brand-item">Caterpillar</div>
+        <div class="brand-item">Komatsu</div>
+        <div class="brand-item">John Deere</div>
+        <div class="brand-item">Bomag</div>
+        <div class="brand-item">Cummins</div>
+        <div class="brand-item">Bosch Industrial</div>
+        <div class="brand-item">JLG Industries</div>
+        <div class="brand-item">Yale Forklifts</div>
+      </div>
     </div>
   </section>
 </div>

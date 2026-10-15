@@ -1,33 +1,169 @@
-<div class="dashboard-container">
-  <div class="dashboard-header">
-    <h2>Centro de Auditoría</h2>
-    <p class="subtitle">Monitoreo de seguridad, trazabilidad de eventos y registro inmutable de acciones del sistema.</p>
-  </div>
-
-  <div class="premium-card">
-    <h3>Línea de Tiempo Operativa</h3>
-    
-    <div class="timeline">
-      <div class="timeline-item" *ngFor="let ev of events">
-        <div class="timeline-dot"></div>
-        <div class="timeline-content">
-          <div class="timeline-header">
-            <h4>{{ ev.action }}</h4>
-            <span class="timeline-date">{{ ev.timestamp | date:'medium' }}</span>
-          </div>
-          <div class="timeline-body">
-            <div class="user-info">
-              <span class="icon">👤</span> <strong>Responsable:</strong> {{ ev.user }}
-            </div>
-            <p class="details">{{ ev.details }}</p>
-          </div>
+<div class="audit-page-wrapper">
+  <div class="audit-container">
+    <!-- Header de Auditoría Técnica -->
+    <header class="audit-header-bar">
+      <div>
+        <div class="breadcrumbs">
+          <span>SmartRent</span>
+          <span class="sep">/</span>
+          <span>Seguridad & Control</span>
+          <span class="sep">/</span>
+          <span class="current">Trazabilidad de Auditoría</span>
         </div>
+        <h1 class="page-title">Centro de Auditoría y Trazabilidad de Eventos</h1>
+        <p class="page-subtitle">
+          Bitácora inmutable de eventos asíncronos procesados por los microservicios y brokers de mensajería (Kafka / RabbitMQ).
+        </p>
       </div>
-      
-      <div *ngIf="events.length === 0" class="empty-state-mini">
-        <span class="empty-icon">🛡️</span>
-        <p>No hay eventos de auditoría registrados en este período.</p>
+
+      <!-- Selector de Modo de Vista -->
+      <div class="view-mode-toggle">
+        <button 
+          class="btn-mode" 
+          [class.active]="viewMode === 'timeline'"
+          (click)="viewMode = 'timeline'"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Línea de Tiempo</span>
+        </button>
+
+        <button 
+          class="btn-mode" 
+          [class.active]="viewMode === 'table'"
+          (click)="viewMode = 'table'"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          <span>Tabla Técnica</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Toolbar de Filtros -->
+    <div class="audit-toolbar">
+      <div class="event-filter-pills">
+        <button 
+          *ngFor="let et of eventTypes"
+          class="filter-pill-btn"
+          [class.active]="selectedFilter === et"
+          (click)="selectedFilter = et"
+        >
+          {{ et }}
+        </button>
+      </div>
+
+      <div class="audit-search-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          placeholder="Filtrar por tipo, payload, microservicio o ID..." 
+          [(ngModel)]="searchTerm"
+          class="search-input"
+        >
+        <button *ngIf="searchTerm" (click)="searchTerm = ''" class="clear-btn">✕</button>
       </div>
     </div>
+
+    <!-- MODO 1: LÍNEA DE TIEMPO TÉCNICA -->
+    <div class="timeline-technical-wrapper" *ngIf="viewMode === 'timeline'">
+      <div class="timeline-track" *ngIf="filteredEvents.length > 0; else noAuditEvents">
+        <article class="timeline-event-card" *ngFor="let ev of filteredEvents">
+          <div class="event-meta-strip">
+            <div class="event-badge-group">
+              <span class="severity-indicator" [ngClass]="ev.severity ? ev.severity.toLowerCase() : 'info'"></span>
+              <span class="event-type-name font-mono">{{ ev.eventType }}</span>
+              <span class="service-source-badge font-mono">{{ ev.originService }}</span>
+            </div>
+            <div class="event-timestamp font-mono tabular-nums">
+              {{ ev.timestamp | date:'yyyy-MM-dd HH:mm:ss' }} UTC
+            </div>
+          </div>
+
+          <div class="event-summary-box">
+            <div class="event-id font-mono">ID Evento: #EV-{{ ev.id }}</div>
+            <button class="btn-toggle-payload" (click)="toggleExpand(ev.id)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+              <span>{{ expandedEventId === ev.id ? 'Ocultar Payload' : 'Ver Payload JSON' }}</span>
+            </button>
+          </div>
+
+          <!-- Payload Monospace expandible -->
+          <div class="event-payload-container font-mono" *ngIf="expandedEventId === ev.id">
+            <div class="payload-header">
+              <span>Kafka Message Body (JSON Format):</span>
+            </div>
+            <pre class="json-code"><code>{{ ev.eventPayload }}</code></pre>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <!-- MODO 2: TABLA DE ALTA DENSIDAD -->
+    <div class="table-container-industrial" *ngIf="viewMode === 'table'">
+      <table class="table-industrial">
+        <thead>
+          <tr>
+            <th>ID Evento</th>
+            <th>Tipo de Evento</th>
+            <th>Microservicio Origen</th>
+            <th>Severidad</th>
+            <th>Timestamp (UTC)</th>
+            <th>Detalle Payload</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ev of filteredEvents">
+            <td class="font-mono">#EV-{{ ev.id }}</td>
+            <td><strong class="font-mono">{{ ev.eventType }}</strong></td>
+            <td><span class="service-pill font-mono">{{ ev.originService }}</span></td>
+            <td>
+              <span class="badge" [ngClass]="ev.severity === 'ERROR' ? 'badge-danger' : (ev.severity === 'WARN' ? 'badge-warning' : 'badge-available')">
+                {{ ev.severity }}
+              </span>
+            </td>
+            <td class="tabular-nums font-mono">{{ ev.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+            <td>
+              <button class="btn btn-outline btn-sm font-mono" (click)="toggleExpand(ev.id)">
+                {{ expandedEventId === ev.id ? 'Cerrar' : 'Inspeccionar JSON' }}
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="expandedEventId !== null && viewMode === 'table'">
+            <td colspan="6" class="payload-expanded-row">
+              <pre class="json-code font-mono"><code>{{ getExpandedPayload() }}</code></pre>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Estado Vacío -->
+    <ng-template #noAuditEvents>
+      <div class="empty-state-industrial">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <h3 class="empty-state-title">No hay eventos para el filtro seleccionado</h3>
+        <p class="empty-state-text">
+          No se registran transacciones bajo el criterio "{{ selectedFilter }}". Selecciona otro tipo de evento o borra el término de búsqueda.
+        </p>
+      </div>
+    </ng-template>
   </div>
 </div>

@@ -1,35 +1,616 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* ==========================================================================
+   SMARTRENT INDUSTRIAL DESIGN SYSTEM
+   Sistema de Diseño B2B/B2C para Arriendo de Maquinaria y Equipos Industriales
+   Estándar: United Rentals, Sunbelt Rentals, SKC, GAM
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --primary-color: #4f46e5;
-  --primary-hover: #4338ca;
-  --bg-color: #f8fafc;
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.18);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  /* ===== PALETA INDUSTRIAL SOBRIA (ANTI-IA) ===== */
+  /* Azul Acero & Petróleo Profundo (B2B Authority) */
+  --steel-950: #0B1120;
+  --steel-900: #0F172A;
+  --steel-850: #172033;
+  --steel-800: #1E293B;
+  --steel-700: #334155;
+  --steel-600: #475569;
+  --steel-500: #64748B;
+  --steel-400: #94A3B8;
+  --steel-300: #CBD5E1;
+  --steel-200: #E2E8F0;
+  --steel-100: #F1F5F9;
+  --steel-50:  #F8FAFC;
+
+  /* Ámbar Industrial Caterpillar / DeWalt (Seguridad & Acción) */
+  --amber-700: #B45309;
+  --amber-600: #D97706;
+  --amber-500: #F59E0B;
+  --amber-400: #FBBF24;
+  --amber-300: #FCD34D;
+  --amber-100: #FEF3C7;
+  --amber-50:  #FFFBEB;
+
+  /* Naranja Seguridad Industrial (Faena / Operaciones) */
+  --safety-orange-700: #C2410C;
+  --safety-orange-600: #EA580C;
+  --safety-orange-500: #F97316;
+  --safety-orange-100: #FFEDD5;
+  --safety-orange-50:  #FFF7ED;
+
+  /* Superficies y Fondos Base Neutros */
+  --bg-base: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #FFFFFF;
+  --bg-muted: #F1F5F9;
+  --bg-subtle: #F4F4F5;
+
+  /* Textos Técnicos y Legibilidad */
+  --text-primary: #0F172A;     /* Carbón profundo */
+  --text-secondary: #475569;   /* Pizarra técnico */
+  --text-muted: #64748B;       /* Metadatos y etiquetas secundarias */
+  --text-disabled: #94A3B8;    /* Controles inactivos */
+  --text-inverse: #FFFFFF;     /* Texto sobre fondos oscuros */
+
+  /* Bordes Técnicos de Alta Precisión */
+  --border-light: #F1F5F9;
+  --border-default: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --border-focus: #D97706;
+
+  /* Radios Contenidos (Ingeniería: 4px - 6px, Máximo 8px) */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Estados Operativos de Flota (Semántica Industrial) */
+  --status-available-text: #166534;
+  --status-available-bg: #DCFCE7;
+  --status-available-border: #86EFAC;
+
+  --status-rented-text: #075985;
+  --status-rented-bg: #E0F2FE;
+  --status-rented-border: #7DD3FC;
+
+  --status-prep-text: #92400E;
+  --status-prep-bg: #FEF3C7;
+  --status-prep-border: #FCD34D;
+
+  --status-overdue-text: #991B1B;
+  --status-overdue-bg: #FEE2E2;
+  --status-overdue-border: #FCA5A5;
+
+  --status-pending-text: #334155;
+  --status-pending-bg: #F1F5F9;
+  --status-pending-border: #CBD5E1;
+
+  /* Sombras Técnicas y Foco Sobrio */
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --focus-ring: 0 0 0 3px rgba(217, 119, 6, 0.25);
+
+  /* Alias de compatibilidad previa */
+  --navy-900: var(--steel-900);
+  --navy-800: var(--steel-800);
+  --navy-700: var(--steel-700);
+  --navy-600: var(--steel-600);
+  --navy-500: var(--steel-500);
+
+  --primary-color: var(--steel-900);
+  --primary-hover: var(--steel-800);
+  --accent-color: var(--amber-600);
+  --accent-hover: var(--amber-700);
+  --accent-gradient: linear-gradient(135deg, #D97706, #B45309);
+
+  --bg-color: var(--bg-base);
+  --bg-white: var(--bg-surface);
+  --border-color: var(--border-default);
+}
+
+/* ===== RESET & TIPOGRAFÍA TÉCNICA ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: var(--bg-color);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  background-color: var(--bg-base);
   color: var(--text-primary);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* Spinner Styles */
+/* Números tabulares para cotizaciones, tablas, SKUs y métricas */
+.tabular-nums,
+.price-tag,
+.sku-badge,
+.table-industrial td.num,
+.stat-metric {
+  font-variant-numeric: tabular-nums;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ===== LAYOUT & CONTENEDORES ===== */
+.main-content {
+  padding: 5.5rem 1.5rem 2.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.container-wide {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ===== ENCABEZADOS DE SECCIÓN INDUSTRIAL ===== */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--steel-900);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.section-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0;
+}
+
+/* ===== BADGES INDUSTRIALES DE ESTADO DE FLOTA ===== */
+.badge-industrial,
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  line-height: 1.2;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* Disponible */
+.badge-available,
+.tag.disponible {
+  background-color: var(--status-available-bg);
+  color: var(--status-available-text);
+  border-color: var(--status-available-border);
+}
+.badge-available .badge-dot,
+.tag.disponible .status-dot {
+  background-color: #16a34a;
+}
+
+/* En Terreno / Arrendado */
+.badge-rented,
+.tag.arrendado {
+  background-color: var(--status-rented-bg);
+  color: var(--status-rented-text);
+  border-color: var(--status-rented-border);
+}
+.badge-rented .badge-dot,
+.tag.arrendado .status-dot {
+  background-color: #0284c7;
+}
+
+/* En Alistamiento / Taller */
+.badge-warning,
+.tag.mantención,
+.tag.mantencion {
+  background-color: var(--status-prep-bg);
+  color: var(--status-prep-text);
+  border-color: var(--status-prep-border);
+}
+.badge-warning .badge-dot,
+.tag.mantención .status-dot,
+.tag.mantencion .status-dot {
+  background-color: #d97706;
+}
+
+/* Atrasado / Crítico */
+.badge-danger,
+.badge-overdue {
+  background-color: var(--status-overdue-bg);
+  color: var(--status-overdue-text);
+  border-color: var(--status-overdue-border);
+}
+.badge-danger .badge-dot,
+.badge-overdue .badge-dot {
+  background-color: #dc2626;
+}
+
+/* Solicitado / Pendiente */
+.badge-pending,
+.badge-neutral {
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending-text);
+  border-color: var(--status-pending-border);
+}
+.badge-pending .badge-dot,
+.badge-neutral .badge-dot {
+  background-color: #64748b;
+}
+
+/* ===== BOTONES INDUSTRIALES TÉCNICOS ===== */
+.btn,
+.btn-industrial {
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  user-select: none;
+}
+
+.btn:focus-visible,
+.btn-industrial:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Primario: Ámbar Industrial DeWalt/CAT */
+.btn-primary {
+  background-color: var(--amber-600);
+  color: #FFFFFF;
+  border-color: var(--amber-700);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+  background-color: var(--amber-700);
+  border-color: #92400E;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  background-color: #92400E;
+  transform: translateY(0);
+}
+
+/* Secundario: Azul Acero Operacional */
+.btn-secondary {
+  background-color: var(--steel-800);
+  color: #FFFFFF;
+  border-color: var(--steel-900);
+}
+
+.btn-secondary:hover {
+  background-color: var(--steel-900);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+/* Contorno / Outline */
+.btn-outline {
+  background-color: var(--bg-surface);
+  color: var(--steel-800);
+  border-color: var(--border-strong);
+}
+
+.btn-outline:hover {
+  background-color: var(--steel-100);
+  color: var(--steel-950);
+  border-color: var(--steel-400);
+}
+
+/* Éxito / Confirmación */
+.btn-success {
+  background-color: #15803D;
+  color: #FFFFFF;
+  border-color: #166534;
+}
+
+.btn-success:hover {
+  background-color: #166534;
+}
+
+/* Peligro / Cancelar */
+.btn-danger {
+  background-color: #DC2626;
+  color: #FFFFFF;
+  border-color: #B91C1C;
+}
+
+.btn-danger:hover {
+  background-color: #B91C1C;
+}
+
+/* Tamaños de Botón */
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  gap: 0.375rem;
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* ===== TARJETAS INDUSTRIALES (CARDS) ===== */
+.card,
+.card-industrial {
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover,
+.card-industrial:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.card-header-industrial {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.875rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.card-title-industrial {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--steel-900);
+  margin: 0;
+}
+
+/* ===== TABLAS TÉCNICAS DE ALTA DENSIDAD ===== */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+}
+
+.table,
+.table-industrial {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.table th,
+.table-industrial th {
+  background-color: var(--steel-50);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.table td,
+.table-industrial td {
+  padding: 0.875rem 1rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-default);
+  vertical-align: middle;
+}
+
+.table tbody tr:hover,
+.table-industrial tbody tr:hover {
+  background-color: var(--steel-50);
+}
+
+.table tr:last-child td,
+.table-industrial tr:last-child td {
+  border-bottom: none;
+}
+
+/* Alineaciones numéricas en tablas */
+.table th.num,
+.table td.num,
+.table-industrial th.num,
+.table-industrial td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== CONTROLES DE FORMULARIO TÉCNICOS ===== */
+.form-group-industrial {
+  margin-bottom: 1rem;
+}
+
+.form-label-industrial,
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.375rem;
+}
+
+.form-control-industrial,
+.form-control,
+.form-select-industrial,
+.form-select {
+  width: 100%;
+  padding: 0.55rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+
+.form-control-industrial:focus,
+.form-control:focus,
+.form-select-industrial:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+/* Input group */
+.input-group-industrial {
+  display: flex;
+  align-items: stretch;
+}
+
+.input-group-industrial .form-control {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.input-group-industrial .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* ===== TARJETAS DE MÉTRICAS OPERATIVAS (KPIS) ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.kpi-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  border-left: 4px solid var(--steel-800);
+}
+
+.kpi-card.accent-amber {
+  border-left-color: var(--amber-600);
+}
+
+.kpi-card.accent-green {
+  border-left-color: #16a34a;
+}
+
+.kpi-card.accent-blue {
+  border-left-color: #0284c7;
+}
+
+.kpi-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-value {
+  font-size: 1.875rem;
+  font-weight: 800;
+  color: var(--steel-900);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.kpi-subtext {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.375rem;
+}
+
+/* ===== ESTADOS VACÍOS (EMPTY STATES) SOBRIOS ===== */
+.empty-state-industrial {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background-color: var(--bg-surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+}
+
+.empty-state-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1rem;
+  color: var(--steel-400);
+}
+
+.empty-state-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--steel-900);
+  margin-bottom: 0.25rem;
+}
+
+.empty-state-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  max-width: 420px;
+  margin: 0 auto 1rem;
+}
+
+/* ===== SPINNER & LOADING OVERLAY ===== */
 .spinner-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background-color: var(--glass-bg);
-  backdrop-filter: blur(5px);
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
   z-index: 9999;
   display: flex;
   justify-content: center;
@@ -37,12 +618,12 @@ body {
 }
 
 .spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(79, 70, 229, 0.2);
-  border-top: 4px solid var(--primary-color);
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top: 3px solid var(--amber-500);
   border-radius: 50%;
-  animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+  animation: spin 0.7s linear infinite;
 }
 
 @keyframes spin {
@@ -50,93 +631,15 @@ body {
   100% { transform: rotate(360deg); }
 }
 
-.main-content {
-  padding: 6rem 2rem 2rem; /* padding top for fixed navbar */
-  max-width: 1200px;
-  margin: 0 auto;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  box-sizing: border-box;
-}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 5rem 1rem 1.5rem;
+  }
 
-/* Buttons */
-.btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
-  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.25);
-}
-
-.btn-primary:hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(79, 70, 229, 0.3);
-}
-
-.btn-success {
-  background-color: #10b981;
-  color: white;
-  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.25);
-}
-
-.btn-success:hover {
-  background-color: #059669;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
-}
-
-/* Cards & Tables */
-.card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: var(--shadow-md);
-  padding: 2rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.table th, .table td {
-  padding: 1rem;
-  text-align: left;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.table th {
-  background-color: #f8fafc;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.05em;
-}
-
-.table tr:last-child td {
-  border-bottom: none;
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
 }
