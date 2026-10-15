@@ -56,6 +56,7 @@ export class ApiService {
       warrantyDepositClp: 1500000,
       locationDepot: 'Patio Pudahuel (Santiago)',
       sku: 'EQ-CAT-320',
+      imageUrl: '/images/cat-320.jpg',
       description: 'Excavadora hidráulica sobre orugas de 22.5 toneladas métricas. Motor Cat C4.4 de 122 kW (164 hp). Profundidad máxima de excavación 6.72 m y balde de 1.19 m³.',
       specs: {
         operatingWeightKg: 22500,
@@ -81,6 +82,7 @@ export class ApiService {
       warrantyDepositClp: 1200000,
       locationDepot: 'Patio Pudahuel (Santiago)',
       sku: 'EQ-JD-310L',
+      imageUrl: '/images/jd-310l.jpg',
       description: 'Retroexcavadora 4x4 versátil de 7.5 toneladas. Motor diésel John Deere PowerTech 4.5L de 86 hp. Balde frontal de 0.96 m³ y brazo extensible a 4.3 m.',
       specs: {
         operatingWeightKg: 7490,
@@ -106,6 +108,7 @@ export class ApiService {
       warrantyDepositClp: 900000,
       locationDepot: 'Patio La Negra (Antofagasta)',
       sku: 'EQ-BMG-211',
+      imageUrl: '/images/bomag-bw211.jpg',
       description: 'Rodillo vibratorio monocilíndrico de 11.2 toneladas para compactación de suelos y bases granulares. Ancho de rodillo 2.13 m con sistema Terrameter.',
       specs: {
         operatingWeightKg: 11200,
@@ -129,6 +132,7 @@ export class ApiService {
       warrantyDepositClp: 150000,
       locationDepot: 'Patio Pudahuel (Santiago)',
       sku: 'HER-MAK-18V',
+      imageUrl: '/images/makita-18v.jpg',
       description: 'Taladro percutor inalámbrico Brushless con 2 baterías de 5.0Ah y cargador rápido. Torque máximo 115 Nm, 2 velocidades y mandril metálico de 13 mm.',
       specs: {
         operatingWeightKg: 2.7,
@@ -152,6 +156,7 @@ export class ApiService {
       warrantyDepositClp: 300000,
       locationDepot: 'Patio San Pedro (Concepción)',
       sku: 'HER-BOS-11E',
+      imageUrl: '/images/bosch-gsh11e.jpg',
       description: 'Martillo demoledor de 11 kg encastre SDS-Max. Potencia 1.500 W con energía de impacto de 16.8 Joules. Sistema Vario-Lock de 12 posiciones de cincel.',
       specs: {
         operatingWeightKg: 11.0,
@@ -175,6 +180,7 @@ export class ApiService {
       warrantyDepositClp: 120000,
       locationDepot: 'Patio Pudahuel (Santiago)',
       sku: 'HER-DW-700',
+      imageUrl: '/images/dewalt-dwe575.jpg',
       description: 'Sierra circular ligera de 7-1/4" (184 mm). Potencia motor 1.600W a 5.200 RPM con base de aluminio resistente a impactos.',
       specs: {
         operatingWeightKg: 4.0,
@@ -197,6 +203,7 @@ export class ApiService {
       warrantyDepositClp: 1000000,
       locationDepot: 'Patio Pudahuel (Santiago)',
       sku: 'EQ-JLG-450',
+      imageUrl: '/images/jlg-450aj.jpg',
       description: 'Brazo articulado diésel 4x4 con altura de trabajo de 15.77 m y alcance horizontal de 7.62 m. Capacidad de plataforma 250 kg para 2 operarios.',
       specs: {
         operatingWeightKg: 6490,
@@ -222,6 +229,7 @@ export class ApiService {
       warrantyDepositClp: 800000,
       locationDepot: 'Patio Pudahuel (Santiago)',
       sku: 'EQ-YAL-3T',
+      imageUrl: '/images/yale-3t.jpg',
       description: 'Grúa horquilla diésel de 3.000 kg de capacidad con mástil triple triplex de 4.8 m de elevación, desplazador lateral y neumáticos todo terreno.',
       specs: {
         operatingWeightKg: 4650,
@@ -247,6 +255,7 @@ export class ApiService {
       warrantyDepositClp: 700000,
       locationDepot: 'Patio Pudahuel (Santiago)',
       sku: 'EQ-CUM-50K',
+      imageUrl: '/images/cummins-50kva.jpg',
       description: 'Grupo electrógeno trifásico 380V/220V insonorizado (68 dBA a 7m). Motor Cummins 4BTA3.9 con estanque de combustible de 150L y autonomía de 16h continuas.',
       specs: {
         operatingWeightKg: 1350,
@@ -271,6 +280,7 @@ export class ApiService {
       warrantyDepositClp: 200000,
       locationDepot: 'Patio San Pedro (Concepción)',
       sku: 'EQ-HON-2200',
+      imageUrl: '/images/honda-eu2200i.jpg',
       description: 'Generador inverter ultrasilencioso (48-57 dBA) de 2.200W pico. Ideal para equipos electrónicos de precisión, estaciones topográficas y oficinas de faena.',
       specs: {
         operatingWeightKg: 21.1,
@@ -295,6 +305,7 @@ export class ApiService {
       warrantyDepositClp: 500000,
       locationDepot: 'Patio La Negra (Antofagasta)',
       sku: 'EQ-SUL-185',
+      imageUrl: '/images/sullair-185.jpg',
       description: 'Compresor de tornillo portátil de 185 CFM a 100 PSI montado sobre tráiler de remolque. Motor diésel Caterpillar C2.2 para martillos neumáticos y arenado.',
       specs: {
         operatingWeightKg: 1020,
@@ -318,6 +329,7 @@ export class ApiService {
       warrantyDepositClp: 180000,
       locationDepot: 'Patio Pudahuel (Santiago)',
       sku: 'HER-HUS-450',
+      imageUrl: '/images/husqvarna-450.jpg',
       description: 'Motosierra con motor X-Torq de 50.2 cc y espada de 18 pulgadas (45 cm). Sistema LowVib de amortiguación para corte de tala y despeje de predios.',
       specs: {
         operatingWeightKg: 5.1,
@@ -341,6 +353,7 @@ export class ApiService {
       warrantyDepositClp: 150000,
       locationDepot: 'Patio Pudahuel (Santiago)',
       sku: 'HER-HON-CP11',
+      imageUrl: '/images/honda-hrn216.jpg',
       description: 'Cortacésped autopropulsado con motor GCV170 de 166 cc. Chasis de acero de 21" con doble cuchilla MicroCut Twin Blades y bolsa colectora de 66L.',
       specs: {
         operatingWeightKg: 36.0,
@@ -365,17 +378,30 @@ export class ApiService {
         })
         .then((data: any[]) => {
           this.ngZone.run(() => {
-            const machines: Machine[] = data.map(m => ({
-              id: m.id ? m.id.toString() : crypto.randomUUID(),
-              name: m.name,
-              serialNumber: m.serialNumber,
-              description: m.description || 'Sin descripción',
-              category: m.category?.name || 'General',
-              status: m.isAvailable ? 'DISPONIBLE' : 'ARRENDADO',
-              isAvailable: !!m.isAvailable,
-              dailyPrice: m.dailyPrice || 0,
-              pricePerDay: m.dailyPrice || 0
-            }));
+            const machines: Machine[] = data.map(m => {
+              const matchedMock = this.mockCatalog.find(mock => 
+                (m.serialNumber && mock.serialNumber === m.serialNumber) ||
+                (m.name && mock.name.toLowerCase() === m.name.toLowerCase()) ||
+                (m.id && mock.id.toString() === m.id.toString())
+              );
+              return {
+                id: m.id ? m.id.toString() : crypto.randomUUID(),
+                name: m.name,
+                serialNumber: m.serialNumber,
+                description: m.description || matchedMock?.description || 'Sin descripción',
+                category: m.category?.name || matchedMock?.category || 'General',
+                status: m.isAvailable ? 'DISPONIBLE' : 'ARRENDADO',
+                isAvailable: !!m.isAvailable,
+                dailyPrice: m.dailyPrice || matchedMock?.dailyPrice || 0,
+                pricePerDay: m.dailyPrice || matchedMock?.dailyPrice || 0,
+                brand: matchedMock?.brand,
+                sku: matchedMock?.sku || m.serialNumber,
+                specs: matchedMock?.specs,
+                imageUrl: matchedMock?.imageUrl,
+                locationDepot: matchedMock?.locationDepot,
+                warrantyDepositClp: matchedMock?.warrantyDepositClp
+              };
+            });
             observer.next(machines);
             observer.complete();
           });
