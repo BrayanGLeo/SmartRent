@@ -4,7 +4,7 @@ import cl.duoc.mssmartrentcart.dto.CheckoutEvent;
 import cl.duoc.mssmartrentcart.model.Cart;
 import cl.duoc.mssmartrentcart.model.CartItem;
 import cl.duoc.mssmartrentcart.repository.CartRepository;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,13 +14,13 @@ import java.util.List;
 public class CartService {
 
     private final CartRepository cartRepository;
-    private final RabbitTemplate rabbitTemplate;
+    private final AmqpTemplate rabbitTemplate;
     
     // Exchange and queue names can be defined in a properties file, but we use hardcoded for simplicity
     private static final String EXCHANGE = "smartrent.exchange";
     private static final String ROUTING_KEY_CHECKOUT = "smartrent.routing.checkout";
 
-    public CartService(CartRepository cartRepository, RabbitTemplate rabbitTemplate) {
+    public CartService(CartRepository cartRepository, AmqpTemplate rabbitTemplate) {
         this.cartRepository = cartRepository;
         this.rabbitTemplate = rabbitTemplate;
     }

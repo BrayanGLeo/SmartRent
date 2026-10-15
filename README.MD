@@ -37,6 +37,11 @@ Servidor de recursos y orquestador backend:
 - 🚦 **Propósito**: Exponer los *endpoints* de forma segura mediante políticas CORS estrictas y validación de roles (RBAC).
 - 📖 **Documentación**: Consulta el [README del Backend](./ms-smartrent-bff/README.md) para conocer comandos y configuraciones.
 
+### 3. ☁️ [Operaciones e Infraestructura AWS](./COMANDOS_AWS.md)
+Guía de comandos y operaciones para instancias EC2 y Docker:
+- 🛠️ **Comandos esenciales**: Diagnóstico de RAM/Disco, solución de espacio lleno, Docker Compose y base de datos PostgreSQL.
+- 📖 **Documentación**: Consulta la [Guía de Comandos AWS](./COMANDOS_AWS.md).
+
 ---
 
 ## 🛡️ Ecosistema de Seguridad (Azure AD)
@@ -44,7 +49,7 @@ Servidor de recursos y orquestador backend:
 Toda la plataforma está securizada bajo la suite de identidad de Microsoft. Se han configurado dos *App Registrations* en Azure para establecer una relación de confianza:
 
 * 👤 **Client ID Público (Frontend)**: Encargado de solicitar el inicio de sesión y obtener el token de acceso interactuando con el usuario.
-* 🏢 **Client ID Privado (Backend API)**: Define los alcances (*scopes*) delegados y expone los roles de la aplicación (`Admin`, `JefeBodega`, `Arrendatario`), los cuales son validados mediante conversores de *claims* JWT a *authorities* de Spring Security.
+* 🏢 **Client ID Privado (Backend API)**: Define los alcances (*scopes*) delegados y expone los roles de la aplicación (`Administrador`, `JefeBodega`, `Arrendatario`), los cuales son validados mediante conversores de *claims* JWT a *authorities* de Spring Security.
 
 ## 💻 Dependencias Globales
 

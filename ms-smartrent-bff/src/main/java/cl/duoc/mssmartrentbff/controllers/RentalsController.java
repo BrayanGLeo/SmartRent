@@ -35,13 +35,13 @@ public class RentalsController {
     }
 
     @PutMapping("/rentals/{id}/status")
-    @PreAuthorize("hasAuthority('SCOPE_Arriendos.Escribir') and hasAnyRole('Admin', 'JefeBodega')")
+    @PreAuthorize("hasAuthority('SCOPE_Arriendos.Escribir') and (hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_JEFEBODEGA'))")
     public Map<String, String> cambiarEstado(@PathVariable String id, @RequestBody Map<String, String> body) {
         return Map.of(KEY_ID, id, KEY_ESTADO, body.get(KEY_ESTADO), "mensaje", "Estado actualizado correctamente");
     }
 
     @GetMapping("/reportes/kpis")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Map<String, Object> kpis() {
         return Map.of("arriendosActivos", 12, "equiposEnTerreno", 5, "tiempoCicloPromedioDias", 3.4);
     }

@@ -36,10 +36,11 @@ export function MSALInstanceFactory(): IPublicClientApplication {
 
 export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   const protectedResourceMap = new Map<string, Array<string | ProtectedResourceScopes>>();
-  // Rutas privadas que siempre requieren token
   protectedResourceMap.set(`${environment.apiBaseUrl}/rentals`, [environment.azure.apiScope]);
   protectedResourceMap.set(`${environment.apiBaseUrl}/rentals/*`, [environment.azure.apiScope]);
+  protectedResourceMap.set(`${environment.apiBaseUrl}/reports`, [environment.azure.apiScope]);
   protectedResourceMap.set(`${environment.apiBaseUrl}/reports/*`, [environment.azure.apiScope]);
+  protectedResourceMap.set(`${environment.apiBaseUrl}/audit`, [environment.azure.apiScope]);
   protectedResourceMap.set(`${environment.apiBaseUrl}/audit/*`, [environment.azure.apiScope]);
   
   // Catálogo: endpoint público, no se registra en protectedResourceMap

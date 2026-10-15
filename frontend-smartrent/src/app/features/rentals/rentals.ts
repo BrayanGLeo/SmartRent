@@ -203,11 +203,11 @@ export class Rentals implements OnInit {
   }
 
   get isArrendatario(): boolean {
-    return this.authService.userRole() === 'Arrendatario' || this.authService.userRole() === 'Admin';
+    return this.authService.userRole() === 'Arrendatario' || this.authService.userRole() === 'Administrador';
   }
 
   get isJefeBodega(): boolean {
-    return this.authService.userRole() === 'JefeBodega' || this.authService.userRole() === 'Admin';
+    return this.authService.userRole() === 'JefeBodega' || this.authService.userRole() === 'Administrador';
   }
 
   getStatusConfig(status: string): RentalStatusConfig {

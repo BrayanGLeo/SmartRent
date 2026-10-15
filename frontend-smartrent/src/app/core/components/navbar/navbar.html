@@ -14,20 +14,49 @@
       </div>
     </div>
   </div>
+  
+  <ul class="nav-links">
+    <li><a routerLink="/catalog" routerLinkActive="active">Catálogo</a></li>
+    <li><a routerLink="/about" routerLinkActive="active">Sobre Nosotros</a></li>
 
-  <!-- Main Navigation Bar -->
-  <nav class="navbar">
-    <div class="navbar-container">
-      <!-- Logo Técnico -->
-      <div class="brand">
-        <a routerLink="/" class="brand-link">
-          <div class="brand-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="6" width="20" height="12" rx="2"></rect>
-              <path d="M12 12h.01"></path>
-              <path d="M17 12h.01"></path>
-              <path d="M7 12h.01"></path>
-            </svg>
+    <!-- Gestión de Arriendos: Arrendatario y Jefe de Bodega -->
+    <li *ngIf="authService.userRole() === 'Arrendatario' || authService.userRole() === 'JefeBodega'">
+      <a routerLink="/rentals" routerLinkActive="active">
+        {{ authService.userRole() === 'JefeBodega' ? 'Gestión Arriendos' : 'Mis Arriendos' }}
+      </a>
+    </li>
+
+    <!-- Carrito: Arrendatario -->
+    <li *ngIf="authService.userRole() === 'Arrendatario'">
+      <a routerLink="/cart" routerLinkActive="active">Carrito</a>
+    </li>
+
+    <!-- Auditoría: Solo Auditor -->
+    <li *ngIf="authService.userRole() === 'Auditor'">
+      <a routerLink="/audit" routerLinkActive="active">Auditoría</a>
+    </li>
+
+    <!-- Reportería: Solo Administrador -->
+    <li *ngIf="authService.userRole() === 'Administrador'">
+      <a routerLink="/reports" routerLinkActive="active">Reportes</a>
+    </li>
+
+    <!-- Panel Admin (CRUD Catálogo): Solo Administrador -->
+    <li *ngIf="authService.userRole() === 'Administrador'">
+      <a routerLink="/admin" routerLinkActive="active">Panel Admin</a>
+    </li>
+  </ul>
+
+  <div class="auth-buttons">
+    <div class="nav-spinner" *ngIf="authService.isAuthBusy()"></div>
+
+    <ng-container *ngIf="!authService.isAuthBusy()">
+      <ng-container *ngIf="authService.account(); else loggedOut">
+        <div class="user-profile">
+          <div class="avatar">{{ authService.account()?.name?.charAt(0) || 'U' }}</div>
+          <div class="user-details">
+            <span class="user-name">{{ authService.account()?.name || 'Usuario' }}</span>
+            <span class="user-role">{{ authService.userRole() }}</span>
           </div>
           <div class="brand-text">
             <span class="brand-name">SMART<span class="brand-highlight">RENT</span></span>
