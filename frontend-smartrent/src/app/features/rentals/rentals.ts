@@ -225,6 +225,10 @@ export class Rentals implements OnInit {
     }
 
     const selectedMachine = this.machines.find(m => String(m.id) === String(this.newRental.machineId));
+    if (selectedMachine && ((selectedMachine.availableStock !== undefined && selectedMachine.availableStock <= 0) || !selectedMachine.isAvailable)) {
+      alert(`El equipo "${selectedMachine.name}" no cuenta con unidades disponibles en patio. No se puede generar la solicitud.`);
+      return;
+    }
     const newEntry: Rental = {
       id: Math.floor(1050 + Math.random() * 100),
       machineId: this.newRental.machineId,

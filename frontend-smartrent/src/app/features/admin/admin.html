@@ -1,24 +1,1854 @@
-<div class="admin-container">
-  <div class="admin-header">
-    <h1>Panel de Administración</h1>
-    <p>Bienvenido al panel de control para administradores de SmartRent.</p>
+<div class="admin-shell">
+  <!-- Top Industrial Header Bar -->
+  <header class="admin-topbar">
+    <div class="topbar-left">
+      <div class="brand-pill">
+        <svg class="icon-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+        </svg>
+        <span class="brand-name">SmartRent Core</span>
+        <span class="env-tag">BFF Cloud Native</span>
+      </div>
+      <div class="breadcrumb">
+        <span class="crumb-parent">Plataforma B2B</span>
+        <span class="crumb-sep">/</span>
+        <span class="crumb-active">Administración Central & Bodega</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="network-badge">
+        <span class="live-dot"></span>
+        <span class="net-text">Red 20 Empresas Conectadas</span>
+      </div>
+      <div class="auth-pill" *ngIf="authService.account() as userAccount">
+        <div class="user-avatar-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </div>
+        <div class="user-meta">
+          <span class="user-name">{{ userAccount.name || 'Operaciones Central' }}</span>
+          <span class="user-role-badge">ADMIN / JEFE BODEGA</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs Header (5 Tabs) -->
+  <nav class="admin-nav-tabs">
+    <!-- TAB 1: Usuarios del Tenant -->
+    <button
+      type="button"
+      class="nav-tab-btn"
+      [class.active]="activeTab() === 'users'"
+      (click)="setTab('users')"
+    >
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+      <span>Usuarios del Tenant</span>
+      <span class="tab-badge">{{ filteredUsers().length }}</span>
+    </button>
+
+    <!-- TAB 2: Gestión de Inventario -->
+    <button
+      type="button"
+      class="nav-tab-btn"
+      [class.active]="activeTab() === 'inventory'"
+      (click)="setTab('inventory')"
+    >
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+      </svg>
+      <span>Gestión de Inventario</span>
+      <span class="tab-badge">{{ inventory().length }}</span>
+    </button>
+
+    <!-- TAB 3: Validación de Bodega (Jefe de Bodega) -->
+    <button
+      type="button"
+      class="nav-tab-btn"
+      [class.active]="activeTab() === 'validation'"
+      (click)="setTab('validation')"
+    >
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 11l3 3L22 4" />
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      </svg>
+      <span>Validación Bodega</span>
+      <span class="tab-badge badge-warning" *ngIf="pendingValidationOrders().length > 0">
+        {{ pendingValidationOrders().length }} pend.
+      </span>
+    </button>
+
+    <!-- TAB 4: KPIs & Operaciones -->
+    <button
+      type="button"
+      class="nav-tab-btn"
+      [class.active]="activeTab() === 'kpis'"
+      (click)="setTab('kpis')"
+    >
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+      <span>KPIs & Operaciones</span>
+      <span class="tab-live-indicator">LIVE</span>
+    </button>
+
+    <!-- TAB 5: Topología RabbitMQ -->
+    <button
+      type="button"
+      class="nav-tab-btn"
+      [class.active]="activeTab() === 'rabbitmq'"
+      (click)="setTab('rabbitmq')"
+    >
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+      </svg>
+      <span>Topología RabbitMQ</span>
+      <span class="tab-badge rabbit-badge">{{ queues().length }}Q</span>
+    </button>
+  </nav>
+
+  <!-- Main Work Area -->
+  <main class="admin-main-container">
+
+    <!-- ============================================================ -->
+    <!-- TAB 1: USUARIOS DEL TENANT                                   -->
+    <!-- ============================================================ -->
+    <section class="tab-panel" *ngIf="activeTab() === 'users'">
+      <div class="panel-header-row">
+        <div class="panel-heading">
+          <h2>Usuarios del Tenant & Gobernanza de la Red</h2>
+          <p>Supervisión de usuarios federados por empresa / tenant en la red SmartRent con Azure AD.</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="btn btn-primary" (click)="openCreateUserModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Nuevo Usuario del Tenant
+          </button>
+        </div>
+      </div>
+
+      <!-- Tenant Selector & Filter Bar -->
+      <div class="tenant-selector-banner">
+        <div class="tenant-select-group">
+          <label class="tenant-select-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tenant-icon">
+              <path d="M3 21h18M3 7v14M21 7v14M6 11h3M6 15h3M15 11h3M15 15h3M9 21V3h6v18" />
+            </svg>
+            Filtrar por Tenant / Empresa Red:
+          </label>
+          <select
+            class="tenant-select-control"
+            [value]="selectedTenantId()"
+            (change)="onTenantSelectChange($any($event.target).value)"
+          >
+            <option value="ALL">Todos los Tenants de la Red (20 Empresas)</option>
+            <option *ngFor="let t of tenants" [value]="t.id">
+              [{{ t.id }}] {{ t.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Tenant Details Badge if specific tenant is selected -->
+        <div class="tenant-info-chip" *ngIf="selectedTenantInfo() as tInfo">
+          <div class="t-badge-col">
+            <span class="t-badge-title">Tenant Seleccionado:</span>
+            <span class="t-badge-val font-bold">{{ tInfo.name }}</span>
+          </div>
+          <div class="t-badge-col">
+            <span class="t-badge-title">RUT / Sede:</span>
+            <span class="t-badge-val mono-code">{{ tInfo.rut }}</span>
+          </div>
+          <div class="t-badge-col">
+            <span class="t-badge-title">Patio Asignado:</span>
+            <span class="t-badge-val text-amber-700">{{ tInfo.depotLocation }}</span>
+          </div>
+          <div class="t-badge-col">
+            <span class="t-badge-title">Contacto:</span>
+            <span class="t-badge-val text-blue-700">{{ tInfo.contactEmail }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters Row -->
+      <div class="filters-card">
+        <div class="search-field">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Buscar por nombre, correo corporativo o tenant..."
+            [value]="userSearchQuery()"
+            (input)="userSearchQuery.set($any($event.target).value)"
+            class="input-search"
+          />
+          <button
+            *ngIf="userSearchQuery()"
+            type="button"
+            class="btn-clear"
+            (click)="userSearchQuery.set('')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Rol:</label>
+          <select
+            class="select-filter"
+            [value]="userRoleFilter()"
+            (change)="userRoleFilter.set($any($event.target).value)"
+          >
+            <option value="ALL">Todos los roles</option>
+            <option value="ADMIN">Admin</option>
+            <option value="OPERADOR">Jefe de bodega (Operador)</option>
+            <option value="CLIENTE">Arrendatario (Cliente)</option>
+            <option value="AUDITOR">Auditor</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Users Table -->
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre Completo</th>
+              <th>Correo Azure AD</th>
+              <th>Tenant / Empresa Asignada</th>
+              <th>Rol Oficial</th>
+              <th>Estado</th>
+              <th>Fecha Alta</th>
+              <th class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of filteredUsers()">
+              <td>
+                <span class="mono-code">{{ user.id }}</span>
+              </td>
+              <td>
+                <div class="user-cell">
+                  <span class="user-cell-name">{{ user.fullName }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="mono-email">{{ user.email }}</span>
+              </td>
+              <td>
+                <div class="tenant-table-cell">
+                  <span class="tenant-id-pill">{{ user.tenantId }}</span>
+                  <span class="tenant-name-text">{{ user.company }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getRoleBadge(user.role).badgeClass">
+                  {{ getRoleBadge(user.role).label }}
+                </span>
+              </td>
+              <td>
+                <span
+                  class="badge-status"
+                  [class.status-active]="user.status === 'ACTIVO'"
+                  [class.status-inactive]="user.status === 'INACTIVO'"
+                >
+                  <span class="dot-indicator"></span>
+                  {{ user.status }}
+                </span>
+              </td>
+              <td>
+                <span class="cell-date">{{ user.createdAt }}</span>
+              </td>
+              <td class="td-actions">
+                <button
+                  type="button"
+                  class="btn-icon-action"
+                  (click)="openEditUserModal(user)"
+                  title="Editar usuario"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-icon-action"
+                  [title]="user.status === 'ACTIVO' ? 'Inactivar cuenta' : 'Activar cuenta'"
+                  (click)="toggleUserStatus(user)"
+                >
+                  <svg *ngIf="user.status === 'ACTIVO'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                  </svg>
+                  <svg *ngIf="user.status === 'INACTIVO'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-icon-action action-danger"
+                  (click)="confirmDeleteUser(user)"
+                  title="Eliminar usuario"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="filteredUsers().length === 0">
+              <td colspan="8" class="empty-table-state">
+                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <p class="empty-title">No hay usuarios asignados a este tenant o filtro</p>
+                <p class="empty-desc">Prueba cambiando el tenant seleccionado o limpiando la búsqueda.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 2: GESTIÓN DE INVENTARIO Y STOCK LIMITADO                 -->
+    <!-- ============================================================ -->
+    <section class="tab-panel" *ngIf="activeTab() === 'inventory'">
+      <div class="panel-header-row">
+        <div class="panel-heading">
+          <h2>Gestión de Inventario, Disponibilidad & Stock Limitado</h2>
+          <p>Control de unidades en patio, asignación de bodegas y bloqueo de pedidos ante stock agotado.</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="btn btn-primary" (click)="openCreateMachineModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Alta de Maquinaria
+          </button>
+        </div>
+      </div>
+
+      <!-- Fleet Overview Cards -->
+      <div class="stats-overview-grid">
+        <div class="stat-pill-card">
+          <span class="stat-pill-title">Flota Total Registrada</span>
+          <div class="stat-pill-val">{{ fleetStats().total }} <span class="stat-unit">unidades</span></div>
+        </div>
+        <div class="stat-pill-card">
+          <span class="stat-pill-title">Disponibles en Patio</span>
+          <div class="stat-pill-val val-green">{{ fleetStats().available }} <span class="stat-unit">unidades</span></div>
+        </div>
+        <div class="stat-pill-card">
+          <span class="stat-pill-title">En Faena / Arrendadas</span>
+          <div class="stat-pill-val val-amber">{{ fleetStats().inUse }} <span class="stat-unit">unidades</span></div>
+        </div>
+        <div class="stat-pill-card">
+          <span class="stat-pill-title">En Taller / Mantenimiento</span>
+          <div class="stat-pill-val text-red-600">{{ fleetStats().inMaintenance }} <span class="stat-unit">unidades</span></div>
+        </div>
+        <div class="stat-pill-card">
+          <span class="stat-pill-title">Ocupación de Red</span>
+          <div class="stat-pill-val val-primary">{{ fleetStats().occupancyRate }}%</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-card">
+        <div class="search-field">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Buscar por SKU, nombre de equipo o bodega..."
+            [value]="inventorySearchQuery()"
+            (input)="inventorySearchQuery.set($any($event.target).value)"
+            class="input-search"
+          />
+          <button
+            *ngIf="inventorySearchQuery()"
+            type="button"
+            class="btn-clear"
+            (click)="inventorySearchQuery.set('')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Categoría:</label>
+          <select
+            class="select-filter"
+            [value]="inventoryCategoryFilter()"
+            (change)="inventoryCategoryFilter.set($any($event.target).value)"
+          >
+            <option value="ALL">Todas las categorías</option>
+            <option value="MOVIMIENTO_TIERRA">Movimiento de Tierra</option>
+            <option value="COMPACTACION">Compactación</option>
+            <option value="GENERACION">Generación y Energía</option>
+            <option value="ELEVACION">Equipos de Elevación</option>
+            <option value="HERRAMIENTAS">Herramientas Eléctricas</option>
+            <option value="ACCESORIOS">Accesorios</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Estado:</label>
+          <select
+            class="select-filter"
+            [value]="inventoryStatusFilter()"
+            (change)="inventoryStatusFilter.set($any($event.target).value)"
+          >
+            <option value="ALL">Todos los estados</option>
+            <option value="DISPONIBLE">Disponibles</option>
+            <option value="EN_MANTENCION">En Taller / Mantención</option>
+            <option value="SIN_STOCK">Sin Stock (Agotado)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Machinery Table with Stock Control -->
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Equipo / SKU</th>
+              <th>Categoría & Bodega</th>
+              <th>Tarifa Diaria</th>
+              <th>Control de Stock (Limitado)</th>
+              <th>Estado de Pedidos</th>
+              <th class="th-actions">Gestión de Stock & Equipo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of filteredInventory()">
+              <td>
+                <div class="machine-profile-cell">
+                  <img [src]="item.imageUrl" [alt]="item.name" class="machine-thumb" />
+                  <div class="machine-profile-meta">
+                    <span class="machine-name">{{ item.name }}</span>
+                    <span class="mono-sku">{{ item.sku }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="cat-depot-cell">
+                  <span class="category-pill">{{ getCategoryLabel(item.category) }}</span>
+                  <span class="depot-tag">{{ item.assignedDepot || 'Patio Pudahuel Sur' }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="tabular-price">{{ formatClp(item.dailyRate) }}</span>
+                <span class="price-suffix">/ día neto</span>
+              </td>
+              <td>
+                <div class="availability-meter-wrapper">
+                  <div class="meter-bar-track">
+                    <div
+                      class="meter-bar-fill"
+                      [style.width.%]="item.totalStock > 0 ? (item.availableStock / item.totalStock) * 100 : 0"
+                      [class.meter-low]="item.availableStock === 1"
+                      [class.meter-empty]="item.availableStock === 0"
+                    ></div>
+                  </div>
+                  <div class="stock-status-line">
+                    <span class="availability-label">
+                      <strong>{{ item.availableStock }}</strong> / {{ item.totalStock }} unidades
+                    </span>
+                    <span class="stock-alert-tag" *ngIf="item.availableStock === 0">AGOTADO</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span
+                  *ngIf="item.availableStock > 0 && !item.isOrderBlocked && item.status !== 'EN_MANTENCION'"
+                  class="badge-machinery mach-available"
+                >
+                  Admite Arriendos
+                </span>
+                <span
+                  *ngIf="item.availableStock === 0 || item.isOrderBlocked"
+                  class="badge-machinery mach-empty"
+                  title="Stock agotado: No se pueden seguir pidiendo arriendos de este equipo"
+                >
+                  BLOQUEADO (Sin Stock)
+                </span>
+                <span
+                  *ngIf="item.status === 'EN_MANTENCION'"
+                  class="badge-machinery mach-maintenance"
+                >
+                  En Taller Técnico
+                </span>
+              </td>
+              <td class="td-actions">
+                <button
+                  type="button"
+                  class="btn-action-text"
+                  (click)="openQuickEditModal(item)"
+                  title="Modificar stock o tarifa"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                  Ajustar Stock
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-icon-action"
+                  [title]="item.status === 'EN_MANTENCION' ? 'Reintegrar a Patio' : 'Enviar a Mantención'"
+                  (click)="toggleMaintenance(item)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-icon-action"
+                  [title]="item.isOrderBlocked ? 'Desbloquear pedidos' : 'Bloquear pedidos de este modelo'"
+                  (click)="toggleOrderBlock(item)"
+                >
+                  <svg *ngIf="!item.isOrderBlocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  <svg *ngIf="item.isOrderBlocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber-600">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-icon-action"
+                  (click)="openEditMachineModal(item)"
+                  title="Editar ficha completa"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-icon-action action-danger"
+                  (click)="confirmDeleteMachine(item)"
+                  title="Dar de baja equipo"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 3: VALIDACIÓN DE BODEGA (JEFE DE BODEGA)                 -->
+    <!-- ============================================================ -->
+    <section class="tab-panel" *ngIf="activeTab() === 'validation'">
+      <div class="panel-header-row">
+        <div class="panel-heading">
+          <h2>Validación Técnica de Bodega (Alistamiento & Despacho)</h2>
+          <p>El Jefe de Bodega valida el estado técnico y checklist preoperacional antes de entregar maquinarias a terreno.</p>
+        </div>
+      </div>
+
+      <!-- Validation Role Alert Banner -->
+      <div class="warehouse-badge-banner">
+        <div class="wb-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        </div>
+        <div class="wb-content">
+          <h4>Gobernanza de Alistamiento Técnico (Rol Jefe de Bodega)</h4>
+          <p>
+            Ningún equipo puede salir a faena (<code>EN_TERRENO</code>) sin validación previa del Jefe de Bodega.
+            Al aprobar el despacho, <strong>se emite el ticket operacional</strong> y <strong>se descuenta automáticamente 1 unidad del stock disponible</strong>. Al recepcionar la devolución, el stock disponible se restablece.
+          </p>
+        </div>
+      </div>
+
+      <!-- Section: Solicitudes Pendientes de Validación -->
+      <div class="sub-panel-card">
+        <div class="sub-panel-header">
+          <div>
+            <h3>Maquinarias Solicitadas Pendientes de Inspección de Salida</h3>
+            <p>Órdenes en alistamiento esperando aprobación técnica del Jefe de Bodega para despacho.</p>
+          </div>
+          <span class="count-tag">{{ pendingValidationOrders().length }} pendientes</span>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Código Orden</th>
+                <th>Maquinaria Asignada</th>
+                <th>Cliente / Tenant</th>
+                <th>Faena de Destino</th>
+                <th>Fechas Arriendo</th>
+                <th>Estado Actual</th>
+                <th class="th-actions">Acción de Bodega</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let order of pendingValidationOrders()">
+                <td>
+                  <span class="mono-code">{{ order.rentalCode }}</span>
+                </td>
+                <td>
+                  <div class="machine-profile-cell">
+                    <span class="mono-sku">{{ order.sku }}</span>
+                    <span class="user-cell-name">{{ order.machineName }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="tenant-table-cell">
+                    <span class="tenant-id-pill">{{ order.tenantId }}</span>
+                    <span class="tenant-name-text">{{ order.company }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="worksite-text">{{ order.workSiteAddress }}</span>
+                </td>
+                <td>
+                  <span class="cell-date tabular-nums">{{ order.startDate }} → {{ order.endDate }}</span>
+                </td>
+                <td>
+                  <span class="badge" [class.role-operador]="order.status === 'EN_PREPARACION'" [class.role-cliente]="order.status === 'SOLICITADO'">
+                    {{ order.status === 'EN_PREPARACION' ? 'En Taller / Alistamiento' : 'Solicitado' }}
+                  </span>
+                </td>
+                <td class="td-actions">
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    (click)="openInspectionModal(order)"
+                  >
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M9 11l3 3L22 4" />
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                    </svg>
+                    Inspeccionar y Validar
+                  </button>
+                </td>
+              </tr>
+
+              <tr *ngIf="pendingValidationOrders().length === 0">
+                <td colspan="7" class="empty-table-state">
+                  <svg class="empty-icon text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  <p class="empty-title">No hay maquinarias pendientes de validación</p>
+                  <p class="empty-desc">Todos los equipos solicitados han sido inspeccionados o despachados a faena.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section: Equipos en Terreno y Recepción de Devoluciones -->
+      <div class="sub-panel-card">
+        <div class="sub-panel-header">
+          <div>
+            <h3>Equipos en Terreno & Recepción de Retornos</h3>
+            <p>Maquinarias operando activamente en faenas de clientes. Al retornar a patio, el Jefe de Bodega confirma la devolución e incrementa el stock disponible.</p>
+          </div>
+          <span class="count-tag">{{ inFieldOrders().length }} en faena</span>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Código Orden</th>
+                <th>Equipo en Terreno</th>
+                <th>Faena de Obra</th>
+                <th>Validado por</th>
+                <th>Horómetro Salida</th>
+                <th>Fecha Despacho</th>
+                <th class="th-actions">Acción de Devolución</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let order of inFieldOrders()">
+                <td>
+                  <span class="mono-code">{{ order.rentalCode }}</span>
+                </td>
+                <td>
+                  <div class="machine-profile-cell">
+                    <span class="mono-sku">{{ order.sku }}</span>
+                    <span class="user-cell-name">{{ order.machineName }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="worksite-text">{{ order.workSiteAddress }}</span>
+                </td>
+                <td>
+                  <span class="text-xs text-slate-700 font-semibold">{{ order.inspectedBy || 'Carlos Mendoza' }}</span>
+                </td>
+                <td>
+                  <span class="tabular-nums font-bold">{{ order.horometerOut || 1200 }} hrs</span>
+                </td>
+                <td>
+                  <span class="cell-date">{{ order.inspectionDate || order.startDate }}</span>
+                </td>
+                <td class="td-actions">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    (click)="receiveAndReturnMachine(order)"
+                    title="Confirmar recepción en patio y reincorporar al stock disponible"
+                  >
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 14 4 9 9 4" />
+                      <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+                    </svg>
+                    Recepcionar y Devolver a Stock
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 4: KPIS Y OPERACIONES DE LA RED EN TIEMPO REAL           -->
+    <!-- ============================================================ -->
+    <section class="tab-panel" *ngIf="activeTab() === 'kpis'">
+      <div class="panel-header-row">
+        <div class="panel-heading">
+          <h2>Rendimiento Operativo y Métricas de la Red</h2>
+          <p>Indicadores clave consolidados de las 20 empresas de arriendo vía `ms-smartrent-report`.</p>
+        </div>
+
+        <div class="range-selector">
+          <button
+            type="button"
+            class="btn-range"
+            [class.active]="kpiRange() === 'last24h'"
+            (click)="setKpiRange('last24h')"
+          >
+            Últimas 24h
+          </button>
+          <button
+            type="button"
+            class="btn-range"
+            [class.active]="kpiRange() === 'last7d'"
+            (click)="setKpiRange('last7d')"
+          >
+            Últimos 7 días
+          </button>
+          <button
+            type="button"
+            class="btn-range"
+            [class.active]="kpiRange() === 'last30d'"
+            (click)="setKpiRange('last30d')"
+          >
+            Últimos 30 días
+          </button>
+        </div>
+      </div>
+
+      <!-- 4 Network KPI Cards -->
+      <div class="kpi-cards-grid">
+        <div class="kpi-metric-card">
+          <div class="kpi-card-header">
+            <span class="kpi-card-title">Volumen de Arriendos</span>
+            <span class="kpi-icon-container">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-card-body">
+            <span class="kpi-big-number">{{ kpiMetrics().dailyRentals }}</span>
+            <span class="kpi-comp-tag positive">{{ kpiMetrics().dailyRentalsComparison }}</span>
+          </div>
+          <span class="kpi-footnote">Órdenes procesadas en el periodo</span>
+        </div>
+
+        <div class="kpi-metric-card">
+          <div class="kpi-card-header">
+            <span class="kpi-card-title">Tiempo de Ciclo Promedio</span>
+            <span class="kpi-icon-container">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-card-body">
+            <span class="kpi-big-number">{{ kpiMetrics().avgCycleHours }} <span class="kpi-unit">hrs</span></span>
+            <span class="kpi-comp-tag neutral">Optimizado</span>
+          </div>
+          <span class="kpi-footnote">{{ kpiMetrics().avgCycleDesc }}</span>
+        </div>
+
+        <div class="kpi-metric-card">
+          <div class="kpi-card-header">
+            <span class="kpi-card-title">Equipos Activos en Terreno</span>
+            <span class="kpi-icon-container">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="3" width="15" height="13" />
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                <circle cx="5.5" cy="18.5" r="2.5" />
+                <circle cx="18.5" cy="18.5" r="2.5" />
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-card-body">
+            <span class="kpi-big-number">{{ kpiMetrics().activeMachines }} <span class="kpi-unit">/ {{ kpiMetrics().totalFleet }}</span></span>
+            <span class="kpi-comp-tag positive">{{ kpiMetrics().occupancyPercent }}% red</span>
+          </div>
+          <span class="kpi-footnote">Unidades operando en faenas de clientes</span>
+        </div>
+
+        <div class="kpi-metric-card">
+          <div class="kpi-card-header">
+            <span class="kpi-card-title">Facturación Diaria Activa</span>
+            <span class="kpi-icon-container">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            </span>
+          </div>
+          <div class="kpi-card-body">
+            <span class="kpi-big-number tabular-nums">{{ formatClp(kpiMetrics().activeDailyRevenueClp) }}</span>
+          </div>
+          <span class="kpi-footnote">{{ kpiMetrics().activeDailyRevenueDesc }}</span>
+        </div>
+      </div>
+
+      <!-- Technical Analytics Grid -->
+      <div class="kpi-analytics-grid">
+        <div class="analytics-card">
+          <div class="card-title-bar">
+            <h3>Top Equipos Más Arrendados (Ocupación & Demanda)</h3>
+            <span class="sub-indicator">ms-smartrent-report / top-services</span>
+          </div>
+          <div class="top-services-list">
+            <div class="top-service-row" *ngFor="let s of topServices(); let i = index">
+              <div class="rank-badge">{{ i + 1 }}</div>
+              <img [src]="s.imageUrl" [alt]="s.name" class="service-thumb" />
+              <div class="service-info-col">
+                <div class="service-name-row">
+                  <span class="service-name">{{ s.name }}</span>
+                  <span class="mono-code">{{ s.sku }}</span>
+                  <span class="service-rentals-count">{{ s.rentalsCount }} arriendos</span>
+                </div>
+                <div class="service-bar-container">
+                  <div class="service-bar-fill" [style.width.%]="s.occupancyPercent"></div>
+                </div>
+              </div>
+              <div class="service-stats-col">
+                <span class="occupancy-rate">{{ s.occupancyPercent }}% ocupación</span>
+                <span class="revenue-val">{{ formatClp(s.revenueClp) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-card">
+          <div class="card-title-bar">
+            <h3>Distribución Operativa del Ciclo de Arriendo</h3>
+            <span class="sub-indicator">Pipeline de Órdenes</span>
+          </div>
+
+          <div class="stacked-bar-track">
+            <div
+              *ngFor="let item of rentalStatusDistribution()"
+              class="stacked-segment"
+              [style.width.%]="item.percentage"
+              [style.background-color]="item.color"
+              [title]="item.label + ': ' + item.count + ' (' + item.percentage + '%)'"
+            ></div>
+          </div>
+
+          <div class="status-legend-grid">
+            <div class="legend-card" *ngFor="let item of rentalStatusDistribution()">
+              <div class="legend-header">
+                <span class="legend-bullet" [style.background-color]="item.color"></span>
+                <span class="legend-title">{{ item.label }}</span>
+                <span class="legend-count tabular-nums">{{ item.count }}</span>
+              </div>
+              <div class="legend-desc">{{ item.description }}</div>
+              <div class="legend-pct tabular-nums">{{ item.percentage }}% del total</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TAB 5: ADMINISTRACIÓN DE TOPOLOGÍA RABBITMQ                   -->
+    <!-- ============================================================ -->
+    <section class="tab-panel" *ngIf="activeTab() === 'rabbitmq'">
+      <div class="panel-header-row">
+        <div class="panel-heading">
+          <h2>Consola Técnica de Mensajería: RabbitAdminService</h2>
+          <p>Administración declarativa y REST de Exchanges, Colas de Procesamiento y Dead Letter Queues (DLQ).</p>
+        </div>
+        <div class="panel-actions rabbit-actions">
+          <button type="button" class="btn btn-secondary" (click)="restoreBaseTopology(true)">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+            Restaurar Topología Oficial
+          </button>
+          <button type="button" class="btn btn-outline" (click)="openCreateExchangeModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Nuevo Exchange
+          </button>
+          <button type="button" class="btn btn-primary" (click)="openCreateQueueModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Nueva Cola
+          </button>
+          <button type="button" class="btn btn-outline" (click)="openCreateBindingModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            Nuevo Binding
+          </button>
+        </div>
+      </div>
+
+      <div class="rabbit-summary-banner">
+        <div class="rabbit-conn-stat">
+          <span class="live-dot-rabbit"></span>
+          <span class="banner-title">RabbitMQ Cluster v3.12 (AWS Amazon MQ)</span>
+          <span class="cluster-vhost">VHost: /smartrent-prod</span>
+        </div>
+        <div class="topology-chips">
+          <span class="chip-item"><strong>{{ exchanges().length }}</strong> Exchanges Activos</span>
+          <span class="chip-item"><strong>{{ queues().length }}</strong> Colas (3 Direct + 3 DLQ)</span>
+          <span class="chip-item"><strong>{{ bindings().length }}</strong> Routing Bindings</span>
+        </div>
+      </div>
+
+      <!-- Exchanges Section -->
+      <div class="sub-panel-card">
+        <div class="sub-panel-header">
+          <div>
+            <h3>Exchanges de Enrutamiento Declarados</h3>
+            <p>Puntos de entrada de comandos y eventos publicados por los microservicios de SmartRent.</p>
+          </div>
+          <span class="count-tag">{{ exchanges().length }} registrados</span>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nombre del Exchange</th>
+                <th>Tipo</th>
+                <th>Durable</th>
+                <th>Auto-Delete</th>
+                <th>Propósito Operativo</th>
+                <th>Gobernanza</th>
+                <th class="th-actions">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ex of exchanges()">
+                <td>
+                  <span class="mono-rabbit-name font-bold">{{ ex.name }}</span>
+                </td>
+                <td>
+                  <span class="rabbit-type-badge">{{ ex.type }}</span>
+                </td>
+                <td>
+                  <span class="badge-flag" [class.flag-true]="ex.durable">{{ ex.durable ? 'true' : 'false' }}</span>
+                </td>
+                <td>
+                  <span class="badge-flag" [class.flag-false]="!ex.autoDelete">{{ ex.autoDelete ? 'true' : 'false' }}</span>
+                </td>
+                <td>
+                  <span class="text-sm text-slate-700">{{ ex.description }}</span>
+                </td>
+                <td>
+                  <span class="badge-official" *ngIf="ex.isOfficial">OFICIAL CASO</span>
+                  <span class="badge-custom" *ngIf="!ex.isOfficial">CUSTOM</span>
+                </td>
+                <td class="td-actions">
+                  <button
+                    type="button"
+                    class="btn-icon-action action-danger"
+                    [disabled]="ex.isOfficial"
+                    [title]="ex.isOfficial ? 'Exchange oficial protegido' : 'Eliminar Exchange'"
+                    (click)="confirmDeleteExchange(ex)"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Queues Section (3 principales + 3 DLQ) -->
+      <div class="sub-panel-card">
+        <div class="sub-panel-header">
+          <div>
+            <h3>Colas de Mensajería & Dead Letter Queues (DLQ)</h3>
+            <p>Monitoreo de colas del caso SmartRent: notificaciones, alistamiento de bodega, contratos y DLQ de contingencia.</p>
+          </div>
+          <span class="count-tag">{{ queues().length }} colas activas</span>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nombre de Cola</th>
+                <th>Tipo</th>
+                <th>Durable</th>
+                <th>DLQ Vinculada</th>
+                <th>Propósito Operativo</th>
+                <th>Mensajes</th>
+                <th>Consumers</th>
+                <th class="th-actions">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let q of queues()">
+                <td>
+                  <span class="mono-rabbit-name font-bold" [class.dlq-name]="q.type === 'dlq'">
+                    {{ q.name }}
+                  </span>
+                </td>
+                <td>
+                  <span
+                    class="rabbit-queue-type"
+                    [class.type-dlq]="q.type === 'dlq'"
+                    [class.type-std]="q.type === 'standard'"
+                  >
+                    {{ q.type === 'dlq' ? 'DEAD LETTER' : 'STANDARD' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge-flag" [class.flag-true]="q.durable">{{ q.durable ? 'true' : 'false' }}</span>
+                </td>
+                <td>
+                  <span *ngIf="q.dlqAssociated" class="mono-dlq-ref">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mini-dlq-icon">
+                      <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v1" />
+                      <polyline points="18 8 22 12 18 16" />
+                      <line x1="6" y1="12" x2="22" y2="12" />
+                    </svg>
+                    {{ q.dlqAssociated }}
+                  </span>
+                  <span *ngIf="!q.dlqAssociated" class="text-xs text-slate-400">N/A</span>
+                </td>
+                <td>
+                  <span class="text-sm text-slate-700">{{ q.purpose }}</span>
+                </td>
+                <td>
+                  <span class="tabular-nums font-semibold" [class.text-amber-600]="q.messageCount > 0">
+                    {{ q.messageCount }}
+                  </span>
+                </td>
+                <td>
+                  <span class="tabular-nums font-semibold">{{ q.consumerCount }}</span>
+                </td>
+                <td class="td-actions">
+                  <button
+                    type="button"
+                    class="btn-icon-action action-danger"
+                    [disabled]="q.isOfficial"
+                    [title]="q.isOfficial ? 'Cola oficial de evaluación protegida' : 'Eliminar Cola'"
+                    (click)="confirmDeleteQueue(q)"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Bindings Section -->
+      <div class="sub-panel-card">
+        <div class="sub-panel-header">
+          <div>
+            <h3>Enlaces de Enrutamiento (Bindings Activos)</h3>
+            <p>Mapeo entre Exchanges origen, Routing Keys específicas o con comodines y Colas destino.</p>
+          </div>
+          <span class="count-tag">{{ bindings().length }} bindings</span>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Exchange Origen</th>
+                <th>Routing Key</th>
+                <th>Cola Destino</th>
+                <th class="th-actions">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let b of bindings()">
+                <td>
+                  <span class="mono-code text-blue-700">{{ b.source }}</span>
+                </td>
+                <td>
+                  <span class="mono-routing-key">{{ b.routingKey }}</span>
+                </td>
+                <td>
+                  <span class="mono-code text-emerald-700">{{ b.destination }}</span>
+                </td>
+                <td class="td-actions">
+                  <button
+                    type="button"
+                    class="btn-icon-action action-danger"
+                    (click)="deleteBinding(b)"
+                    title="Desvincular binding"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- MODAL 1: USUARIO (CREAR / EDITAR CON TENANT)                  -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop" *ngIf="isUserModalOpen()" (click)="closeUserModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ editingUser() ? 'Modificar Usuario del Tenant' : 'Registrar Nuevo Usuario del Tenant' }}</h3>
+        <button type="button" class="btn-close" (click)="closeUserModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="modal-form">
+        <div class="form-group">
+          <label class="form-label">Nombre Completo o Razón Social <span class="req">*</span></label>
+          <input
+            type="text"
+            formControlName="fullName"
+            class="form-control"
+            placeholder="ej. Carlos Mendoza Silva o Constructora Besalco S.A."
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Correo Corporativo (Azure AD / Entra ID) <span class="req">*</span></label>
+          <input
+            type="email"
+            formControlName="email"
+            class="form-control mono-input"
+            placeholder="ej. c.mendoza@pudahuel-rent.cl"
+          />
+        </div>
+
+        <!-- Tenant Selector -->
+        <div class="form-group">
+          <label class="form-label">Tenant Asignado en la Red <span class="req">*</span></label>
+          <select formControlName="tenantId" class="form-control" (change)="onUserModalTenantChange($event)">
+            <option *ngFor="let t of tenants" [value]="t.id">
+              [{{ t.id }}] {{ t.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Empresa / Razón Social <span class="req">*</span></label>
+          <input
+            type="text"
+            formControlName="company"
+            class="form-control"
+            placeholder="ej. Maquinarias Pudahuel Sur SpA"
+          />
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Rol Operativo <span class="req">*</span></label>
+            <select formControlName="role" class="form-control">
+              <option value="ADMIN">Admin (Gobernanza Central)</option>
+              <option value="OPERADOR">Jefe de bodega (Operador)</option>
+              <option value="CLIENTE">Arrendatario (Cliente)</option>
+              <option value="AUDITOR">Auditor (Cumplimiento & Finanzas)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Estado de la Cuenta <span class="req">*</span></label>
+            <select formControlName="status" class="form-control">
+              <option value="ACTIVO">ACTIVO</option>
+              <option value="INACTIVO">INACTIVO</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" (click)="closeUserModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            {{ editingUser() ? 'Guardar Cambios' : 'Dar de Alta Usuario' }}
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
-  <div class="admin-grid">
-    <div class="admin-card">
-      <h3>Gestión de Usuarios</h3>
-      <p>Administra los usuarios del sistema, roles y permisos.</p>
-      <button class="btn-primary">Ver Usuarios</button>
-    </div>
-    <div class="admin-card">
-      <h3>Configuración de Tenants</h3>
-      <p>Administra las configuraciones globales para cada inquilino.</p>
-      <button class="btn-primary">Ver Tenants</button>
-    </div>
-    <div class="admin-card">
-      <h3>Reportes Globales</h3>
-      <p>Accede a métricas y estadísticas del sistema completo.</p>
-      <button class="btn-primary">Ver Reportes</button>
+  <!-- ============================================================ -->
+  <!-- MODAL 2: MAQUINARIA (CREAR / EDITAR COMPLETA)                -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop" *ngIf="isMachineModalOpen()" (click)="closeMachineModal()">
+    <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ editingMachine() ? 'Editar Ficha de Equipo' : 'Alta de Nuevo Equipo o Accesorio' }}</h3>
+        <button type="button" class="btn-close" (click)="closeMachineModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="machineForm" (ngSubmit)="saveMachine()" class="modal-form">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Código SKU de Inventario <span class="req">*</span></label>
+            <input
+              type="text"
+              formControlName="sku"
+              class="form-control mono-input uppercase"
+              placeholder="ej. CAT-320D, BOM-BW211, CUM-50KVA"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Categoría Técnica <span class="req">*</span></label>
+            <select formControlName="category" class="form-control">
+              <option value="MOVIMIENTO_TIERRA">Movimiento de Tierra</option>
+              <option value="COMPACTACION">Compactación</option>
+              <option value="GENERACION">Generación y Energía</option>
+              <option value="ELEVACION">Equipos de Elevación</option>
+              <option value="HERRAMIENTAS">Herramientas Eléctricas</option>
+              <option value="ACCESORIOS">Accesorios y Complementos</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Nombre Comercial del Equipo <span class="req">*</span></label>
+            <input
+              type="text"
+              formControlName="name"
+              class="form-control"
+              placeholder="ej. Excavadora Hidráulica Cat 320 Oruga"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Patio / Bodega Asignada <span class="req">*</span></label>
+            <select formControlName="assignedDepot" class="form-control">
+              <option value="Patio Pudahuel Sur">Patio Pudahuel Sur (Santiago)</option>
+              <option value="Patio La Negra Antofagasta">Patio La Negra (Antofagasta)</option>
+              <option value="Patio San Pedro Biobío">Patio San Pedro (Concepción)</option>
+              <option value="Patio Central Pudahuel">Patio Central Pudahuel</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label">Tarifa Diaria Neta (CLP) <span class="req">*</span></label>
+            <input
+              type="number"
+              formControlName="dailyRate"
+              class="form-control tabular-nums"
+              placeholder="ej. 150000"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Flota Total <span class="req">*</span></label>
+            <input
+              type="number"
+              formControlName="totalStock"
+              class="form-control tabular-nums"
+              placeholder="ej. 5"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Stock Disponible en Patio <span class="req">*</span></label>
+            <input
+              type="number"
+              formControlName="availableStock"
+              class="form-control tabular-nums"
+              placeholder="ej. 3"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Imagen Oficial del Equipo (Catálogo Local)</label>
+          <div class="image-selector-grid">
+            <label
+              *ngFor="let img of localCatalogImages"
+              class="image-select-card"
+              [class.selected]="machineForm.get('imageUrl')?.value === img.url"
+            >
+              <input
+                type="radio"
+                formControlName="imageUrl"
+                [value]="img.url"
+                class="hidden-radio"
+              />
+              <img [src]="img.url" [alt]="img.label" class="img-preview" />
+              <span class="img-title">{{ img.label }}</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" (click)="closeMachineModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            {{ editingMachine() ? 'Guardar Cambios' : 'Registrar en Catálogo' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL 3: AJUSTE RÁPIDO DE STOCK Y TARIFA                     -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop" *ngIf="isQuickEditModalOpen()" (click)="closeQuickEditModal()">
+    <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Ajuste Rápido de Stock y Tarifa</h3>
+          <p class="modal-subtitle" *ngIf="quickEditingMachine() as m">
+            {{ m.name }} (<span class="mono-code">{{ m.sku }}</span>)
+          </p>
+        </div>
+        <button type="button" class="btn-close" (click)="closeQuickEditModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="quickEditForm" (ngSubmit)="saveQuickEdit()" class="modal-form">
+        <div class="form-group">
+          <label class="form-label">Tarifa Diaria Neta (CLP $) <span class="req">*</span></label>
+          <input
+            type="number"
+            formControlName="dailyRate"
+            class="form-control tabular-nums"
+          />
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Stock Disponible <span class="req">*</span></label>
+            <input
+              type="number"
+              formControlName="availableStock"
+              class="form-control tabular-nums"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Flota Total <span class="req">*</span></label>
+            <input
+              type="number"
+              formControlName="totalStock"
+              class="form-control tabular-nums"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Patio de Despacho</label>
+          <input
+            type="text"
+            formControlName="assignedDepot"
+            class="form-control"
+            placeholder="ej. Patio Pudahuel Sur"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Estado Operativo</label>
+          <select formControlName="status" class="form-control">
+            <option value="DISPONIBLE">DISPONIBLE</option>
+            <option value="EN_MANTENCION">EN MANTENCIÓN</option>
+            <option value="SIN_STOCK">SIN STOCK</option>
+          </select>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" (click)="closeQuickEditModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar y Sincronizar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: INSPECCIÓN & VALIDACIÓN TÉCNICA (JEFE DE BODEGA)      -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop" *ngIf="isInspectionModalOpen()" (click)="closeInspectionModal()">
+    <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Inspección Preoperacional & Validación de Maquinaria</h3>
+          <p class="modal-subtitle" *ngIf="inspectingOrder() as o">
+            Orden <strong>{{ o.rentalCode }}</strong> — {{ o.machineName }} (SKU: <code>{{ o.sku }}</code>)
+          </p>
+        </div>
+        <button type="button" class="btn-close" (click)="closeInspectionModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="inspectionForm" class="modal-form">
+        <!-- Order details snippet -->
+        <div class="inspection-order-summary" *ngIf="inspectingOrder() as o">
+          <div class="ios-item">
+            <span class="ios-label">Cliente / Arrendatario:</span>
+            <span class="ios-val">{{ o.lesseeName }} ({{ o.company }})</span>
+          </div>
+          <div class="ios-item">
+            <span class="ios-label">Faena Destino:</span>
+            <span class="ios-val">{{ o.workSiteAddress }}</span>
+          </div>
+          <div class="ios-item">
+            <span class="ios-label">Periodo:</span>
+            <span class="ios-val tabular-nums">{{ o.startDate }} al {{ o.endDate }}</span>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Jefe de Bodega / Inspector Responsable <span class="req">*</span></label>
+            <input
+              type="text"
+              formControlName="operatorName"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Horómetro de Salida (Horas de Uso) <span class="req">*</span></label>
+            <input
+              type="number"
+              formControlName="horometerOut"
+              class="form-control tabular-nums"
+              placeholder="ej. 1420"
+            />
+          </div>
+        </div>
+
+        <!-- Checklist Preoperacional -->
+        <div class="checklist-card">
+          <span class="checklist-title">Checklist de Validación Técnica de Salida</span>
+          <div class="checklist-items">
+            <label class="checklist-row">
+              <input type="checkbox" formControlName="fluidsChecked" />
+              <span>Niveles de fluidos certificados (aceite motor, refrigerante y presión hidráulica dentro de norma).</span>
+            </label>
+            <label class="checklist-row">
+              <input type="checkbox" formControlName="structureChecked" />
+              <span>Inspección estructural OK (sin fisuras en chasis, desgaste de orugas/neumáticos &lt; 40%).</span>
+            </label>
+            <label class="checklist-row">
+              <input type="checkbox" formControlName="brakeEngineChecked" />
+              <span>Pruebas dinámicas operacionales (arranque en frío, sistema de frenado y dirección verificados).</span>
+            </label>
+            <label class="checklist-row">
+              <input type="checkbox" formControlName="securityKitChecked" />
+              <span>Kit de seguridad de faena instalado (extintor certificado, alarma de retroceso, baliza destellante).</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Observaciones del Jefe de Bodega</label>
+          <textarea
+            formControlName="notes"
+            class="form-control"
+            rows="2"
+            placeholder="Comentarios sobre el estado del equipo..."
+          ></textarea>
+        </div>
+
+        <div class="modal-footer validation-modal-footer">
+          <button type="button" class="btn btn-outline" (click)="closeInspectionModal()">Cancelar</button>
+          <button type="button" class="btn btn-danger" (click)="rejectOrderForMaintenance()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            Rechazar por Fallas (A Taller)
+          </button>
+          <button type="button" class="btn btn-primary" (click)="approveAndDispatchOrder()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Aprobar y Despachar a Faena (-1 Stock)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: CREAR COLA RABBITMQ                                   -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop" *ngIf="isQueueModalOpen()" (click)="closeQueueModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Declarar Nueva Cola en RabbitMQ</h3>
+          <p class="modal-subtitle">Microservicio Administrador: <code>POST /queues</code></p>
+        </div>
+        <button type="button" class="btn-close" (click)="closeQueueModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="queueForm" (ngSubmit)="saveQueue()" class="modal-form">
+        <div class="form-group">
+          <label class="form-label">Nombre de Cola <span class="req">*</span></label>
+          <input
+            type="text"
+            formControlName="name"
+            class="form-control mono-input"
+            placeholder="ej. q.cmd.audit"
+          />
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Tipo de Cola</label>
+            <select formControlName="type" class="form-control">
+              <option value="standard">Standard / Classic</option>
+              <option value="quorum">Quorum (High Availability)</option>
+              <option value="dlq">Dead Letter Queue (DLQ)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">DLQ Asociada (Opcional)</label>
+            <input
+              type="text"
+              formControlName="dlqAssociated"
+              class="form-control mono-input"
+              placeholder="ej. q.cmd.audit.dlq"
+            />
+          </div>
+        </div>
+
+        <div class="form-row-2 checkbox-row">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="durable" />
+            <span>Durable</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="autoDelete" />
+            <span>Auto-delete</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Propósito Operativo <span class="req">*</span></label>
+          <textarea
+            formControlName="purpose"
+            class="form-control"
+            rows="2"
+            placeholder="Función de la cola..."
+          ></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" (click)="closeQueueModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Declarar Cola</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: CREAR EXCHANGE                                        -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop" *ngIf="isExchangeModalOpen()" (click)="closeExchangeModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Declarar Nuevo Exchange</h3>
+          <p class="modal-subtitle">Microservicio Administrador: <code>POST /exchanges</code></p>
+        </div>
+        <button type="button" class="btn-close" (click)="closeExchangeModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="exchangeForm" (ngSubmit)="saveExchange()" class="modal-form">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Nombre del Exchange <span class="req">*</span></label>
+            <input
+              type="text"
+              formControlName="name"
+              class="form-control mono-input"
+              placeholder="ej. cmd.telemetry"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tipo de Enrutamiento <span class="req">*</span></label>
+            <select formControlName="type" class="form-control">
+              <option value="direct">Direct</option>
+              <option value="topic">Topic</option>
+              <option value="fanout">Fanout</option>
+              <option value="headers">Headers</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-2 checkbox-row">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="durable" />
+            <span>Durable</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="autoDelete" />
+            <span>Auto-delete</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descripción Funcional <span class="req">*</span></label>
+          <textarea
+            formControlName="description"
+            class="form-control"
+            rows="2"
+          ></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" (click)="closeExchangeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Declarar Exchange</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: CREAR BINDING                                         -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop" *ngIf="isBindingModalOpen()" (click)="closeBindingModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Crear Enlace (Binding)</h3>
+          <p class="modal-subtitle">Microservicio Administrador: <code>POST /bindings</code></p>
+        </div>
+        <button type="button" class="btn-close" (click)="closeBindingModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="bindingForm" (ngSubmit)="saveBinding()" class="modal-form">
+        <div class="form-group">
+          <label class="form-label">Exchange Origen <span class="req">*</span></label>
+          <select formControlName="source" class="form-control mono-input">
+            <option *ngFor="let ex of exchanges()" [value]="ex.name">{{ ex.name }} ({{ ex.type }})</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cola Destino <span class="req">*</span></label>
+          <select formControlName="destination" class="form-control mono-input">
+            <option *ngFor="let q of queues()" [value]="q.name">{{ q.name }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Routing Key <span class="req">*</span></label>
+          <input
+            type="text"
+            formControlName="routingKey"
+            class="form-control mono-input"
+            placeholder="ej. email.send o prep.#"
+          />
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" (click)="closeBindingModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Vincular Binding</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: CONFIRMACIÓN GENÉRICA                                 -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop" *ngIf="isConfirmModalOpen()" (click)="closeConfirmModal()">
+    <div class="modal-card modal-sm confirm-card" (click)="$event.stopPropagation()">
+      <div class="confirm-icon-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
+      <div class="confirm-content">
+        <h3>{{ confirmActionData()?.title || 'Confirmar Acción' }}</h3>
+        <p>{{ confirmActionData()?.message }}</p>
+      </div>
+      <div class="modal-footer confirm-footer">
+        <button type="button" class="btn btn-outline" (click)="closeConfirmModal()">Cancelar</button>
+        <button type="button" class="btn btn-danger" (click)="executeConfirmAction()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TOAST NOTIFICATIONS CONTAINER                                -->
+  <!-- ============================================================ -->
+  <aside class="toast-container" aria-live="polite">
+    <div
+      *ngFor="let toast of toasts()"
+      class="toast-item"
+      [class.toast-success]="toast.type === 'success'"
+      [class.toast-error]="toast.type === 'error'"
+      [class.toast-warning]="toast.type === 'warning'"
+      [class.toast-info]="toast.type === 'info'"
+    >
+      <div class="toast-icon">
+        <svg *ngIf="toast.type === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </svg>
+        <svg *ngIf="toast.type === 'error'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="15" y1="9" x2="9" y2="15" />
+          <line x1="9" y1="9" x2="15" y2="15" />
+        </svg>
+        <svg *ngIf="toast.type === 'warning'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+          <line x1="12" y1="9" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+        <svg *ngIf="toast.type === 'info'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="16" x2="12" y2="12" />
+          <line x1="12" y1="8" x2="12.01" y2="8" />
+        </svg>
+      </div>
+      <div class="toast-body">
+        <span class="toast-title">{{ toast.title }}</span>
+        <span class="toast-text">{{ toast.message }}</span>
+      </div>
+      <button type="button" class="toast-dismiss" (click)="dismissToast(toast.id)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+  </aside>
 </div>

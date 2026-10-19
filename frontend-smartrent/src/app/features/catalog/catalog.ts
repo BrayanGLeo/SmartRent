@@ -167,6 +167,11 @@ export class Catalog implements OnInit {
   }
 
   requestQuote(machine: Machine): void {
+    if (!machine.isAvailable || (machine.availableStock !== undefined && machine.availableStock <= 0)) {
+      this.showToast(`Equipo sin stock disponible en patio: ${machine.name}. No es posible generar pedidos.`, 'quote');
+      return;
+    }
+
     this.cartService.addItem({
       machineId: machine.id,
       machineName: machine.name,
@@ -183,6 +188,11 @@ export class Catalog implements OnInit {
   }
 
   rentDirect(machine: Machine): void {
+    if (!machine.isAvailable || (machine.availableStock !== undefined && machine.availableStock <= 0)) {
+      this.showToast(`Stock agotado: ${machine.name} se encuentra en faena y no admite nuevos pedidos.`, 'express');
+      return;
+    }
+
     this.cartService.addItem({
       machineId: machine.id,
       machineName: machine.name,

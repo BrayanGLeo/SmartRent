@@ -45,6 +45,8 @@ export interface Machine {
   locationDepot?: string;         // Sucursal / Patio de acopio (ej: "Bodega Pudahuel Norte")
   minRentalDays?: number;         // Días mínimos de arriendo
   sku?: string;                   // Código SKU de inventario
+  totalStock?: number;            // Flota total registrada
+  availableStock?: number;        // Unidades actualmente disponibles en patio
 }
 
 export interface MachineFilter {
