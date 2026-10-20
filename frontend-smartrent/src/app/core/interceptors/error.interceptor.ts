@@ -10,19 +10,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.error instanceof ErrorEvent) {
         // Client-side error
         errorMessage = `Error: ${error.error.message}`;
+      } else if (error.status === 401) {
+        // 401 se maneja silenciosamente: el componente que hizo la petición
+        // decide qué hacer (ej: fallback a datos locales en catálogo).
+        return throwError(() => new Error('No autorizado'));
+      } else if (error.status === 403) {
+        errorMessage = 'No tienes permisos para realizar esta acción (403 Forbidden).';
+      } else if (error.status === 500) {
+        errorMessage = 'Error interno del servidor (500 Server Error). Intenta más tarde.';
       } else {
-        // Server-side error
-        if (error.status === 401) {
-          // 401 se maneja silenciosamente: el componente que hizo la petición
-          // decide qué hacer (ej: fallback a datos locales en catálogo).
-          return throwError(() => new Error('No autorizado'));
-        } else if (error.status === 403) {
-          errorMessage = 'No tienes permisos para realizar esta acción (403 Forbidden).';
-        } else if (error.status === 500) {
-          errorMessage = 'Error interno del servidor (500 Server Error). Intenta más tarde.';
-        } else {
-          errorMessage = `Código de error: ${error.status}\nMensaje: ${error.message}`;
-        }
+        errorMessage = `Código de error: ${error.status}\nMensaje: ${error.message}`;
       }
 
       // Evitar bloquear con alert en endpoints de consulta como reportes, auditoria o usuarios
@@ -30,7 +27,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      // TODO: Usar un servicio de Toast o Snackbar, por ahora usaremos alert para que sea visible
+      // Nota: Por ahora se usa alert para visibilidad en frontend hasta integrar Toast/Snackbar
       alert(errorMessage);
       
       return throwError(() => new Error(errorMessage));
