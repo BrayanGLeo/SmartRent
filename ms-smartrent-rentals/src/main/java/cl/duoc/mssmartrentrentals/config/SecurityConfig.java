@@ -40,6 +40,8 @@ public class SecurityConfig {
     private static final String ADMIN_ROLE_NAME = "Administrador";
     private static final String ROLE_JEFEBODEGA = "ROLE_JEFEBODEGA";
     private static final String JEFEBODEGA_ROLE_NAME = "JefeBodega";
+    private static final String ROLE_ARRENDATARIO = "ROLE_ARRENDATARIO";
+    private static final String ARRENDATARIO_ROLE_NAME = "Arrendatario";
 
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:https://753ae9df-d5ec-4c6b-8227-b334fc775087.ciamlogin.com/753ae9df-d5ec-4c6b-8227-b334fc775087/discovery/v2.0/keys}")
     private String jwkSetUri;
@@ -111,9 +113,13 @@ public class SecurityConfig {
                 result.add(new SimpleGrantedAuthority(ROLE_ADMIN));
                 result.add(new SimpleGrantedAuthority(ADMIN_ROLE_NAME));
             }
-            case "JEFEBODEGA", "JEFE_BODEGA", "JEFE BODEGA" -> {
+            case "JEFEBODEGA", "JEFE_BODEGA", "JEFE BODEGA", "OPERADOR", "BODEGA" -> {
                 result.add(new SimpleGrantedAuthority(ROLE_JEFEBODEGA));
                 result.add(new SimpleGrantedAuthority(JEFEBODEGA_ROLE_NAME));
+            }
+            case "ARRENDATARIO", "CLIENTE" -> {
+                result.add(new SimpleGrantedAuthority(ROLE_ARRENDATARIO));
+                result.add(new SimpleGrantedAuthority(ARRENDATARIO_ROLE_NAME));
             }
             default -> result.add(new SimpleGrantedAuthority(ROLE_PREFIX + normalized));
         }

@@ -13,10 +13,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,10 +64,57 @@ class CatalogControllerTest {
     }
 
     @Test
+    void createMachine_ShouldSupportFrontendPayloadFields() {
+        MachineRequest request = new MachineRequest(
+                "Excavadora", null, null, null, null,
+                "CAT-320D", 150000.0, "Movimiento de Tierra", 5, "DISPONIBLE"
+        );
+        when(catalogService.createMachine(any(Machine.class))).thenReturn(testMachine);
+
+        ResponseEntity<Machine> response = catalogController.createMachine(request);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        verify(catalogService, times(1)).createMachine(any(Machine.class));
+    }
+
+    @Test
+    void updateMachine_ShouldReturnUpdatedMachine() {
+        Map<String, Object> body = Map.of("dailyPrice", 150000, "availableStock", 5, "isAvailable", true);
+        when(catalogService.updateMachine(eq(1L), any())).thenReturn(testMachine);
+
+        ResponseEntity<Machine> response = catalogController.updateMachine(1L, body);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        verify(catalogService, times(1)).updateMachine(1L, body);
+    }
+
+    @Test
+    void deleteMachine_ShouldReturnNoContent() {
+        doNothing().when(catalogService).deleteMachine(1L);
+
+        ResponseEntity<Void> response = catalogController.deleteMachine(1L);
+
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        verify(catalogService, times(1)).deleteMachine(1L);
+    }
+
+    @Test
     void updateAvailability_ShouldReturnUpdatedMachine() {
         when(catalogService.updateMachineAvailability(1L, false)).thenReturn(testMachine);
 
         ResponseEntity<Machine> response = catalogController.updateAvailability(1L, false);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(catalogService, times(1)).updateMachineAvailability(1L, false);
+    }
+
+    @Test
+    void updateAvailability_WithBodyMap_ShouldReturnUpdatedMachine() {
+        when(catalogService.updateMachineAvailability(1L, false)).thenReturn(testMachine);
+
+        ResponseEntity<Machine> response = catalogController.updateAvailability(1L, null, Map.of("isAvailable", false));
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(catalogService, times(1)).updateMachineAvailability(1L, false);
@@ -79,6 +128,7 @@ class CatalogControllerTest {
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
+
     @Test
     void getMachineById_ShouldReturnMachineWhenFound() {
         when(catalogService.getMachineById(1L)).thenReturn(java.util.Optional.of(testMachine));

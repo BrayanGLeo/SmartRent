@@ -22,8 +22,19 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         errorMessage = `Código de error: ${error.status}\nMensaje: ${error.message}`;
       }
 
-      // Evitar bloquear con alert en endpoints como reportes, auditoria, usuarios o arriendos (manejados por componentes con Toast)
-      if (req.url.includes('/reports') || req.url.includes('/audit') || req.url.includes('/users') || req.url.includes('/rentals')) {
+      // Evitar bloquear con alert en endpoints manejados por componentes con Toast/UI propia
+      if (
+        req.url.includes('/reports') ||
+        req.url.includes('/audit') ||
+        req.url.includes('/users') ||
+        req.url.includes('/rentals') ||
+        req.url.includes('/catalog') ||
+        req.url.includes('/cart') ||
+        req.url.includes('/checkout') ||
+        req.url.includes('/queues') ||
+        req.url.includes('/exchanges') ||
+        req.url.includes('/bindings')
+      ) {
         return throwError(() => error);
       }
 

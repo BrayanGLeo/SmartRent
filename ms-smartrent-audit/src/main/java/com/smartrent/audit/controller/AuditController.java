@@ -21,7 +21,7 @@ public class AuditController {
         this.repository = repository;
     }
 
-    @GetMapping
+    @GetMapping({"", "/events"})
     public ResponseEntity<List<AuditTimeline>> getAuditHistory() {
         return ResponseEntity.ok(repository.findAllByOrderByTimestampDesc());
     }

@@ -39,13 +39,20 @@ export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   // Endpoints que requieren Authorization Bearer token hacia microservicios protegidos.
   // Una sola entrada por recurso: con strictMatching el patrón está anclado (^...$) y
   // "/reports*" cubre tanto "/reports" como "/reports/kpis?range=..." sin solapamientos.
-  const protectedResources = ['rentals', 'reports', 'audit', 'users'];
+  const protectedResources = ['rentals', 'reports', 'audit', 'users', 'cart', 'checkout'];
   protectedResources.forEach(resource =>
     protectedResourceMap.set(`${environment.apiBaseUrl}/${resource}*`, [environment.azure.apiScope])
   );
 
-  // Catálogo: endpoint público de lectura, no se registra en protectedResourceMap
-  // para que MSAL no intente adjuntar tokens a las peticiones GET públicas.
+  // Catálogo: GET público de lectura sin token, pero operaciones de escritura (POST, PUT, DELETE, PATCH)
+  // desde el panel de Administración requieren adjuntar el Bearer token JWT.
+  protectedResourceMap.set(`${environment.apiBaseUrl}/catalog*`, [
+    { httpMethod: 'GET', scopes: null },
+    { httpMethod: 'POST', scopes: [environment.azure.apiScope] },
+    { httpMethod: 'PUT', scopes: [environment.azure.apiScope] },
+    { httpMethod: 'DELETE', scopes: [environment.azure.apiScope] },
+    { httpMethod: 'PATCH', scopes: [environment.azure.apiScope] }
+  ]);
 
   return {
     interactionType: InteractionType.Redirect,
