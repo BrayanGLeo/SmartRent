@@ -17,7 +17,11 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -64,7 +68,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtDecoder jwtDecoder, JwtAuthenticationConverter conv) throws Exception {
         http.csrf(csrf -> csrf.disable());
-        http.cors(cors -> cors.disable());
+        http.cors(Customizer.withDefaults());
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
@@ -158,5 +162,26 @@ public class SecurityConfig {
             default -> result.add(new SimpleGrantedAuthority(ROLE_PREFIX + normalized));
         }
         return result;
+    }
+
+    @SuppressWarnings("java:S5122")
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:4200",
+                "http://localhost:*",
+                "https://smartrent-portal.s3.us-east-1.amazonaws.com",
+                "*"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("Authorization", "Content-Type", "WWW-Authenticate"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

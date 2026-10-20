@@ -5,15 +5,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import static org.springframework.cloud.gateway.server.mvc.filter.AfterFilterFunctions.dedupeResponseHeader;
+import static org.springframework.cloud.gateway.server.mvc.filter.AfterFilterFunctions.removeResponseHeader;
+import static org.springframework.cloud.gateway.server.mvc.filter.AfterFilterFunctions.DedupeStrategy.RETAIN_FIRST;
+import static org.springframework.cloud.gateway.server.mvc.filter.BeforeFilterFunctions.stripPrefix;
 import static org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions.route;
 import static org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions.http;
 import static org.springframework.web.servlet.function.RequestPredicates.path;
 
-import static org.springframework.cloud.gateway.server.mvc.filter.BeforeFilterFunctions.stripPrefix;
-
 @Configuration
 @SuppressWarnings("null")
 public class GatewayConfig {
+
+    private static final String ALLOW_ORIGIN = "Access-Control-Allow-Origin";
 
     private static final String CATALOG_URL = "http://smartrent-catalog:8081";
     private static final String RENTALS_URL = "http://smartrent-rentals:8082";
@@ -26,14 +30,20 @@ public class GatewayConfig {
     public RouterFunction<ServerResponse> catalogRoute() {
         return route("catalog_route")
                 .route(path("/api/catalog/**"), http(CATALOG_URL))
+                .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                .after(removeResponseHeader(ALLOW_ORIGIN))
                 .build()
                 .and(route("catalog_route_v1")
                         .route(path("/v1/api/catalog/**"), http(CATALOG_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build())
                 .and(route("catalog_route_v2")
                         .route(path("/v2/api/catalog/**"), http(CATALOG_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build());
     }
 
@@ -41,14 +51,20 @@ public class GatewayConfig {
     public RouterFunction<ServerResponse> rentalsRoute() {
         return route("rentals_route")
                 .route(path("/api/rentals/**"), http(RENTALS_URL))
+                .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                .after(removeResponseHeader(ALLOW_ORIGIN))
                 .build()
                 .and(route("rentals_route_v1")
                         .route(path("/v1/api/rentals/**"), http(RENTALS_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build())
                 .and(route("rentals_route_v2")
                         .route(path("/v2/api/rentals/**"), http(RENTALS_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build());
     }
 
@@ -56,14 +72,20 @@ public class GatewayConfig {
     public RouterFunction<ServerResponse> reportsRoute() {
         return route("reports_route")
                 .route(path("/api/reports/**"), http(REPORT_URL))
+                .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                .after(removeResponseHeader(ALLOW_ORIGIN))
                 .build()
                 .and(route("reports_route_v1")
                         .route(path("/v1/api/reports/**"), http(REPORT_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build())
                 .and(route("reports_route_v2")
                         .route(path("/v2/api/reports/**"), http(REPORT_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build());
     }
 
@@ -71,14 +93,20 @@ public class GatewayConfig {
     public RouterFunction<ServerResponse> auditRoute() {
         return route("audit_route")
                 .route(path("/api/audit/**"), http(AUDIT_URL))
+                .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                .after(removeResponseHeader(ALLOW_ORIGIN))
                 .build()
                 .and(route("audit_route_v1")
                         .route(path("/v1/api/audit/**"), http(AUDIT_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build())
                 .and(route("audit_route_v2")
                         .route(path("/v2/api/audit/**"), http(AUDIT_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build());
     }
 
@@ -86,14 +114,20 @@ public class GatewayConfig {
     public RouterFunction<ServerResponse> cartRoute() {
         return route("cart_route")
                 .route(path("/api/cart/**"), http(CART_URL))
+                .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                .after(removeResponseHeader(ALLOW_ORIGIN))
                 .build()
                 .and(route("cart_route_v1")
                         .route(path("/v1/api/cart/**"), http(CART_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build())
                 .and(route("cart_route_v2")
                         .route(path("/v2/api/cart/**"), http(CART_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build());
     }
 
@@ -101,14 +135,20 @@ public class GatewayConfig {
     public RouterFunction<ServerResponse> checkoutRoute() {
         return route("checkout_route")
                 .route(path("/api/checkout/**"), http(CHECKOUT_URL))
+                .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                .after(removeResponseHeader(ALLOW_ORIGIN))
                 .build()
                 .and(route("checkout_route_v1")
                         .route(path("/v1/api/checkout/**"), http(CHECKOUT_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build())
                 .and(route("checkout_route_v2")
                         .route(path("/v2/api/checkout/**"), http(CHECKOUT_URL))
                         .before(stripPrefix(1))
+                        .after(dedupeResponseHeader(ALLOW_ORIGIN, RETAIN_FIRST))
+                        .after(removeResponseHeader(ALLOW_ORIGIN))
                         .build());
     }
 }

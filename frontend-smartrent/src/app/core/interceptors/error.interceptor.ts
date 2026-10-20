@@ -25,8 +25,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      // Evitar bloquear con alert en endpoints de consulta como reportes o auditoria
-      if (req.url.includes('/reports') || req.url.includes('/audit')) {
+      // Evitar bloquear con alert en endpoints de consulta como reportes, auditoria o usuarios
+      if (req.url.includes('/reports') || req.url.includes('/audit') || req.url.includes('/users')) {
         return throwError(() => error);
       }
 
