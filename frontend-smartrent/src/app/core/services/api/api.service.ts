@@ -37,9 +37,9 @@ export type {
   providedIn: 'root'
 })
 export class ApiService {
-  private readonly http = inject(HttpClient);
+  public readonly http = inject(HttpClient);
   private readonly ngZone = inject(NgZone);
-  private readonly baseUrl = environment.apiBaseUrl;
+  public readonly baseUrl = environment.apiBaseUrl;
 
   private readonly mockCatalog: Machine[] = [
     {
@@ -365,8 +365,50 @@ export class ApiService {
     }
   ];
 
+  private getLocalInventoryMap(): Record<string, any> {
+    const map: Record<string, any> = {};
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const cached = localStorage.getItem('smartrent_catalog_inventory');
+        if (cached) {
+          const list = JSON.parse(cached);
+          if (Array.isArray(list)) {
+            list.forEach((item: any) => {
+              if (item.sku) map[item.sku] = item;
+              if (item.name) map[item.name.toLowerCase()] = item;
+              if (item.id) map[item.id.toString()] = item;
+            });
+          }
+        }
+      }
+    } catch (e) {}
+    return map;
+  }
+
   getMockCatalog(): Machine[] {
-    return [...this.mockCatalog];
+    const invMap = this.getLocalInventoryMap();
+    return this.mockCatalog.map(m => {
+      const inv = invMap[m.sku || ''] || invMap[m.name.toLowerCase()] || invMap[m.id.toString()];
+      if (inv) {
+        const availableStock = inv.availableStock !== undefined ? inv.availableStock : (m.availableStock ?? (m.isAvailable ? 2 : 0));
+        const totalStock = inv.totalStock !== undefined ? inv.totalStock : (m.totalStock ?? 5);
+        const isAvail = availableStock > 0 && inv.status !== 'EN_MANTENCION';
+        return {
+          ...m,
+          dailyPrice: inv.dailyRate || m.dailyPrice,
+          pricePerDay: inv.dailyRate || m.pricePerDay,
+          availableStock,
+          totalStock,
+          isAvailable: isAvail,
+          status: isAvail ? 'DISPONIBLE' : (inv.status === 'EN_MANTENCION' ? 'EN_MANTENCION' : 'SIN_STOCK')
+        };
+      }
+      return {
+        ...m,
+        availableStock: m.availableStock ?? (m.isAvailable ? 2 : 0),
+        totalStock: m.totalStock ?? 5
+      };
+    });
   }
 
   getCatalog(): Observable<Machine[]> {
@@ -378,24 +420,34 @@ export class ApiService {
         })
         .then((data: any[]) => {
           this.ngZone.run(() => {
+            const invMap = this.getLocalInventoryMap();
             const machines: Machine[] = data.map(m => {
               const matchedMock = this.mockCatalog.find(mock => 
                 (m.serialNumber && mock.serialNumber === m.serialNumber) ||
                 (m.name && mock.name.toLowerCase() === m.name.toLowerCase()) ||
                 (m.id && mock.id.toString() === m.id.toString())
               );
+              const sku = matchedMock?.sku || m.serialNumber || (m.name ? m.name.toUpperCase().slice(0, 7) : 'SKU-GEN');
+              const inv = invMap[sku] || (m.name ? invMap[m.name.toLowerCase()] : null) || (m.id ? invMap[m.id.toString()] : null);
+              
+              const totalStock = inv?.totalStock !== undefined ? inv.totalStock : (m.totalStock ?? 5);
+              const availableStock = inv?.availableStock !== undefined ? inv.availableStock : (m.isAvailable ? Math.min(2, totalStock) : 0);
+              const isAvail = availableStock > 0 && inv?.status !== 'EN_MANTENCION';
+
               return {
                 id: m.id ? m.id.toString() : crypto.randomUUID(),
                 name: m.name,
                 serialNumber: m.serialNumber,
                 description: m.description || matchedMock?.description || 'Sin descripción',
                 category: m.category?.name || matchedMock?.category || 'General',
-                status: m.isAvailable ? 'DISPONIBLE' : 'ARRENDADO',
-                isAvailable: !!m.isAvailable,
-                dailyPrice: m.dailyPrice || matchedMock?.dailyPrice || 0,
-                pricePerDay: m.dailyPrice || matchedMock?.dailyPrice || 0,
+                status: isAvail ? 'DISPONIBLE' : (inv?.status === 'EN_MANTENCION' ? 'EN_MANTENCION' : 'SIN_STOCK'),
+                isAvailable: isAvail,
+                availableStock,
+                totalStock,
+                dailyPrice: inv?.dailyRate || m.dailyPrice || matchedMock?.dailyPrice || 0,
+                pricePerDay: inv?.dailyRate || m.dailyPrice || matchedMock?.dailyPrice || 0,
                 brand: matchedMock?.brand,
-                sku: matchedMock?.sku || m.serialNumber,
+                sku,
                 specs: matchedMock?.specs,
                 imageUrl: matchedMock?.imageUrl,
                 locationDepot: matchedMock?.locationDepot,
@@ -408,7 +460,8 @@ export class ApiService {
         })
         .catch(err => {
           this.ngZone.run(() => {
-            observer.error(err);
+            observer.next(this.getMockCatalog());
+            observer.complete();
           });
         });
     });
@@ -433,6 +486,36 @@ export class ApiService {
     return this.http.put<Rental>(`${this.baseUrl}/rentals/${id}/status`, { status });
   }
 
+  // Catalog Management (Admin)
+  updateCatalogService(id: string | number, data: Partial<any>): Observable<any> {
+    return this.http.put(`${this.baseUrl}/catalog/services/${id}`, data);
+  }
+
+  createCatalogService(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/catalog/services`, data);
+  }
+
+  deleteCatalogService(id: string | number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/catalog/services/${id}`);
+  }
+
+  // Users (Admin)
+  getAdminUsers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/users`);
+  }
+
+  createAdminUser(user: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/users`, user);
+  }
+
+  updateAdminUser(id: string | number, user: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/users/${id}`, user);
+  }
+
+  deleteAdminUser(id: string | number): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/users/${id}`);
+  }
+
   // Reports
   getKpis(): Observable<KpiData> {
     return this.http.get<any>(`${this.baseUrl}/reports/kpis`).pipe(
@@ -441,6 +524,51 @@ export class ApiService {
         labels: data?.labels || ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
       }))
     );
+  }
+
+  getReportKpis(range: string = 'last24h'): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/report/kpis`, { params: { range } });
+  }
+
+  getTopServices(range: string = 'last7d'): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/report/top-services`, { params: { range } });
+  }
+
+  // RabbitMQ Topology Administration
+  getRabbitQueues(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/queues`);
+  }
+
+  createRabbitQueue(queue: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/queues`, queue);
+  }
+
+  deleteRabbitQueue(name: string): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/queues/${encodeURIComponent(name)}`);
+  }
+
+  getRabbitExchanges(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/exchanges`);
+  }
+
+  createRabbitExchange(exchange: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/exchanges`, exchange);
+  }
+
+  deleteRabbitExchange(name: string): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/exchanges/${encodeURIComponent(name)}`);
+  }
+
+  getRabbitBindings(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/bindings`);
+  }
+
+  createRabbitBinding(binding: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/bindings`, binding);
+  }
+
+  deleteRabbitBinding(binding: any): Observable<any> {
+    return this.http.request<any>('delete', `${this.baseUrl}/bindings`, { body: binding });
   }
 
   // Audit

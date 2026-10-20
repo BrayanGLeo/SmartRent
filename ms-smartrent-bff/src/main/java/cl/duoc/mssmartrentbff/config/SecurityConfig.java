@@ -35,7 +35,17 @@ public class SecurityConfig {
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/v1/api/catalog/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/v2/api/catalog/**"))
+                                .antMatcher("/v2/api/catalog/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/api/users/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v1/api/users/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v2/api/users/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/users/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/api/admin/**"))
                 .permitAll()
                 .requestMatchers(
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
