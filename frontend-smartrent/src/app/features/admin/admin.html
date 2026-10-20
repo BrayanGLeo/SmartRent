@@ -126,17 +126,35 @@
     <section class="tab-panel" *ngIf="activeTab() === 'users'">
       <div class="panel-header-row">
         <div class="panel-heading">
-          <h2>Usuarios del Tenant & Gobernanza de la Red</h2>
-          <p>Supervisión de usuarios federados por empresa / tenant en la red SmartRent con Azure AD.</p>
+          <h2>Usuarios del Tenant & Directorio Federado</h2>
+          <p>Supervisión de usuarios federados del tenant en la red SmartRent con Microsoft Entra ID (Azure CIAM).</p>
         </div>
         <div class="panel-actions">
-          <button type="button" class="btn btn-primary" (click)="openCreateUserModal()">
-            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
+          <button type="button" class="btn btn-primary" (click)="syncTenantUsers()" [disabled]="isSyncing()">
+            <svg class="btn-icon" [class.animate-spin]="isSyncing()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
             </svg>
-            Nuevo Usuario del Tenant
+            <span>{{ isSyncing() ? 'Sincronizando...' : 'Sincronizar Directorio Tenant' }}</span>
           </button>
+        </div>
+      </div>
+
+      <!-- IDaaS Cloud Security Notice -->
+      <div class="idaas-security-banner">
+        <div class="idaas-banner-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+        <div class="idaas-banner-content">
+          <span class="idaas-banner-title">Directorio de Identidad de Solo Lectura (Microsoft Entra ID CIAM)</span>
+          <p class="idaas-banner-desc">
+            Los nombres, correos y roles son leídos del Tenant de Azure (ID: <code>753ae9df-d5ec-4c6b-8227-b334fc775087</code>).
+            Por políticas estrictas de ciberseguridad y privacidad, las contraseñas son confidenciales y no se pueden modificar desde este panel; se administran exclusivamente en Azure Portal.
+          </p>
         </div>
       </div>
 
@@ -147,14 +165,14 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tenant-icon">
               <path d="M3 21h18M3 7v14M21 7v14M6 11h3M6 15h3M15 11h3M15 15h3M9 21V3h6v18" />
             </svg>
-            Filtrar por Tenant / Empresa Red:
+            Filtrar por Tenant / Directorio:
           </label>
           <select
             class="tenant-select-control"
             [value]="selectedTenantId()"
             (change)="onTenantSelectChange($any($event.target).value)"
           >
-            <option value="ALL">Todos los Tenants de la Red (20 Empresas)</option>
+            <option value="ALL">Todos los Tenants de la Red</option>
             <option *ngFor="let t of tenants" [value]="t.id">
               [{{ t.id }}] {{ t.name }}
             </option>
@@ -230,14 +248,14 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>ID / OID</th>
               <th>Nombre Completo</th>
               <th>Correo Azure AD</th>
-              <th>Tenant / Empresa Asignada</th>
+              <th>Tenant Asignado</th>
               <th>Rol Oficial</th>
               <th>Estado</th>
-              <th>Fecha Alta</th>
-              <th class="th-actions">Acciones</th>
+              <th>Fuente</th>
+              <th class="th-actions">Ficha</th>
             </tr>
           </thead>
           <tbody>
@@ -275,45 +293,18 @@
                 </span>
               </td>
               <td>
-                <span class="cell-date">{{ user.createdAt }}</span>
+                <span class="badge-source">Entra ID CIAM</span>
               </td>
               <td class="td-actions">
                 <button
                   type="button"
                   class="btn-icon-action"
-                  (click)="openEditUserModal(user)"
-                  title="Editar usuario"
+                  (click)="viewUserIdentityCard(user)"
+                  title="Ver Ficha de Identidad del Tenant (Solo Lectura)"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </button>
-
-                <button
-                  type="button"
-                  class="btn-icon-action"
-                  [title]="user.status === 'ACTIVO' ? 'Inactivar cuenta' : 'Activar cuenta'"
-                  (click)="toggleUserStatus(user)"
-                >
-                  <svg *ngIf="user.status === 'ACTIVO'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                  </svg>
-                  <svg *ngIf="user.status === 'INACTIVO'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </button>
-
-                <button
-                  type="button"
-                  class="btn-icon-action action-danger"
-                  (click)="confirmDeleteUser(user)"
-                  title="Eliminar usuario"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
                   </svg>
                 </button>
               </td>
@@ -1186,12 +1177,16 @@
   </main>
 
   <!-- ============================================================ -->
-  <!-- MODAL 1: USUARIO (CREAR / EDITAR CON TENANT)                  -->
+  <!-- ============================================================ -->
+  <!-- MODAL 1: USUARIO (FICHA DE IDENTIDAD FEDERADA - SOLO LECTURA)  -->
   <!-- ============================================================ -->
   <div class="modal-backdrop" *ngIf="isUserModalOpen()" (click)="closeUserModal()">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>{{ editingUser() ? 'Modificar Usuario del Tenant' : 'Registrar Nuevo Usuario del Tenant' }}</h3>
+        <div class="modal-header-text">
+          <h3>Ficha de Identidad del Tenant</h3>
+          <span class="modal-badge-source">Sincronizado con Microsoft Entra ID (CIAM)</span>
+        </div>
         <button type="button" class="btn-close" (click)="closeUserModal()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -1200,74 +1195,85 @@
         </button>
       </div>
 
-      <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="modal-form">
+      <div class="readonly-alert-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="alert-box-icon">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="16" x2="12" y2="12" />
+          <line x1="12" y1="8" x2="12.01" y2="8" />
+        </svg>
+        <p>
+          <strong>Identidad Protegida:</strong> Los datos de este usuario provienen del Tenant federado de Azure.
+          La contraseña y las credenciales son privadas y no pueden ser modificadas desde este panel; su gestión se realiza exclusivamente en <strong>Azure Portal</strong>.
+        </p>
+      </div>
+
+      <div class="modal-form">
         <div class="form-group">
-          <label class="form-label">Nombre Completo o Razón Social <span class="req">*</span></label>
+          <label class="form-label">Nombre Completo (displayName en Azure)</label>
           <input
             type="text"
-            formControlName="fullName"
-            class="form-control"
-            placeholder="ej. Carlos Mendoza Silva o Constructora Besalco S.A."
+            [value]="userForm.get('fullName')?.value"
+            class="form-control readonly-input"
+            readonly
           />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Correo Corporativo (Azure AD / Entra ID) <span class="req">*</span></label>
+          <label class="form-label">Correo Corporativo / Identidad de Acceso (UPN)</label>
           <input
             type="email"
-            formControlName="email"
-            class="form-control mono-input"
-            placeholder="ej. c.mendoza@pudahuel-rent.cl"
+            [value]="userForm.get('email')?.value"
+            class="form-control mono-input readonly-input"
+            readonly
           />
         </div>
 
-        <!-- Tenant Selector -->
         <div class="form-group">
-          <label class="form-label">Tenant Asignado en la Red <span class="req">*</span></label>
-          <select formControlName="tenantId" class="form-control" (change)="onUserModalTenantChange($event)">
-            <option *ngFor="let t of tenants" [value]="t.id">
-              [{{ t.id }}] {{ t.name }}
-            </option>
-          </select>
+          <label class="form-label">Tenant ID (Directorio Cloud Native)</label>
+          <input
+            type="text"
+            [value]="userForm.get('tenantId')?.value"
+            class="form-control mono-input readonly-input"
+            readonly
+          />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Empresa / Razón Social <span class="req">*</span></label>
+          <label class="form-label">Organización / Empresa en la Red</label>
           <input
             type="text"
-            formControlName="company"
-            class="form-control"
-            placeholder="ej. Maquinarias Pudahuel Sur SpA"
+            [value]="userForm.get('company')?.value"
+            class="form-control readonly-input"
+            readonly
           />
         </div>
 
         <div class="form-row-2">
           <div class="form-group">
-            <label class="form-label">Rol Operativo <span class="req">*</span></label>
-            <select formControlName="role" class="form-control">
-              <option value="ADMIN">Admin (Gobernanza Central)</option>
-              <option value="OPERADOR">Jefe de bodega (Operador)</option>
-              <option value="CLIENTE">Arrendatario (Cliente)</option>
-              <option value="AUDITOR">Auditor (Cumplimiento & Finanzas)</option>
-            </select>
+            <label class="form-label">Rol Oficial (JWT Claim roles)</label>
+            <input
+              type="text"
+              [value]="getRoleBadge(userForm.get('role')?.value).label"
+              class="form-control readonly-input"
+              readonly
+            />
           </div>
 
           <div class="form-group">
-            <label class="form-label">Estado de la Cuenta <span class="req">*</span></label>
-            <select formControlName="status" class="form-control">
-              <option value="ACTIVO">ACTIVO</option>
-              <option value="INACTIVO">INACTIVO</option>
-            </select>
+            <label class="form-label">Estado en el Directorio</label>
+            <input
+              type="text"
+              [value]="userForm.get('status')?.value"
+              class="form-control readonly-input"
+              readonly
+            />
           </div>
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline" (click)="closeUserModal()">Cancelar</button>
-          <button type="submit" class="btn btn-primary">
-            {{ editingUser() ? 'Guardar Cambios' : 'Dar de Alta Usuario' }}
-          </button>
+          <button type="button" class="btn btn-secondary" (click)="closeUserModal()">Cerrar Ficha</button>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 

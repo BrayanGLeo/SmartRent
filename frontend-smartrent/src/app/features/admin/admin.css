@@ -278,6 +278,119 @@
   font-weight: 500;
 }
 
+/* IDaaS SECURITY BANNER & BADGES */
+.idaas-security-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #2563eb;
+  border-radius: 8px;
+  padding: 0.9rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.idaas-banner-icon {
+  width: 32px;
+  height: 32px;
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.idaas-banner-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.idaas-banner-content {
+  flex: 1;
+}
+
+.idaas-banner-title {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin-bottom: 0.2rem;
+}
+
+.idaas-banner-desc {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #1e3a8a;
+  line-height: 1.4;
+}
+
+.idaas-banner-desc code {
+  background-color: #dbeafe;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.badge-source {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #1d4ed8;
+  background-color: #dbeafe;
+  border: 1px solid #bfdbfe;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.modal-badge-source {
+  display: block;
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: #0284c7;
+  margin-top: 0.2rem;
+}
+
+.readonly-alert-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 1.25rem 1.5rem 0 1.5rem;
+}
+
+.readonly-alert-box .alert-box-icon {
+  width: 18px;
+  height: 18px;
+  color: #0284c7;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.readonly-alert-box p {
+  margin: 0;
+  font-size: 0.775rem;
+  color: #475569;
+  line-height: 1.35;
+}
+
+.readonly-input {
+  background-color: #f8fafc !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+  cursor: default;
+}
+
 /* WAREHOUSE MANAGER VALIDATION BANNER */
 .warehouse-badge-banner {
   display: flex;

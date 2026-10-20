@@ -155,12 +155,12 @@ export class AdminPanel implements OnInit {
   // ==========================================
   public readonly tenants: TenantInfo[] = [
     {
-      id: 'TNT-CENTRAL-01',
-      name: 'SmartRent Matriz Central',
+      id: '753ae9df-d5ec-4c6b-8227-b334fc775087',
+      name: 'SmartRent Red CIAM (Microsoft Entra ID)',
       rut: '76.842.100-K',
-      headquarters: 'Av. El Bosque Norte 500, Las Condes, RM',
-      depotLocation: 'Patio Central Pudahuel',
-      activeUsersCount: 3,
+      headquarters: 'Directorio Cloud Native Azure CIAM',
+      depotLocation: 'Patio Pudahuel Central / Red 20 Empresas',
+      activeUsersCount: 4,
       contactEmail: 'admin@smartrent.cl',
       status: 'ACTIVO'
     },
@@ -226,7 +226,7 @@ export class AdminPanel implements OnInit {
     }
   ];
 
-  public selectedTenantId = signal<string>('ALL');
+  public selectedTenantId = signal<string>('753ae9df-d5ec-4c6b-8227-b334fc775087');
   public users = signal<AdminUser[]>([]);
   public userSearchQuery = signal<string>('');
   public userRoleFilter = signal<string>('ALL');
@@ -437,7 +437,8 @@ export class AdminPanel implements OnInit {
   }
 
   // ==========================================
-  // USERS LOGIC (CRUD & MULTI-TENANT)
+  // ==========================================
+  // USERS LOGIC (FEDERATED TENANT & READ-ONLY IDaaS)
   // ==========================================
   private initializeUsers(): void {
     const cached = localStorage.getItem('smartrent_admin_users');
@@ -446,6 +447,7 @@ export class AdminPanel implements OnInit {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
           this.users.set(parsed);
+          this.refreshActiveUserFromMsal();
           return;
         }
       } catch (e) {
@@ -455,89 +457,126 @@ export class AdminPanel implements OnInit {
 
     const initialUsers: AdminUser[] = [
       {
-        id: 'USR-101',
+        id: 'USR-AZ-01',
         fullName: 'Brayan González Leo',
         email: 'b.gonzalez@smartrent.cl',
-        company: 'SmartRent Red Matriz (Central)',
-        tenantId: 'TNT-CENTRAL-01',
+        company: 'SmartRent Red CIAM (Microsoft Entra ID)',
+        tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087',
         role: 'ADMIN',
         status: 'ACTIVO',
         createdAt: '2024-01-15'
       },
       {
-        id: 'USR-102',
-        fullName: 'Carlos Mendoza Silva',
+        id: 'USR-AZ-02',
+        fullName: 'Carlos Mendoza Silva (Jefe Bodega)',
         email: 'c.mendoza@pudahuel-rent.cl',
-        company: 'Maquinarias Pudahuel Sur SpA',
-        tenantId: 'TNT-PUDAHUEL-02',
+        company: 'SmartRent Red CIAM (Microsoft Entra ID)',
+        tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087',
         role: 'OPERADOR',
         status: 'ACTIVO',
         createdAt: '2024-02-01'
       },
       {
-        id: 'USR-103',
-        fullName: 'Constanza Valenzuela',
+        id: 'USR-AZ-03',
+        fullName: 'Constanza Valenzuela (Arrendatario)',
         email: 'c.valenzuela@besalco.cl',
-        company: 'Constructora Besalco S.A.',
-        tenantId: 'TNT-BESALCO-03',
+        company: 'SmartRent Red CIAM (Microsoft Entra ID)',
+        tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087',
         role: 'CLIENTE',
         status: 'ACTIVO',
         createdAt: '2024-02-18'
       },
       {
-        id: 'USR-104',
-        fullName: 'Rodrigo Araya Peña',
+        id: 'USR-AZ-04',
+        fullName: 'Rodrigo Araya Peña (Auditor)',
         email: 'r.araya@kpmg-audit.cl',
-        company: 'KPMG Auditores & Consultores',
-        tenantId: 'TNT-KPMG-06',
+        company: 'SmartRent Red CIAM (Microsoft Entra ID)',
+        tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087',
         role: 'AUDITOR',
         status: 'ACTIVO',
         createdAt: '2024-01-20'
-      },
-      {
-        id: 'USR-105',
-        fullName: 'Felipe Morales Tapia',
-        email: 'f.morales@antofagasta-equipos.cl',
-        company: 'Equipos Mineros Antofagasta Ltda',
-        tenantId: 'TNT-ANTOF-04',
-        role: 'OPERADOR',
-        status: 'ACTIVO',
-        createdAt: '2024-03-12'
-      },
-      {
-        id: 'USR-106',
-        fullName: 'Daniela Soto Navarrete',
-        email: 'd.soto@echeverria-izquierdo.cl',
-        company: 'Echeverría Izquierdo Ingeniería',
-        tenantId: 'TNT-ECHEVERRIA-07',
-        role: 'CLIENTE',
-        status: 'ACTIVO',
-        createdAt: '2024-04-05'
-      },
-      {
-        id: 'USR-107',
-        fullName: 'Héctor Paredes Rubio',
-        email: 'h.paredes@vial-biobio.cl',
-        company: 'Vial Rent Concepción SpA',
-        tenantId: 'TNT-BIOBIO-05',
-        role: 'OPERADOR',
-        status: 'INACTIVO',
-        createdAt: '2024-05-10'
       }
     ];
 
     this.users.set(initialUsers);
+    this.refreshActiveUserFromMsal();
     this.saveUsersToStorage();
 
     this.apiService.getAdminUsers().subscribe({
       next: (remoteUsers: any[]) => {
         if (Array.isArray(remoteUsers) && remoteUsers.length > 0) {
           this.users.set(remoteUsers);
+          this.refreshActiveUserFromMsal();
           this.saveUsersToStorage();
         }
       },
       error: () => {}
     });
+  }
+
+  public syncTenantUsers(): void {
+    this.isSyncing.set(true);
+    this.apiService.getAdminUsers().subscribe({
+      next: (remoteUsers: any[]) => {
+        this.isSyncing.set(false);
+        if (Array.isArray(remoteUsers) && remoteUsers.length > 0) {
+          this.users.set(remoteUsers);
+          this.refreshActiveUserFromMsal();
+          this.saveUsersToStorage();
+          this.showToast(
+            'success',
+            'Directorio Sincronizado',
+            `Se obtuvieron ${remoteUsers.length} usuarios desde el Tenant de Microsoft Entra ID.`
+          );
+        } else {
+          this.refreshActiveUserFromMsal();
+          this.showToast(
+            'info',
+            'Directorio Actualizado',
+            'Sincronizado con la sesión activa autenticada en Microsoft Entra ID.'
+          );
+        }
+      },
+      error: () => {
+        this.isSyncing.set(false);
+        this.refreshActiveUserFromMsal();
+        this.showToast(
+          'info',
+          'Directorio Local Sincronizado',
+          'Mostrando usuarios federados del tenant autenticados en el IDaaS (Azure CIAM).'
+        );
+      }
+    });
+  }
+
+  public refreshActiveUserFromMsal(): void {
+    const currentAcc = this.authService.account();
+    if (!currentAcc) return;
+
+    const claims = (currentAcc.idTokenClaims || {}) as any;
+    const roles: string[] = claims.roles || [];
+    let mappedRole: 'ADMIN' | 'OPERADOR' | 'CLIENTE' | 'AUDITOR' = 'ADMIN';
+    if (roles.includes('ROLE_ADMIN')) mappedRole = 'ADMIN';
+    else if (roles.includes('ROLE_JEFEBODEGA')) mappedRole = 'OPERADOR';
+    else if (roles.includes('ROLE_AUDITOR')) mappedRole = 'AUDITOR';
+    else if (roles.includes('ROLE_ARRENDATARIO')) mappedRole = 'CLIENTE';
+
+    const activeUser: AdminUser = {
+      id: claims.oid ? `AZ-${claims.oid.substring(0, 8)}` : 'AZ-ACTIVO',
+      fullName: currentAcc.name || currentAcc.username,
+      email: currentAcc.username,
+      company: 'SmartRent Red CIAM (Microsoft Entra ID)',
+      tenantId: claims.tid || '753ae9df-d5ec-4c6b-8227-b334fc775087',
+      role: mappedRole,
+      status: 'ACTIVO',
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+
+    this.users.update(list => {
+      const filtered = list.filter(u => u.email.toLowerCase() !== activeUser.email.toLowerCase());
+      return [activeUser, ...filtered];
+    });
+    this.saveUsersToStorage();
   }
 
   private saveUsersToStorage(): void {
@@ -552,23 +591,7 @@ export class AdminPanel implements OnInit {
     }
   }
 
-  public openCreateUserModal(): void {
-    this.editingUser.set(null);
-    const activeTenant = this.selectedTenantId() !== 'ALL' ? this.selectedTenantId() : 'TNT-CENTRAL-01';
-    const foundTenant = this.tenants.find(t => t.id === activeTenant);
-
-    this.userForm.reset({
-      fullName: '',
-      email: '',
-      tenantId: activeTenant,
-      company: foundTenant ? foundTenant.name : 'SmartRent Red Central',
-      role: 'CLIENTE',
-      status: 'ACTIVO'
-    });
-    this.isUserModalOpen.set(true);
-  }
-
-  public openEditUserModal(user: AdminUser): void {
+  public viewUserIdentityCard(user: AdminUser): void {
     this.editingUser.set(user);
     this.userForm.patchValue({
       fullName: user.fullName,
@@ -581,90 +604,9 @@ export class AdminPanel implements OnInit {
     this.isUserModalOpen.set(true);
   }
 
-  public onUserModalTenantChange(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    const tid = select.value;
-    const found = this.tenants.find(t => t.id === tid);
-    if (found) {
-      this.userForm.patchValue({ company: found.name });
-    }
-  }
-
   public closeUserModal(): void {
     this.isUserModalOpen.set(false);
     this.editingUser.set(null);
-  }
-
-  public saveUser(): void {
-    if (this.userForm.invalid) {
-      this.userForm.markAllAsTouched();
-      this.showToast('warning', 'Campos requeridos', 'Verifica el formulario antes de guardar el usuario.');
-      return;
-    }
-
-    const formVal = this.userForm.value;
-    const current = this.editingUser();
-
-    if (current) {
-      const updated: AdminUser = {
-        ...current,
-        fullName: formVal.fullName,
-        email: formVal.email,
-        tenantId: formVal.tenantId,
-        company: formVal.company,
-        role: formVal.role,
-        status: formVal.status
-      };
-
-      this.users.update(list => list.map(u => (u.id === current.id ? updated : u)));
-      this.saveUsersToStorage();
-      this.closeUserModal();
-      this.showToast('success', 'Usuario actualizado', `Datos actualizados para ${updated.fullName} (${updated.tenantId}).`);
-
-      this.apiService.updateAdminUser(current.id, updated).subscribe({ error: () => {} });
-    } else {
-      const newUser: AdminUser = {
-        id: `USR-${Math.floor(100 + Math.random() * 900)}`,
-        fullName: formVal.fullName,
-        email: formVal.email,
-        tenantId: formVal.tenantId,
-        company: formVal.company,
-        role: formVal.role,
-        status: formVal.status,
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-
-      this.users.update(list => [newUser, ...list]);
-      this.saveUsersToStorage();
-      this.closeUserModal();
-      this.showToast('success', 'Usuario registrado', `Se dio de alta a ${newUser.fullName} en ${newUser.company}.`);
-
-      this.apiService.createAdminUser(newUser).subscribe({ error: () => {} });
-    }
-  }
-
-  public toggleUserStatus(user: AdminUser): void {
-    const nextStatus: 'ACTIVO' | 'INACTIVO' = user.status === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-    const updated: AdminUser = { ...user, status: nextStatus };
-
-    this.users.update(list => list.map(u => (u.id === user.id ? updated : u)));
-    this.saveUsersToStorage();
-    this.showToast('info', 'Estado modificado', `El usuario ${user.fullName} quedó ${nextStatus}.`);
-
-    this.apiService.updateAdminUser(user.id, updated).subscribe({ error: () => {} });
-  }
-
-  public confirmDeleteUser(user: AdminUser): void {
-    this.openConfirmModal(
-      'Eliminar Usuario',
-      `¿Confirmas la eliminación del usuario "${user.fullName}" (${user.email}) del tenant ${user.tenantId}? Esta acción revocará sus credenciales corporativas.`,
-      () => {
-        this.users.update(list => list.filter(u => u.id !== user.id));
-        this.saveUsersToStorage();
-        this.showToast('success', 'Usuario eliminado', `Se eliminó al usuario ${user.fullName}.`);
-        this.apiService.deleteAdminUser(user.id).subscribe({ error: () => {} });
-      }
-    );
   }
 
   // ==========================================
