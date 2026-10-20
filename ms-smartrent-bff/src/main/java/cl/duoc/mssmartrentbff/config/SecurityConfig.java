@@ -31,6 +31,11 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    private static final String ROLE_ADMIN = "ROLE_ADMIN";
+    private static final String ADMIN_ROLE_NAME = "Administrador";
+    private static final String ROLE_AUDITOR = "ROLE_AUDITOR";
+    private static final String AUDITOR_ROLE_NAME = "Auditor";
+
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:https://753ae9df-d5ec-4c6b-8227-b334fc775087.ciamlogin.com/753ae9df-d5ec-4c6b-8227-b334fc775087/discovery/v2.0/keys}")
     private String jwkSetUri;
 
@@ -88,7 +93,7 @@ public class SecurityConfig {
                                 .antMatcher("/v1/api/reports/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/v2/api/reports/**"))
-                .hasAnyAuthority("ROLE_ADMIN", "Administrador")
+                .hasAnyAuthority(ROLE_ADMIN, ADMIN_ROLE_NAME)
                 .requestMatchers(
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/audit/**"),
@@ -98,7 +103,7 @@ public class SecurityConfig {
                                 .antMatcher("/v1/api/audit/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/v2/api/audit/**"))
-                .hasAnyAuthority("ROLE_AUDITOR", "Auditor", "ROLE_ADMIN", "Administrador")
+                .hasAnyAuthority(ROLE_AUDITOR, AUDITOR_ROLE_NAME, ROLE_ADMIN, ADMIN_ROLE_NAME)
                 .anyRequest().authenticated());
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder).jwtAuthenticationConverter(conv)));
         return http.build();
@@ -116,13 +121,13 @@ public class SecurityConfig {
             if (roles != null) {
                 roles.forEach(r -> {
                     autoridades.add(new SimpleGrantedAuthority(r));
-                    if ("Administrador".equalsIgnoreCase(r) || "ROLE_ADMIN".equalsIgnoreCase(r)) {
-                        autoridades.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                        autoridades.add(new SimpleGrantedAuthority("Administrador"));
+                    if (ADMIN_ROLE_NAME.equalsIgnoreCase(r) || ROLE_ADMIN.equalsIgnoreCase(r)) {
+                        autoridades.add(new SimpleGrantedAuthority(ROLE_ADMIN));
+                        autoridades.add(new SimpleGrantedAuthority(ADMIN_ROLE_NAME));
                     }
-                    if ("Auditor".equalsIgnoreCase(r) || "ROLE_AUDITOR".equalsIgnoreCase(r)) {
-                        autoridades.add(new SimpleGrantedAuthority("ROLE_AUDITOR"));
-                        autoridades.add(new SimpleGrantedAuthority("Auditor"));
+                    if (AUDITOR_ROLE_NAME.equalsIgnoreCase(r) || ROLE_AUDITOR.equalsIgnoreCase(r)) {
+                        autoridades.add(new SimpleGrantedAuthority(ROLE_AUDITOR));
+                        autoridades.add(new SimpleGrantedAuthority(AUDITOR_ROLE_NAME));
                     }
                 });
             }
@@ -132,6 +137,7 @@ public class SecurityConfig {
         return converter;
     }
 
+    @SuppressWarnings("java:S5122")
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
