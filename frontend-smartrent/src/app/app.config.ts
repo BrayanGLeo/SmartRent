@@ -36,6 +36,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
 
 export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   const protectedResourceMap = new Map<string, Array<string | ProtectedResourceScopes>>();
+  // Endpoints que requieren Authorization Bearer token hacia microservicios protegidos
   protectedResourceMap.set(`${environment.apiBaseUrl}/rentals`, [environment.azure.apiScope]);
   protectedResourceMap.set(`${environment.apiBaseUrl}/rentals/*`, [environment.azure.apiScope]);
   protectedResourceMap.set(`${environment.apiBaseUrl}/reports`, [environment.azure.apiScope]);
@@ -43,10 +44,8 @@ export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   protectedResourceMap.set(`${environment.apiBaseUrl}/audit`, [environment.azure.apiScope]);
   protectedResourceMap.set(`${environment.apiBaseUrl}/audit/*`, [environment.azure.apiScope]);
   
-  // Catálogo: endpoint público, no se registra en protectedResourceMap
-  // para que MSAL no intente adjuntar tokens a las peticiones GET.
-  // Las operaciones de escritura (POST/PUT/DELETE) se manejan desde
-  // componentes protegidos con MsalGuard donde el usuario ya está autenticado.
+  // Catálogo: endpoint público de lectura, no se registra en protectedResourceMap
+  // para que MSAL no intente adjuntar tokens a las peticiones GET públicas.
 
   return {
     interactionType: InteractionType.Redirect,
