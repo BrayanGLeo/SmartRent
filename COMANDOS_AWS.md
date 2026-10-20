@@ -158,3 +158,25 @@ docker exec -it smartrent-postgres psql -U smartrent -d smartrent_audit
 2. **Cuidado con las IPs dinámicas:**  
    En AWS Learner Lab, la **IP Pública** de la instancia cambia cada vez que se detiene e inicia.  
    * Si tus instancias están en la misma VPC/Subred, utiliza la **IP Privada (Private IPv4)** en tus variables de entorno (`.env` para `RABBITMQ_HOST` y `KAFKA_HOST`). Las IPs privadas **no cambian** al apagar y encender la máquina.
+
+
+---
+
+## 🌐 7. Despliegue del Frontend (`frontend-smartrent`) en EC2
+
+Puedes desplegar el Frontend en una instancia EC2 de dos formas (ambas ya están automatizadas en el repositorio):
+
+### Opción A: Instalación directa en Ubuntu con un solo comando (Recomendado)
+```bash
+cd ~/SmartRent/frontend-smartrent
+sed -i 's/\r$//' deploy-ec2.sh
+chmod +x deploy-ec2.sh
+./deploy-ec2.sh
+```
+*(Este script crea automáticamente 2 GB de Swap, instala Node.js 22 y Nginx, compila Angular en modo producción y publica el sitio en el puerto 80).*
+
+### Opción B: Con Docker Compose
+```bash
+cd ~/SmartRent
+docker compose -f infra/compose.frontend.yml up -d --build
+```
