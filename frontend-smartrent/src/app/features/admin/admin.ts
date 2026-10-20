@@ -156,11 +156,11 @@ export class AdminPanel implements OnInit {
   public readonly tenants: TenantInfo[] = [
     {
       id: '753ae9df-d5ec-4c6b-8227-b334fc775087',
-      name: 'SmartRent Red CIAM (Microsoft Entra ID)',
+      name: 'SmartRent Red CIAM (pepito123.onmicrosoft.com)',
       rut: '76.842.100-K',
-      headquarters: 'Directorio Cloud Native Azure CIAM',
+      headquarters: 'Directorio Cloud Native Azure CIAM (pepito123)',
       depotLocation: 'Patio Pudahuel Central / Red 20 Empresas',
-      activeUsersCount: 4,
+      activeUsersCount: 5,
       contactEmail: 'admin@smartrent.cl',
       status: 'ACTIVO'
     },
@@ -457,44 +457,54 @@ export class AdminPanel implements OnInit {
 
     const initialUsers: AdminUser[] = [
       {
-        id: 'USR-AZ-01',
-        fullName: 'Brayan González Leo',
-        email: 'b.gonzalez@smartrent.cl',
-        company: 'SmartRent Red CIAM (Microsoft Entra ID)',
+        id: '42392204-fa6d-42ec-8118-542a929e9f82',
+        fullName: 'Brayan',
+        email: 'Brayan@pepito123.onmicrosoft.com',
+        company: 'SmartRent Red CIAM (pepito123.onmicrosoft.com)',
         tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087',
         role: 'ADMIN',
         status: 'ACTIVO',
         createdAt: '2024-01-15'
       },
       {
-        id: 'USR-AZ-02',
-        fullName: 'Carlos Mendoza Silva (Jefe Bodega)',
-        email: 'c.mendoza@pudahuel-rent.cl',
-        company: 'SmartRent Red CIAM (Microsoft Entra ID)',
+        id: '6f3d972f-78d8-40a5-a916-023271ed94cf',
+        fullName: 'Juan Administrador',
+        email: 'Juan@pepito123.onmicrosoft.com',
+        company: 'SmartRent Red CIAM (pepito123.onmicrosoft.com)',
+        tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087',
+        role: 'ADMIN',
+        status: 'ACTIVO',
+        createdAt: '2024-01-15'
+      },
+      {
+        id: '79c25ca9-bc8e-4709-b345-6b19b5ae6e1f',
+        fullName: 'Lucas Jefe de Bodega',
+        email: 'Lucas@pepito123.onmicrosoft.com',
+        company: 'SmartRent Red CIAM (pepito123.onmicrosoft.com)',
         tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087',
         role: 'OPERADOR',
         status: 'ACTIVO',
         createdAt: '2024-02-01'
       },
       {
-        id: 'USR-AZ-03',
-        fullName: 'Constanza Valenzuela (Arrendatario)',
-        email: 'c.valenzuela@besalco.cl',
-        company: 'SmartRent Red CIAM (Microsoft Entra ID)',
-        tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087',
-        role: 'CLIENTE',
-        status: 'ACTIVO',
-        createdAt: '2024-02-18'
-      },
-      {
-        id: 'USR-AZ-04',
-        fullName: 'Rodrigo Araya Peña (Auditor)',
-        email: 'r.araya@kpmg-audit.cl',
-        company: 'SmartRent Red CIAM (Microsoft Entra ID)',
+        id: 'b4fc592c-d2d9-4aab-aead-565a4df1afc3',
+        fullName: 'Diego Auditor',
+        email: 'Diego@pepito123.onmicrosoft.com',
+        company: 'SmartRent Red CIAM (pepito123.onmicrosoft.com)',
         tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087',
         role: 'AUDITOR',
         status: 'ACTIVO',
         createdAt: '2024-01-20'
+      },
+      {
+        id: 'b89795b0-c4c2-4b55-b525-e80607ea1edb',
+        fullName: 'DANIEL GODOY SEPULVEDA',
+        email: 'dan.godoys_duocuc.cl#EXT#@pepito123.onmicrosoft.com',
+        company: 'SmartRent Red CIAM (pepito123.onmicrosoft.com)',
+        tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087',
+        role: 'CLIENTE',
+        status: 'ACTIVO',
+        createdAt: '2024-02-18'
       }
     ];
 

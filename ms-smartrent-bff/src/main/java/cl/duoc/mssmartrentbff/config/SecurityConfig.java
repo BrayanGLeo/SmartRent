@@ -42,11 +42,20 @@ public class SecurityConfig {
                                 .antMatcher("/v1/api/reports/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/v2/api/reports/**"),
-                        org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher("/api/audit/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/api/audit/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/v1/api/audit/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/v2/api/audit/**"))
+                                .antMatcher("/v2/api/audit/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/api/users/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v1/api/users/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v2/api/users/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/users/**"))
                 .permitAll()
                 .anyRequest().authenticated());
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(conv)));

@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "azure.graph.tenant-id",
+      "type": "java.lang.String",
+      "description": "Tenant ID del directorio de Microsoft Entra ID (Azure CIAM)."
+    },
+    {
+      "name": "azure.graph.client-id",
+      "type": "java.lang.String",
+      "description": "Client ID (Application ID) registrado en Microsoft Entra ID."
+    },
+    {
+      "name": "azure.graph.client-secret",
+      "type": "java.lang.String",
+      "description": "Client Secret para autenticación con Microsoft Graph API."
+    }
+  ]
+}
