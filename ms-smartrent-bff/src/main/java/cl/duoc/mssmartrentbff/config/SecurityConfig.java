@@ -3,7 +3,6 @@ package cl.duoc.mssmartrentbff.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -19,9 +18,6 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -34,6 +30,7 @@ import java.util.Set;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    private static final String ROLE_PREFIX = "ROLE_";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String ADMIN_ROLE_NAME = "Administrador";
     private static final String ROLE_AUDITOR = "ROLE_AUDITOR";
@@ -67,7 +64,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtDecoder jwtDecoder, JwtAuthenticationConverter conv) throws Exception {
         http.csrf(csrf -> csrf.disable());
-        http.cors(Customizer.withDefaults());
+        http.cors(cors -> cors.disable());
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
@@ -145,8 +142,8 @@ public class SecurityConfig {
         result.add(new SimpleGrantedAuthority(role));
 
         String normalized = role.toUpperCase(Locale.ROOT);
-        if (normalized.startsWith("ROLE_")) {
-            normalized = normalized.substring("ROLE_".length());
+        if (normalized.startsWith(ROLE_PREFIX)) {
+            normalized = normalized.substring(ROLE_PREFIX.length());
         }
 
         switch (normalized) {
@@ -158,26 +155,8 @@ public class SecurityConfig {
                 result.add(new SimpleGrantedAuthority(ROLE_AUDITOR));
                 result.add(new SimpleGrantedAuthority(AUDITOR_ROLE_NAME));
             }
-            default -> result.add(new SimpleGrantedAuthority("ROLE_" + normalized));
+            default -> result.add(new SimpleGrantedAuthority(ROLE_PREFIX + normalized));
         }
         return result;
-    }
-
-    @SuppressWarnings("java:S5122")
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration c = new CorsConfiguration();
-        c.setAllowedOriginPatterns(List.of(
-                "http://localhost:4200",
-                "http://localhost:*",
-                "https://smartrent-portal.s3.us-east-1.amazonaws.com",
-                "*"));
-        c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
-        c.setAllowedHeaders(List.of("*"));
-        c.setExposedHeaders(List.of("Authorization", "Content-Type", "WWW-Authenticate"));
-
-        UrlBasedCorsConfigurationSource s = new UrlBasedCorsConfigurationSource();
-        s.registerCorsConfiguration("/**", c);
-        return s;
     }
 }
