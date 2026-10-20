@@ -37,26 +37,32 @@ public class SecurityConfig {
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/v2/api/catalog/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/api/reports/**"),
-                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/v1/api/reports/**"),
-                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/v2/api/reports/**"),
-                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/api/audit/**"),
-                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/v1/api/audit/**"),
-                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/v2/api/audit/**"),
-                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/api/users/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/v1/api/users/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/v2/api/users/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/users/**"))
+                                .antMatcher("/users/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/api/admin/**"))
                 .permitAll()
+                .requestMatchers(
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/api/reports/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v1/api/reports/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v2/api/reports/**"))
+                .hasAnyAuthority("ROLE_ADMIN", "Administrador")
+                .requestMatchers(
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/api/audit/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v1/api/audit/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v2/api/audit/**"))
+                .hasAnyAuthority("ROLE_AUDITOR", "Auditor", "ROLE_ADMIN", "Administrador")
                 .anyRequest().authenticated());
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(conv)));
         return http.build();
@@ -72,7 +78,17 @@ public class SecurityConfig {
             var roles = jwt.getClaimAsStringList("roles");
 
             if (roles != null) {
-                roles.forEach(r -> autoridades.add(new SimpleGrantedAuthority(r)));
+                roles.forEach(r -> {
+                    autoridades.add(new SimpleGrantedAuthority(r));
+                    if ("Administrador".equalsIgnoreCase(r) || "ROLE_ADMIN".equalsIgnoreCase(r)) {
+                        autoridades.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                        autoridades.add(new SimpleGrantedAuthority("Administrador"));
+                    }
+                    if ("Auditor".equalsIgnoreCase(r) || "ROLE_AUDITOR".equalsIgnoreCase(r)) {
+                        autoridades.add(new SimpleGrantedAuthority("ROLE_AUDITOR"));
+                        autoridades.add(new SimpleGrantedAuthority("Auditor"));
+                    }
+                });
             }
             return autoridades;
         });
@@ -83,12 +99,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
-        c.setAllowedOrigins(List.of(
+        c.setAllowedOriginPatterns(List.of(
                 "http://localhost:4200",
-                "http://localhost:5173",
-                "https://smartrent-portal.s3.us-east-1.amazonaws.com"));
-        c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        c.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+                "http://localhost:*",
+                "https://smartrent-portal.s3.us-east-1.amazonaws.com",
+                "*"));
+        c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+        c.setAllowedHeaders(List.of("*"));
+        c.setExposedHeaders(List.of("Authorization", "Content-Type", "WWW-Authenticate"));
 
         UrlBasedCorsConfigurationSource s = new UrlBasedCorsConfigurationSource();
         s.registerCorsConfiguration("/**", c);
