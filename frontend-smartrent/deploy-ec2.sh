@@ -60,6 +60,11 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
+    # Soporte para ruta raiz desde AWS HTTP API Gateway (proxy /{proxy+})
+    location = /index.html {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+    }
+
     location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff2)$ {
         expires 7d;
         add_header Cache-Control "public, no-transform";
