@@ -90,6 +90,10 @@ export class Home {
   }
 
   onQuickSearch(): void {
+    if (this.authService.userRole() === 'Administrador') {
+      void this.router.navigate(['/admin']);
+      return;
+    }
     const queryParams: Record<string, string> = {};
     if (this.searchForm.category) {
       queryParams['category'] = this.searchForm.category;
@@ -108,6 +112,10 @@ export class Home {
   }
 
   filterByCategory(categoryName: string): void {
+    if (this.authService.userRole() === 'Administrador') {
+      void this.router.navigate(['/admin']);
+      return;
+    }
     void this.router.navigate(['/catalog'], {
       queryParams: { category: categoryName }
     });
