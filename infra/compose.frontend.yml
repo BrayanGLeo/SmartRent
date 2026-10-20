@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  smartrent-frontend:
+    build: ../frontend-smartrent
+    restart: unless-stopped
+    container_name: smartrent-frontend
+    ports:
+      - "80:80"
