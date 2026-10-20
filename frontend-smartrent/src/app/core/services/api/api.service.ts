@@ -381,7 +381,7 @@ export class ApiService {
           }
         }
       }
-    } catch (e) {}
+    } catch (e) { }
     return map;
   }
 
@@ -422,14 +422,14 @@ export class ApiService {
           this.ngZone.run(() => {
             const invMap = this.getLocalInventoryMap();
             const machines: Machine[] = data.map(m => {
-              const matchedMock = this.mockCatalog.find(mock => 
+              const matchedMock = this.mockCatalog.find(mock =>
                 (m.serialNumber && mock.serialNumber === m.serialNumber) ||
                 (m.name && mock.name.toLowerCase() === m.name.toLowerCase()) ||
                 (m.id && mock.id.toString() === m.id.toString())
               );
               const sku = matchedMock?.sku || m.serialNumber || (m.name ? m.name.toUpperCase().slice(0, 7) : 'SKU-GEN');
               const inv = invMap[sku] || (m.name ? invMap[m.name.toLowerCase()] : null) || (m.id ? invMap[m.id.toString()] : null);
-              
+
               const totalStock = inv?.totalStock !== undefined ? inv.totalStock : (m.totalStock ?? 5);
               const availableStock = inv?.availableStock !== undefined ? inv.availableStock : (m.isAvailable ? Math.min(2, totalStock) : 0);
               const isAvail = availableStock > 0 && inv?.status !== 'EN_MANTENCION';

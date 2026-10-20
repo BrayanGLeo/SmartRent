@@ -30,7 +30,7 @@
         </div>
         <div class="user-meta">
           <span class="user-name">{{ userAccount.name || 'Operaciones Central' }}</span>
-          <span class="user-role-badge">ADMIN / JEFE BODEGA</span>
+          <span class="user-role-badge">{{ currentUserRoleDisplay() }}</span>
         </div>
       </div>
     </div>
@@ -335,12 +335,12 @@
           <p>Control de unidades en patio, asignación de bodegas y bloqueo de pedidos ante stock agotado.</p>
         </div>
         <div class="panel-actions">
-          <button type="button" class="btn btn-primary" (click)="openCreateMachineModal()">
+          <button type="button" class="btn btn-primary" (click)="openCreateProductModal()">
             <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            Alta de Maquinaria
+            Crear Producto
           </button>
         </div>
       </div>
@@ -1278,13 +1278,18 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- MODAL 2: MAQUINARIA (CREAR / EDITAR COMPLETA)                -->
+  <!-- MODAL 2: PRODUCTO (CREAR / EDITAR)                          -->
   <!-- ============================================================ -->
   <div class="modal-backdrop" *ngIf="isMachineModalOpen()" (click)="closeMachineModal()">
     <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>{{ editingMachine() ? 'Editar Ficha de Equipo' : 'Alta de Nuevo Equipo o Accesorio' }}</h3>
-        <button type="button" class="btn-close" (click)="closeMachineModal()">
+        <div>
+          <h3>{{ editingMachine() ? 'Editar Producto' : 'Crear Producto' }}</h3>
+          <p class="modal-subtitle">
+            {{ editingMachine() ? 'Actualiza los datos, stock y tarifa del producto.' : 'Completa la información para registrar un nuevo producto en el catálogo.' }}
+          </p>
+        </div>
+        <button type="button" class="btn-close" (click)="closeMachineModal()" aria-label="Cerrar modal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -1292,7 +1297,7 @@
         </button>
       </div>
 
-      <form [formGroup]="machineForm" (ngSubmit)="saveMachine()" class="modal-form">
+      <form [formGroup]="machineForm" (ngSubmit)="saveMachine()" class="modal-form" novalidate>
         <div class="form-row-2">
           <div class="form-group">
             <label class="form-label">Código SKU de Inventario <span class="req">*</span></label>
@@ -1300,13 +1305,27 @@
               type="text"
               formControlName="sku"
               class="form-control mono-input uppercase"
-              placeholder="ej. CAT-320D, BOM-BW211, CUM-50KVA"
+              [class.is-invalid]="machineForm.get('sku')?.touched && machineForm.get('sku')?.invalid"
+              placeholder="ej. CAT-320D"
+              autocomplete="off"
+              maxlength="15"
+              (keydown)="preventSpaces($event)"
+              (input)="onSkuInput($event)"
             />
+            <small class="field-hint">Mínimo 1 y máximo 15 caracteres alfanuméricos. Sin espacios.</small>
+            <div class="field-error" *ngIf="machineForm.get('sku')?.touched && machineForm.get('sku')?.invalid">
+              <span *ngIf="machineForm.get('sku')?.hasError('required')">El código SKU es obligatorio (no puede estar vacío).</span>
+              <span *ngIf="machineForm.get('sku')?.hasError('pattern') || machineForm.get('sku')?.hasError('maxlength')">Debe tener entre 1 y 15 caracteres alfanuméricos sin espacios.</span>
+            </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Categoría Técnica <span class="req">*</span></label>
-            <select formControlName="category" class="form-control">
+            <label class="form-label">Categoría del Producto <span class="req">*</span></label>
+            <select
+              formControlName="category"
+              class="form-control"
+              [class.is-invalid]="machineForm.get('category')?.touched && machineForm.get('category')?.invalid"
+            >
               <option value="MOVIMIENTO_TIERRA">Movimiento de Tierra</option>
               <option value="COMPACTACION">Compactación</option>
               <option value="GENERACION">Generación y Energía</option>
@@ -1314,87 +1333,161 @@
               <option value="HERRAMIENTAS">Herramientas Eléctricas</option>
               <option value="ACCESORIOS">Accesorios y Complementos</option>
             </select>
+            <small class="field-hint">Selecciona la familia correspondiente.</small>
+            <div class="field-error" *ngIf="machineForm.get('category')?.touched && machineForm.get('category')?.invalid">
+              <span>Selecciona una categoría válida (no puede estar vacía).</span>
+            </div>
           </div>
         </div>
 
         <div class="form-row-2">
           <div class="form-group">
-            <label class="form-label">Nombre Comercial del Equipo <span class="req">*</span></label>
+            <label class="form-label">Nombre Comercial del Producto <span class="req">*</span></label>
             <input
               type="text"
               formControlName="name"
               class="form-control"
+              [class.is-invalid]="machineForm.get('name')?.touched && machineForm.get('name')?.invalid"
               placeholder="ej. Excavadora Hidráulica Cat 320 Oruga"
+              maxlength="100"
+              (keydown)="preventFirstSpace($event, machineForm.get('name')?.value)"
+              (input)="onNameInput($event)"
             />
+            <small class="field-hint">Mínimo 1 y máximo 100 caracteres. El primer dígito no puede ser espacio.</small>
+            <div class="field-error" *ngIf="machineForm.get('name')?.touched && machineForm.get('name')?.invalid">
+              <span *ngIf="machineForm.get('name')?.hasError('required')">El nombre comercial es obligatorio (no puede estar vacío).</span>
+              <span *ngIf="machineForm.get('name')?.hasError('pattern') || machineForm.get('name')?.hasError('maxlength')">Debe tener entre 1 y 100 letras/números y no comenzar con espacio.</span>
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Patio / Bodega Asignada <span class="req">*</span></label>
-            <select formControlName="assignedDepot" class="form-control">
+            <select
+              formControlName="assignedDepot"
+              class="form-control"
+              [class.is-invalid]="machineForm.get('assignedDepot')?.touched && machineForm.get('assignedDepot')?.invalid"
+            >
               <option value="Patio Pudahuel Sur">Patio Pudahuel Sur (Santiago)</option>
               <option value="Patio La Negra Antofagasta">Patio La Negra (Antofagasta)</option>
               <option value="Patio San Pedro Biobío">Patio San Pedro (Concepción)</option>
               <option value="Patio Central Pudahuel">Patio Central Pudahuel</option>
             </select>
+            <small class="field-hint">Ubicación operativa del inventario.</small>
+            <div class="field-error" *ngIf="machineForm.get('assignedDepot')?.touched && machineForm.get('assignedDepot')?.invalid">
+              <span>Selecciona un patio de asignación (no puede estar vacío).</span>
+            </div>
           </div>
         </div>
 
         <div class="form-row-3">
           <div class="form-group">
-            <label class="form-label">Tarifa Diaria Neta (CLP) <span class="req">*</span></label>
+            <label class="form-label">Tarifa Diaria Neta (CLP $) <span class="req">*</span></label>
             <input
-              type="number"
+              type="text"
+              inputmode="numeric"
               formControlName="dailyRate"
               class="form-control tabular-nums"
+              [class.is-invalid]="machineForm.get('dailyRate')?.touched && machineForm.get('dailyRate')?.invalid"
               placeholder="ej. 150000"
+              maxlength="9"
+              (keydown)="preventNonNumeric($event)"
+              (input)="onNumericInput($event, 'dailyRate', 9)"
             />
+            <small class="field-hint">Mínimo 1 y máximo 9 dígitos numéricos sin espacios.</small>
+            <div class="field-error" *ngIf="machineForm.get('dailyRate')?.touched && machineForm.get('dailyRate')?.invalid">
+              <span *ngIf="machineForm.get('dailyRate')?.hasError('required')">La tarifa diaria es obligatoria (no puede estar vacía).</span>
+              <span *ngIf="machineForm.get('dailyRate')?.hasError('pattern') || machineForm.get('dailyRate')?.hasError('min') || machineForm.get('dailyRate')?.hasError('max')">Debe tener entre 1 y 9 dígitos numéricos sin espacios (mayor a 0).</span>
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Flota Total <span class="req">*</span></label>
             <input
-              type="number"
+              type="text"
+              inputmode="numeric"
               formControlName="totalStock"
               class="form-control tabular-nums"
+              [class.is-invalid]="machineForm.get('totalStock')?.touched && machineForm.get('totalStock')?.invalid"
               placeholder="ej. 5"
+              maxlength="5"
+              (keydown)="preventNonNumeric($event)"
+              (input)="onNumericInput($event, 'totalStock', 5)"
             />
+            <small class="field-hint">Mínimo 1 y máximo 5 dígitos numéricos sin espacios.</small>
+            <div class="field-error" *ngIf="machineForm.get('totalStock')?.touched && machineForm.get('totalStock')?.invalid">
+              <span *ngIf="machineForm.get('totalStock')?.hasError('required')">La flota total es obligatoria (no puede estar vacía).</span>
+              <span *ngIf="machineForm.get('totalStock')?.hasError('pattern') || machineForm.get('totalStock')?.hasError('min') || machineForm.get('totalStock')?.hasError('max')">Debe tener entre 1 y 5 dígitos numéricos sin espacios (mínimo 1).</span>
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Stock Disponible en Patio <span class="req">*</span></label>
             <input
-              type="number"
+              type="text"
+              inputmode="numeric"
               formControlName="availableStock"
               class="form-control tabular-nums"
+              [class.is-invalid]="machineForm.get('availableStock')?.touched && machineForm.get('availableStock')?.invalid"
               placeholder="ej. 3"
+              maxlength="5"
+              (keydown)="preventNonNumeric($event)"
+              (input)="onNumericInput($event, 'availableStock', 5)"
             />
+            <small class="field-hint">Mínimo 1 y máximo 5 dígitos numéricos sin espacios.</small>
+            <div class="field-error" *ngIf="machineForm.get('availableStock')?.touched && machineForm.get('availableStock')?.invalid">
+              <span *ngIf="machineForm.get('availableStock')?.hasError('required')">El stock disponible es obligatorio (no puede estar vacío).</span>
+              <span *ngIf="machineForm.get('availableStock')?.hasError('pattern') || machineForm.get('availableStock')?.hasError('min') || machineForm.get('availableStock')?.hasError('max')">Debe tener entre 1 y 5 dígitos numéricos sin espacios.</span>
+            </div>
           </div>
         </div>
 
+        <!-- Selector de Imagen Ultra Optimizado con Lazy Loading -->
         <div class="form-group">
-          <label class="form-label">Imagen Oficial del Equipo (Catálogo Local)</label>
-          <div class="image-selector-grid">
-            <label
-              *ngFor="let img of localCatalogImages"
-              class="image-select-card"
-              [class.selected]="machineForm.get('imageUrl')?.value === img.url"
+          <label class="form-label">Imagen Oficial del Producto</label>
+          <div class="product-image-preview-bar">
+            <img
+              [src]="selectedProductImage()"
+              alt="Vista previa de producto"
+              class="selected-img-thumb"
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="selected-img-info">
+              <span class="selected-img-name">{{ getSelectedImageLabel() }}</span>
+              <span class="selected-img-url">{{ selectedProductImage() }}</span>
+            </div>
+            <button
+              type="button"
+              class="btn btn-xs btn-outline"
+              (click)="toggleImageGallery()"
             >
-              <input
-                type="radio"
-                formControlName="imageUrl"
-                [value]="img.url"
-                class="hidden-radio"
+              {{ isImageGalleryOpen() ? 'Ocultar catálogo' : 'Cambiar imagen' }}
+            </button>
+          </div>
+
+          <div class="image-selector-grid optimized-gallery" *ngIf="isImageGalleryOpen()">
+            <div
+              *ngFor="let img of localCatalogImages; trackBy: trackByImgUrl"
+              class="image-select-card"
+              [class.selected]="selectedProductImage() === img.url"
+              (click)="selectProductImage(img.url)"
+            >
+              <img
+                [src]="img.url"
+                [alt]="img.label"
+                class="img-preview"
+                loading="lazy"
+                decoding="async"
               />
-              <img [src]="img.url" [alt]="img.label" class="img-preview" />
               <span class="img-title">{{ img.label }}</span>
-            </label>
+            </div>
           </div>
         </div>
 
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" (click)="closeMachineModal()">Cancelar</button>
           <button type="submit" class="btn btn-primary">
-            {{ editingMachine() ? 'Guardar Cambios' : 'Registrar en Catálogo' }}
+            {{ editingMachine() ? 'Guardar Cambios' : 'Crear Producto' }}
           </button>
         </div>
       </form>
