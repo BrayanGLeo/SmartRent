@@ -30,9 +30,9 @@
         <form class="search-form-grid" (ngSubmit)="onQuickSearch()">
           <!-- Categoría -->
           <div class="form-field">
-            <label class="field-label">Categoría Técnica</label>
+            <label for="searchCategory" class="field-label">Categoría Técnica</label>
             <div class="field-input-wrapper">
-              <select class="field-select" [(ngModel)]="searchForm.category" name="category">
+              <select id="searchCategory" class="field-select" [(ngModel)]="searchForm.category" name="category">
                 <option value="">Todas las Familias de Equipos</option>
                 <option value="Maquinaria Pesada">Maquinaria Pesada (Movimiento de Tierras)</option>
                 <option value="Equipos de Elevación">Equipos de Elevación y Altura</option>
@@ -45,20 +45,20 @@
 
           <!-- Fecha Inicio -->
           <div class="form-field">
-            <label class="field-label">Fecha Inicio Faena</label>
-            <input type="date" class="field-input tabular-nums" [(ngModel)]="searchForm.startDate" name="startDate" required>
+            <label for="searchStartDate" class="field-label">Fecha Inicio Faena</label>
+            <input id="searchStartDate" type="date" class="field-input tabular-nums" [(ngModel)]="searchForm.startDate" name="startDate" required>
           </div>
 
           <!-- Fecha Fin -->
           <div class="form-field">
-            <label class="field-label">Fecha Devolución</label>
-            <input type="date" class="field-input tabular-nums" [(ngModel)]="searchForm.endDate" name="endDate" required>
+            <label for="searchEndDate" class="field-label">Fecha Devolución</label>
+            <input id="searchEndDate" type="date" class="field-input tabular-nums" [(ngModel)]="searchForm.endDate" name="endDate" required>
           </div>
 
           <!-- Patio / Sucursal -->
           <div class="form-field">
-            <label class="field-label">Patio de Despacho</label>
-            <select class="field-select" [(ngModel)]="searchForm.depot" name="depot">
+            <label for="searchDepot" class="field-label">Patio de Despacho</label>
+            <select id="searchDepot" class="field-select" [(ngModel)]="searchForm.depot" name="depot">
               <option *ngFor="let d of depots" [value]="d.id">{{ d.name }}</option>
             </select>
           </div>
@@ -77,8 +77,15 @@
 
       <!-- Accesos Rápidos de Acción Secundaria -->
       <div class="hero-actions-secondary">
-        <a routerLink="/catalog" class="link-catalog">
+        <a *ngIf="authService.userRole() !== 'Administrador'" routerLink="/catalog" class="link-catalog">
           <span>Ver catálogo completo con fichas técnicas</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+        <a *ngIf="authService.userRole() === 'Administrador'" routerLink="/admin" class="link-catalog">
+          <span>Ir al Panel de Administración de Catálogo</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>

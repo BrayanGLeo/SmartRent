@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ApiService, Machine } from '../../core/services/api/api.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { CartService } from '../../core/services/cart/cart.service';
+import { AccessDeniedService } from '../../core/services/modal/access-denied.service';
 
 @Component({
   standalone: true,
@@ -14,12 +15,13 @@ import { CartService } from '../../core/services/cart/cart.service';
   templateUrl: './catalog.html',
 })
 export class Catalog implements OnInit {
-  apiService = inject(ApiService);
-  authService = inject(AuthService);
-  cartService = inject(CartService);
-  router = inject(Router);
-  route = inject(ActivatedRoute);
-  private cdr = inject(ChangeDetectorRef);
+  readonly apiService = inject(ApiService);
+  readonly authService = inject(AuthService);
+  readonly cartService = inject(CartService);
+  readonly accessDeniedService = inject(AccessDeniedService);
+  readonly router = inject(Router);
+  readonly route = inject(ActivatedRoute);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   machines: Machine[] = [];
   categories: string[] = [
@@ -47,6 +49,12 @@ export class Catalog implements OnInit {
   showNotification = false;
 
   ngOnInit() {
+    if (this.authService.userRole() === 'Administrador') {
+      this.accessDeniedService.show('No tiene permiso para acceder a esta página.', '/');
+      void this.router.navigate(['/']);
+      return;
+    }
+
     // Escuchar query params iniciales desde el buscador del Home
     this.route.queryParams.subscribe(params => {
       if (params['category']) {
@@ -108,11 +116,11 @@ export class Catalog implements OnInit {
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase().trim();
       result = result.filter(m =>
-        m.name.toLowerCase().includes(term) ||
-        (m.serialNumber && m.serialNumber.toLowerCase().includes(term)) ||
-        (m.sku && m.sku.toLowerCase().includes(term)) ||
-        (m.brand && m.brand.toLowerCase().includes(term)) ||
-        (m.description && m.description.toLowerCase().includes(term))
+        m.name?.toLowerCase().includes(term) ||
+        m.serialNumber?.toLowerCase().includes(term) ||
+        m.sku?.toLowerCase().includes(term) ||
+        m.brand?.toLowerCase().includes(term) ||
+        m.description?.toLowerCase().includes(term)
       );
     }
 
@@ -138,32 +146,30 @@ export class Catalog implements OnInit {
     return heavyCategories.some(h => catName.toLowerCase().includes(h.toLowerCase()));
   }
 
+  private static readonly IMAGE_MAPPINGS = [
+    { patterns: ['cat', '320', 'cat-320', 'pesada', 'excav'], url: '/images/cat-320.jpg' },
+    { patterns: ['deere', '310', 'jd-310'], url: '/images/jd-310l.jpg' },
+    { patterns: ['bomag', '211', 'bmg'], url: '/images/bomag-bw211.jpg' },
+    { patterns: ['makita', 'mak', 'eléctrica', 'herramienta'], url: '/images/makita-18v.jpg' },
+    { patterns: ['bosch', 'gsh', 'bos'], url: '/images/bosch-gsh11e.jpg' },
+    { patterns: ['dewalt', 'circular', 'dw'], url: '/images/dewalt-dwe575.jpg' },
+    { patterns: ['jlg', '450', 'elevación', 'grúa'], url: '/images/jlg-450aj.jpg' },
+    { patterns: ['yale', 'montacargas', 'yal'], url: '/images/yale-3t.jpg' },
+    { patterns: ['cummins', 'cum', 'generador', 'energía', 'compresor'], url: '/images/cummins-50kva.jpg' },
+    { patterns: ['eu22', 'inverter', 'hon-eu'], url: '/images/honda-eu2200i.jpg' },
+    { patterns: ['sullair', '185', 'sul'], url: '/images/sullair-185.jpg' },
+    { patterns: ['husqvarna', 'motosierra', 'hus', 'jardín', 'paisajismo'], url: '/images/husqvarna-450.jpg' },
+    { patterns: ['hrn', 'pasto', 'césped', 'hon-cp'], url: '/images/honda-hrn216.jpg' }
+  ];
+
   getImageUrl(machine: Machine): string {
     if (machine.imageUrl) return machine.imageUrl;
-    const name = (machine.name || '').toLowerCase();
-    const sku = (machine.sku || machine.serialNumber || '').toLowerCase();
 
-    if (name.includes('cat') || name.includes('320') || sku.includes('cat-320')) return '/images/cat-320.jpg';
-    if (name.includes('deere') || name.includes('310') || sku.includes('jd-310')) return '/images/jd-310l.jpg';
-    if (name.includes('bomag') || name.includes('211') || sku.includes('bmg')) return '/images/bomag-bw211.jpg';
-    if (name.includes('makita') || sku.includes('mak')) return '/images/makita-18v.jpg';
-    if (name.includes('bosch') || name.includes('gsh') || sku.includes('bos')) return '/images/bosch-gsh11e.jpg';
-    if (name.includes('dewalt') || name.includes('circular') || sku.includes('dw')) return '/images/dewalt-dwe575.jpg';
-    if (name.includes('jlg') || name.includes('450') || sku.includes('jlg')) return '/images/jlg-450aj.jpg';
-    if (name.includes('yale') || name.includes('montacargas') || sku.includes('yal')) return '/images/yale-3t.jpg';
-    if (name.includes('cummins') || sku.includes('cum')) return '/images/cummins-50kva.jpg';
-    if (name.includes('eu22') || name.includes('inverter') || sku.includes('hon-eu')) return '/images/honda-eu2200i.jpg';
-    if (name.includes('sullair') || name.includes('185') || sku.includes('sul')) return '/images/sullair-185.jpg';
-    if (name.includes('husqvarna') || name.includes('motosierra') || sku.includes('hus')) return '/images/husqvarna-450.jpg';
-    if (name.includes('hrn') || name.includes('pasto') || name.includes('césped') || sku.includes('hon-cp')) return '/images/honda-hrn216.jpg';
+    const catName = typeof machine.category === 'string' ? machine.category : machine.category?.name || '';
+    const text = `${machine.name || ''} ${machine.sku || ''} ${machine.serialNumber || ''} ${catName}`.toLowerCase();
 
-    const cat = (typeof machine.category === 'string' ? machine.category : machine.category?.name || '').toLowerCase();
-    if (cat.includes('pesada') || cat.includes('excav')) return '/images/cat-320.jpg';
-    if (cat.includes('elevación') || cat.includes('grúa') || cat.includes('yale')) return '/images/jlg-450aj.jpg';
-    if (cat.includes('generador') || cat.includes('energía') || cat.includes('compresor')) return '/images/cummins-50kva.jpg';
-    if (cat.includes('eléctrica') || cat.includes('herramienta')) return '/images/makita-18v.jpg';
-    if (cat.includes('jardín') || cat.includes('paisajismo')) return '/images/husqvarna-450.jpg';
-    return '/images/cat-320.jpg';
+    const match = Catalog.IMAGE_MAPPINGS.find(m => m.patterns.some(p => text.includes(p)));
+    return match ? match.url : '/images/cat-320.jpg';
   }
 
   requestQuote(machine: Machine): void {

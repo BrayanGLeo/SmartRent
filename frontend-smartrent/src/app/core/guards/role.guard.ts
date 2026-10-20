@@ -1,21 +1,36 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService, UserRole } from '../services/auth/auth.service';
+import { MsalService } from '@azure/msal-angular';
+import { concatMap, map } from 'rxjs/operators';
+import { getUserRoleFromAccount, UserRole } from '../services/auth/auth.service';
+import { AccessDeniedService } from '../services/modal/access-denied.service';
 
 /**
  * Fábrica de guards basados en roles.
- * Recibe un array de roles permitidos y retorna un CanActivateFn.
- * Uso: canActivate: [MsalGuard, roleGuard('Administrador', 'JefeBodega')]
+ * Espera la inicialización de MSAL de forma asíncrona.
  */
 export function roleGuard(...allowedRoles: UserRole[]): CanActivateFn {
-  return (route, state) => {
-    const authService = inject(AuthService);
+  return () => {
+    const msalService = inject(MsalService);
+    const accessDeniedService = inject(AccessDeniedService);
     const router = inject(Router);
 
-    if (allowedRoles.includes(authService.userRole())) {
-      return true;
-    }
+    return msalService.initialize().pipe(
+      concatMap(() => msalService.handleRedirectObservable()),
+      map(() => {
+        const accounts = msalService.instance.getAllAccounts();
+        const role = getUserRoleFromAccount(accounts.length > 0 ? accounts[0] : null);
 
-    return router.createUrlTree(['/']);
+        if (allowedRoles.includes(role)) {
+          return true;
+        }
+
+        setTimeout(() => {
+          accessDeniedService.show('No tiene permiso para acceder a esta página.', '/');
+        }, 100);
+
+        return router.createUrlTree(['/']);
+      })
+    );
   };
 }

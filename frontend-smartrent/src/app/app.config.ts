@@ -43,13 +43,16 @@ export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   protectedResourceMap.set(`${environment.apiBaseUrl}/reports/*`, [environment.azure.apiScope]);
   protectedResourceMap.set(`${environment.apiBaseUrl}/audit`, [environment.azure.apiScope]);
   protectedResourceMap.set(`${environment.apiBaseUrl}/audit/*`, [environment.azure.apiScope]);
+  protectedResourceMap.set(`${environment.apiBaseUrl}/users`, [environment.azure.apiScope]);
+  protectedResourceMap.set(`${environment.apiBaseUrl}/users/*`, [environment.azure.apiScope]);
   
   // Catálogo: endpoint público de lectura, no se registra en protectedResourceMap
   // para que MSAL no intente adjuntar tokens a las peticiones GET públicas.
 
   return {
     interactionType: InteractionType.Redirect,
-    protectedResourceMap
+    protectedResourceMap,
+    strictMatching: false
   };
 }
 

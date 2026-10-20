@@ -527,11 +527,11 @@ export class ApiService {
   }
 
   getReportKpis(range: string = 'last24h'): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/report/kpis`, { params: { range } });
+    return this.http.get<any>(`${this.baseUrl}/reports/kpis`, { params: { range } });
   }
 
   getTopServices(range: string = 'last7d'): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/report/top-services`, { params: { range } });
+    return this.http.get<any>(`${this.baseUrl}/reports/top-services`, { params: { range } });
   }
 
   // RabbitMQ Topology Administration

@@ -1,0 +1,71 @@
+<dialog class="modal-backdrop" [open]="modalService.isOpen()" *ngIf="modalService.isOpen()" (click)="onBackdropClick($event)" (keydown.escape)="onConfirm()" aria-labelledby="access-denied-title">
+  <div class="modal-dialog">
+    <!-- Top Security Ribbon -->
+    <div class="security-ribbon">
+      <div class="ribbon-indicator">
+        <span class="pulse-dot"></span>
+        <span class="ribbon-text">SISTEMA DE CONTROL DE ACCESO • SMARTRENT</span>
+      </div>
+      <button type="button" class="btn-close" (click)="onConfirm()" title="Cerrar y volver al inicio">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="modal-body">
+      <!-- Animated Lock / Shield Icon -->
+      <div class="icon-wrapper">
+        <div class="icon-ring"></div>
+        <div class="icon-shield">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            <circle cx="12" cy="16" r="1.5"></circle>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Headings & Text -->
+      <h3 class="modal-title" id="access-denied-title">{{ modalService.title() }}</h3>
+
+      <div class="message-callout">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="callout-icon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span class="message-highlight">{{ modalService.message() }}</span>
+      </div>
+
+      <p class="modal-description">
+        Tu rol actual no tiene autorización para visualizar o interactuar con este recurso.
+        Por políticas de seguridad operacional, serás redirigido a la página de inicio.
+      </p>
+
+      <!-- Auto-redirect progress bar -->
+      <div class="countdown-bar-wrapper">
+        <div class="countdown-label">
+          <span>Redireccionando automáticamente...</span>
+          <span class="tabular-nums font-mono">{{ modalService.secondsRemaining() }}s</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" [style.width.%]="(modalService.secondsRemaining() / 4) * 100"></div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="modal-actions">
+        <button type="button" class="btn-redirect-now" (click)="onConfirm()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Ir al Inicio Ahora</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</dialog>
