@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth/auth.service';
+import { AccessDeniedService } from '../services/modal/access-denied.service';
 
 /**
  * Guard para la ruta /catalog:
@@ -8,11 +9,12 @@ import { AuthService } from '../services/auth/auth.service';
  * 1. Personas no autenticadas (público general / invitados)
  * 2. Arrendatarios (clientes)
  *
- * Bloquea al Administrador (redirigiéndolo a su propio panel en /admin)
- * y a otros roles de gestión interna.
+ * Bloquea al Administrador (ya que tiene su propio panel de administración)
+ * y a otros roles internos, mostrando un modal elegante y redirigiendo al home.
  */
 export const catalogGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
+  const accessDeniedService = inject(AccessDeniedService);
   const router = inject(Router);
 
   // Si no ha iniciado sesión, puede navegar libremente por el catálogo
@@ -22,9 +24,10 @@ export const catalogGuard: CanActivateFn = (route, state) => {
 
   const role = authService.userRole();
 
-  // El Administrador no debe ver el catálogo de clientes; tiene su panel de gestión
+  // El Administrador no debe acceder al catálogo de clientes
   if (role === 'Administrador') {
-    return router.createUrlTree(['/admin']);
+    accessDeniedService.show('No tiene permiso para acceder a esta página.', '/');
+    return router.createUrlTree(['/']);
   }
 
   // Si es Arrendatario o usuario estándar, se permite
@@ -32,6 +35,7 @@ export const catalogGuard: CanActivateFn = (route, state) => {
     return true;
   }
 
-  // Otros roles internos (JefeBodega, Auditor) se redirigen al home
+  // Otros roles internos (JefeBodega, Auditor) se redirigen al home con mensaje
+  accessDeniedService.show('No tiene permiso para acceder a esta página.', '/');
   return router.createUrlTree(['/']);
 };

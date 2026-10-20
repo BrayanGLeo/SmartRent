@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ApiService, Machine } from '../../core/services/api/api.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 import { CartService } from '../../core/services/cart/cart.service';
+import { AccessDeniedService } from '../../core/services/modal/access-denied.service';
 
 @Component({
   standalone: true,
@@ -17,6 +18,7 @@ export class Catalog implements OnInit {
   apiService = inject(ApiService);
   authService = inject(AuthService);
   cartService = inject(CartService);
+  accessDeniedService = inject(AccessDeniedService);
   router = inject(Router);
   route = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
@@ -47,6 +49,12 @@ export class Catalog implements OnInit {
   showNotification = false;
 
   ngOnInit() {
+    if (this.authService.userRole() === 'Administrador') {
+      this.accessDeniedService.show('No tiene permiso para acceder a esta página.', '/');
+      void this.router.navigate(['/']);
+      return;
+    }
+
     // Escuchar query params iniciales desde el buscador del Home
     this.route.queryParams.subscribe(params => {
       if (params['category']) {

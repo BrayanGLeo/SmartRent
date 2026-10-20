@@ -4,11 +4,13 @@ import { MsalService, MsalBroadcastService, MSAL_GUARD_CONFIG, MsalGuardConfigur
 import { InteractionStatus, RedirectRequest } from '@azure/msal-browser';
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
-import { CommonModule } from '@angular/common';import { NavbarComponent } from './core/components/navbar/navbar';
+import { CommonModule } from '@angular/common';
+import { NavbarComponent } from './core/components/navbar/navbar';
+import { AccessDeniedModalComponent } from './core/components/access-denied-modal/access-denied-modal';
 import { LoadingService } from './core/services/loading/loading.service';
 
 @Component({
-  imports: [RouterOutlet, RouterModule, CommonModule, NavbarComponent],
+  imports: [RouterOutlet, RouterModule, CommonModule, NavbarComponent, AccessDeniedModalComponent],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
