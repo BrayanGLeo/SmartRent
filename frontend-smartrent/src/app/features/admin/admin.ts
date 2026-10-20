@@ -146,6 +146,16 @@ export class AdminPanel implements OnInit {
   // Active Tab
   public activeTab = signal<AdminTab>('users');
 
+  // Rol del usuario actual según tenant/claims
+  public currentUserRoleDisplay = computed(() => {
+    const role = this.authService.userRole();
+    if (role === 'Administrador') return 'ADMIN';
+    if (role === 'JefeBodega') return 'JEFE BODEGA';
+    if (role === 'Arrendatario') return 'CLIENTE';
+    if (role === 'Auditor') return 'AUDITOR';
+    return 'ADMIN';
+  });
+
   // Loading & Feedback
   public isSyncing = signal<boolean>(false);
   public toasts = signal<ToastNotification[]>([]);
@@ -279,6 +289,8 @@ export class AdminPanel implements OnInit {
   public editingMachine = signal<MachineItem | null>(null);
   public isQuickEditModalOpen = signal<boolean>(false);
   public quickEditingMachine = signal<MachineItem | null>(null);
+  public isImageGalleryOpen = signal<boolean>(false);
+  public selectedProductImage = signal<string>('/images/cat-320.jpg');
 
   public readonly localCatalogImages: { label: string; url: string }[] = [
     { label: 'Excavadora Cat 320', url: '/images/cat-320.jpg' },
@@ -292,12 +304,50 @@ export class AdminPanel implements OnInit {
   ];
 
   public machineForm: FormGroup = this.fb.group({
-    sku: ['', [Validators.required, Validators.pattern(/^[A-Z0-9-]+$/)]],
-    name: ['', [Validators.required, Validators.minLength(3)]],
+    sku: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(15),
+        Validators.pattern(/^[a-zA-Z0-9-]{1,15}$/)
+      ]
+    ],
+    name: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(100),
+        Validators.pattern(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ][a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]{0,99}$/)
+      ]
+    ],
     category: ['MOVIMIENTO_TIERRA', [Validators.required]],
-    dailyRate: [50000, [Validators.required, Validators.min(1000)]],
-    totalStock: [5, [Validators.required, Validators.min(1)]],
-    availableStock: [5, [Validators.required, Validators.min(0)]],
+    dailyRate: [
+      null,
+      [
+        Validators.required,
+        Validators.min(1),
+        Validators.max(999999999),
+        Validators.pattern(/^[0-9]{1,9}$/)
+      ]
+    ],
+    totalStock: [
+      null,
+      [
+        Validators.required,
+        Validators.min(1),
+        Validators.max(99999),
+        Validators.pattern(/^[0-9]{1,5}$/)
+      ]
+    ],
+    availableStock: [
+      null,
+      [
+        Validators.required,
+        Validators.min(0),
+        Validators.max(99999),
+        Validators.pattern(/^[0-9]{1,5}$/)
+      ]
+    ],
     assignedDepot: ['Patio Pudahuel Sur', [Validators.required]],
     status: ['DISPONIBLE', [Validators.required]],
     imageUrl: ['/images/cat-320.jpg', [Validators.required]]
@@ -751,24 +801,35 @@ export class AdminPanel implements OnInit {
     localStorage.setItem('smartrent_catalog_inventory', JSON.stringify(this.inventory()));
   }
 
-  public openCreateMachineModal(): void {
+  public openCreateProductModal(): void {
     this.editingMachine.set(null);
+    const defaultImg = '/images/cat-320.jpg';
+    this.selectedProductImage.set(defaultImg);
+    this.isImageGalleryOpen.set(false);
     this.machineForm.reset({
       sku: '',
       name: '',
       category: 'MOVIMIENTO_TIERRA',
-      dailyRate: 65000,
-      totalStock: 4,
-      availableStock: 4,
+      dailyRate: null,
+      totalStock: null,
+      availableStock: null,
       assignedDepot: 'Patio Pudahuel Sur',
       status: 'DISPONIBLE',
-      imageUrl: '/images/cat-320.jpg'
+      imageUrl: defaultImg
     });
     this.isMachineModalOpen.set(true);
   }
 
+  // Alias compatible con llamadas existentes
+  public openCreateMachineModal(): void {
+    this.openCreateProductModal();
+  }
+
   public openEditMachineModal(item: MachineItem): void {
     this.editingMachine.set(item);
+    const imgUrl = item.imageUrl || '/images/cat-320.jpg';
+    this.selectedProductImage.set(imgUrl);
+    this.isImageGalleryOpen.set(false);
     this.machineForm.patchValue({
       sku: item.sku,
       name: item.name,
@@ -778,7 +839,7 @@ export class AdminPanel implements OnInit {
       availableStock: item.availableStock,
       assignedDepot: item.assignedDepot || 'Patio Pudahuel Sur',
       status: item.status,
-      imageUrl: item.imageUrl
+      imageUrl: imgUrl
     });
     this.isMachineModalOpen.set(true);
   }
@@ -786,37 +847,172 @@ export class AdminPanel implements OnInit {
   public closeMachineModal(): void {
     this.isMachineModalOpen.set(false);
     this.editingMachine.set(null);
+    this.isImageGalleryOpen.set(false);
+  }
+
+  public toggleImageGallery(): void {
+    this.isImageGalleryOpen.update(v => !v);
+  }
+
+  public selectProductImage(url: string): void {
+    this.selectedProductImage.set(url);
+    this.machineForm.patchValue({ imageUrl: url });
+    this.machineForm.get('imageUrl')?.markAsDirty();
+  }
+
+  public getSelectedImageLabel(): string {
+    const url = this.selectedProductImage();
+    const found = this.localCatalogImages.find(img => img.url === url);
+    return found ? found.label : 'Imagen seleccionada';
+  }
+
+  public trackByImgUrl(_index: number, item: { label: string; url: string }): string {
+    return item.url;
+  }
+
+  // Validaciones en tiempo real para teclado e inputs
+  public preventSpaces(event: KeyboardEvent): void {
+    if (event.key === ' ' || event.code === 'Space') {
+      event.preventDefault();
+    }
+  }
+
+  public preventFirstSpace(event: KeyboardEvent, currentVal: string | null | undefined): void {
+    if ((event.key === ' ' || event.code === 'Space') && (!currentVal || currentVal.length === 0)) {
+      event.preventDefault();
+    }
+  }
+
+  public preventNonNumeric(event: KeyboardEvent): void {
+    const allowed = ['Backspace', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'Delete'];
+    if (allowed.includes(event.key)) {
+      return;
+    }
+    if (event.key === ' ' || !/^[0-9]$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  public onSkuInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    let val = input.value.replace(/\s+/g, '').toUpperCase();
+    if (val.length > 15) {
+      val = val.slice(0, 15);
+    }
+    input.value = val;
+    this.machineForm.get('sku')?.setValue(val);
+  }
+
+  public onNameInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    let val = input.value;
+    if (val.startsWith(' ')) {
+      val = val.trimStart();
+    }
+    if (val.length > 100) {
+      val = val.slice(0, 100);
+    }
+    input.value = val;
+    this.machineForm.get('name')?.setValue(val);
+  }
+
+  public onNumericInput(event: Event, controlName: string, maxDigits: number): void {
+    const input = event.target as HTMLInputElement;
+    let val = input.value.replace(/[^0-9]/g, '');
+    if (val.length > maxDigits) {
+      val = val.slice(0, maxDigits);
+    }
+    input.value = val;
+    this.machineForm.get(controlName)?.setValue(val === '' ? null : Number(val));
   }
 
   public saveMachine(): void {
     if (this.machineForm.invalid) {
       this.machineForm.markAllAsTouched();
-      this.showToast('warning', 'Campos incompletos', 'Completa los datos del equipo.');
+      this.showToast('warning', 'Campos incompletos o inválidos', 'Por favor completa todos los campos requeridos respetando las restricciones de formato.');
       return;
     }
 
     const formVal = this.machineForm.value;
-    const current = this.editingMachine();
 
-    if (formVal.availableStock > formVal.totalStock) {
-      this.showToast('warning', 'Stock inconsistente', 'El stock disponible no puede superar la flota total.');
+    // Validación estricta: No se aceptan celdas vacías
+    if (
+      !formVal.sku ||
+      String(formVal.sku).trim() === '' ||
+      !formVal.name ||
+      String(formVal.name).trim() === '' ||
+      formVal.dailyRate === null ||
+      formVal.dailyRate === undefined ||
+      formVal.dailyRate === '' ||
+      formVal.totalStock === null ||
+      formVal.totalStock === undefined ||
+      formVal.totalStock === '' ||
+      formVal.availableStock === null ||
+      formVal.availableStock === undefined ||
+      formVal.availableStock === '' ||
+      !formVal.assignedDepot ||
+      !formVal.category
+    ) {
+      this.showToast('warning', 'Celdas vacías', 'No se permiten celdas vacías. Por favor completa todos los campos obligatorios.');
       return;
     }
 
-    let status: 'DISPONIBLE' | 'EN_MANTENCION' | 'SIN_STOCK' = formVal.status;
-    if (formVal.availableStock === 0 && status === 'DISPONIBLE') {
+    // SKU: 1 a 15 caracteres alfanuméricos, sin espacios
+    const sku = String(formVal.sku).trim();
+    if (sku.length < 1 || sku.length > 15 || /\s/.test(sku) || !/^[a-zA-Z0-9-]+$/.test(sku)) {
+      this.showToast('warning', 'SKU inválido', 'El código SKU debe tener entre 1 y 15 caracteres alfanuméricos sin espacios.');
+      return;
+    }
+
+    // Nombre: 1 a 100 caracteres, no debe comenzar con espacio
+    const name = String(formVal.name);
+    if (name.length < 1 || name.length > 100 || name.startsWith(' ') || !/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ][a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]*$/.test(name)) {
+      this.showToast('warning', 'Nombre comercial inválido', 'El nombre comercial debe tener entre 1 y 100 caracteres y no comenzar con espacio.');
+      return;
+    }
+
+    // Tarifa: 1 a 9 dígitos numéricos, sin espacios, > 0
+    const dailyRateStr = String(formVal.dailyRate).trim();
+    if (dailyRateStr.length < 1 || dailyRateStr.length > 9 || /\s/.test(dailyRateStr) || !/^[0-9]+$/.test(dailyRateStr) || Number(dailyRateStr) <= 0) {
+      this.showToast('warning', 'Tarifa inválida', 'La tarifa diaria neta debe tener entre 1 y 9 dígitos numéricos sin espacios.');
+      return;
+    }
+
+    // Flota total: 1 a 5 dígitos numéricos, sin espacios, >= 1
+    const totalStockStr = String(formVal.totalStock).trim();
+    if (totalStockStr.length < 1 || totalStockStr.length > 5 || /\s/.test(totalStockStr) || !/^[0-9]+$/.test(totalStockStr) || Number(totalStockStr) < 1) {
+      this.showToast('warning', 'Flota total inválida', 'La flota total debe tener entre 1 y 5 dígitos numéricos sin espacios (mínimo 1).');
+      return;
+    }
+
+    // Stock disponible: 1 a 5 dígitos numéricos, sin espacios, >= 0
+    const availStockStr = String(formVal.availableStock).trim();
+    if (availStockStr.length < 1 || availStockStr.length > 5 || /\s/.test(availStockStr) || !/^[0-9]+$/.test(availStockStr) || Number(availStockStr) < 0) {
+      this.showToast('warning', 'Stock disponible inválido', 'El stock disponible debe tener entre 1 y 5 dígitos numéricos sin espacios.');
+      return;
+    }
+
+    if (Number(availStockStr) > Number(totalStockStr)) {
+      this.showToast('warning', 'Stock inconsistente', 'El stock disponible en patio no puede superar la flota total.');
+      return;
+    }
+
+    let status: 'DISPONIBLE' | 'EN_MANTENCION' | 'SIN_STOCK' = formVal.status || 'DISPONIBLE';
+    if (Number(availStockStr) === 0 && status === 'DISPONIBLE') {
       status = 'SIN_STOCK';
     }
+
+    const current = this.editingMachine();
 
     if (current) {
       const updated: MachineItem = {
         ...current,
-        sku: formVal.sku,
-        name: formVal.name,
+        sku,
+        name,
         category: formVal.category,
-        dailyRate: Number(formVal.dailyRate),
-        totalStock: Number(formVal.totalStock),
-        availableStock: Number(formVal.availableStock),
+        dailyRate: Number(dailyRateStr),
+        totalStock: Number(totalStockStr),
+        availableStock: Number(availStockStr),
         assignedDepot: formVal.assignedDepot,
         status,
         imageUrl: formVal.imageUrl
@@ -825,18 +1021,18 @@ export class AdminPanel implements OnInit {
       this.inventory.update(list => list.map(m => (m.id === current.id ? updated : m)));
       this.saveInventoryToStorage();
       this.closeMachineModal();
-      this.showToast('success', 'Equipo modificado', `Inventario actualizado para ${updated.name}.`);
+      this.showToast('success', 'Producto modificado', `Inventario actualizado para ${updated.name}.`);
 
       this.apiService.updateCatalogService(current.id, updated).subscribe({ error: () => {} });
     } else {
       const newMachine: MachineItem = {
         id: Date.now(),
-        sku: formVal.sku,
-        name: formVal.name,
+        sku,
+        name,
         category: formVal.category,
-        dailyRate: Number(formVal.dailyRate),
-        totalStock: Number(formVal.totalStock),
-        availableStock: Number(formVal.availableStock),
+        dailyRate: Number(dailyRateStr),
+        totalStock: Number(totalStockStr),
+        availableStock: Number(availStockStr),
         assignedDepot: formVal.assignedDepot,
         status,
         imageUrl: formVal.imageUrl
@@ -845,7 +1041,7 @@ export class AdminPanel implements OnInit {
       this.inventory.update(list => [newMachine, ...list]);
       this.saveInventoryToStorage();
       this.closeMachineModal();
-      this.showToast('success', 'Equipo creado', `Se incorporó ${newMachine.name} al catálogo.`);
+      this.showToast('success', 'Producto creado', `Se incorporó ${newMachine.name} al catálogo.`);
 
       this.apiService.createCatalogService(newMachine).subscribe({ error: () => {} });
     }
