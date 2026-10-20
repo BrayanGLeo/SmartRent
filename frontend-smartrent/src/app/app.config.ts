@@ -36,23 +36,21 @@ export function MSALInstanceFactory(): IPublicClientApplication {
 
 export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   const protectedResourceMap = new Map<string, Array<string | ProtectedResourceScopes>>();
-  // Endpoints que requieren Authorization Bearer token hacia microservicios protegidos
-  protectedResourceMap.set(`${environment.apiBaseUrl}/rentals`, [environment.azure.apiScope]);
-  protectedResourceMap.set(`${environment.apiBaseUrl}/rentals/*`, [environment.azure.apiScope]);
-  protectedResourceMap.set(`${environment.apiBaseUrl}/reports`, [environment.azure.apiScope]);
-  protectedResourceMap.set(`${environment.apiBaseUrl}/reports/*`, [environment.azure.apiScope]);
-  protectedResourceMap.set(`${environment.apiBaseUrl}/audit`, [environment.azure.apiScope]);
-  protectedResourceMap.set(`${environment.apiBaseUrl}/audit/*`, [environment.azure.apiScope]);
-  protectedResourceMap.set(`${environment.apiBaseUrl}/users`, [environment.azure.apiScope]);
-  protectedResourceMap.set(`${environment.apiBaseUrl}/users/*`, [environment.azure.apiScope]);
-  
+  // Endpoints que requieren Authorization Bearer token hacia microservicios protegidos.
+  // Una sola entrada por recurso: con strictMatching el patrón está anclado (^...$) y
+  // "/reports*" cubre tanto "/reports" como "/reports/kpis?range=..." sin solapamientos.
+  const protectedResources = ['rentals', 'reports', 'audit', 'users'];
+  protectedResources.forEach(resource =>
+    protectedResourceMap.set(`${environment.apiBaseUrl}/${resource}*`, [environment.azure.apiScope])
+  );
+
   // Catálogo: endpoint público de lectura, no se registra en protectedResourceMap
   // para que MSAL no intente adjuntar tokens a las peticiones GET públicas.
 
   return {
     interactionType: InteractionType.Redirect,
     protectedResourceMap,
-    strictMatching: false
+    strictMatching: true
   };
 }
 

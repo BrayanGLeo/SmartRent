@@ -24,7 +24,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @Configuration
 @EnableWebSecurity
@@ -115,26 +118,49 @@ public class SecurityConfig {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
 
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
-            var autoridades = new ArrayList<GrantedAuthority>(scopes.convert(jwt));
-            var roles = jwt.getClaimAsStringList("roles");
+            // LinkedHashSet evita autoridades duplicadas manteniendo el orden
+            Set<GrantedAuthority> autoridades = new LinkedHashSet<>(scopes.convert(jwt));
+            List<String> roles = jwt.getClaimAsStringList("roles");
 
             if (roles != null) {
-                roles.forEach(r -> {
-                    autoridades.add(new SimpleGrantedAuthority(r));
-                    if (ADMIN_ROLE_NAME.equalsIgnoreCase(r) || ROLE_ADMIN.equalsIgnoreCase(r)) {
-                        autoridades.add(new SimpleGrantedAuthority(ROLE_ADMIN));
-                        autoridades.add(new SimpleGrantedAuthority(ADMIN_ROLE_NAME));
-                    }
-                    if (AUDITOR_ROLE_NAME.equalsIgnoreCase(r) || ROLE_AUDITOR.equalsIgnoreCase(r)) {
-                        autoridades.add(new SimpleGrantedAuthority(ROLE_AUDITOR));
-                        autoridades.add(new SimpleGrantedAuthority(AUDITOR_ROLE_NAME));
-                    }
-                });
+                roles.forEach(r -> autoridades.addAll(mapRole(r)));
             }
-            return autoridades;
+            return new ArrayList<>(autoridades);
         });
 
         return converter;
+    }
+
+    /**
+     * Normaliza un rol de Microsoft Entra ID a las autoridades que usan las reglas de seguridad.
+     * Acepta variantes como "ADMIN", "Admin", "Administrador" o "ROLE_ADMIN" y siempre
+     * produce el formato con prefijo ROLE_ (ej. ROLE_ADMIN, ROLE_JEFEBODEGA).
+     */
+    static List<GrantedAuthority> mapRole(String rawRole) {
+        List<GrantedAuthority> result = new ArrayList<>();
+        if (rawRole == null || rawRole.isBlank()) {
+            return result;
+        }
+        String role = rawRole.trim();
+        result.add(new SimpleGrantedAuthority(role));
+
+        String normalized = role.toUpperCase(Locale.ROOT);
+        if (normalized.startsWith("ROLE_")) {
+            normalized = normalized.substring("ROLE_".length());
+        }
+
+        switch (normalized) {
+            case "ADMIN", "ADMINISTRADOR" -> {
+                result.add(new SimpleGrantedAuthority(ROLE_ADMIN));
+                result.add(new SimpleGrantedAuthority(ADMIN_ROLE_NAME));
+            }
+            case "AUDITOR" -> {
+                result.add(new SimpleGrantedAuthority(ROLE_AUDITOR));
+                result.add(new SimpleGrantedAuthority(AUDITOR_ROLE_NAME));
+            }
+            default -> result.add(new SimpleGrantedAuthority("ROLE_" + normalized));
+        }
+        return result;
     }
 
     @SuppressWarnings("java:S5122")
