@@ -1,4 +1,5 @@
-/* Backdrop Glassmorphism */
+/* Backdrop Glassmorphism & Semantic Dialog */
+dialog.modal-backdrop,
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -7,10 +8,20 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  border: none;
   background: rgba(11, 17, 32, 0.82);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   animation: fadeInBackdrop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+dialog.modal-backdrop::backdrop {
+  background: transparent;
 }
 
 /* Modal Dialog Card */
@@ -59,7 +70,7 @@
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.08em;
-  color: #F87171;
+  color: #FECACA;
   text-transform: uppercase;
 }
 
@@ -70,15 +81,15 @@
   width: 28px;
   height: 28px;
   border: none;
-  background: transparent;
-  color: #94A3B8;
+  background-color: #0F172A;
+  color: #CBD5E1;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-close:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background-color: #334155;
   color: #FFFFFF;
 }
 
@@ -117,10 +128,14 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.05) 70%);
+  background-color: #0F172A;
+  background-image: radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.05) 70%);
   border: 1px solid rgba(239, 68, 68, 0.5);
-  color: #F87171;
   box-shadow: 0 0 25px rgba(239, 68, 68, 0.35);
+}
+
+.icon-shield svg {
+  stroke: #F87171;
 }
 
 /* Typography */
@@ -166,7 +181,7 @@
   font-family: 'Inter', sans-serif;
   font-size: 0.84rem;
   line-height: 1.55;
-  color: #94A3B8;
+  color: #E2E8F0;
   max-width: 380px;
 }
 

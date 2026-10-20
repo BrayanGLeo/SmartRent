@@ -5,13 +5,13 @@ import { Router } from '@angular/router';
   providedIn: 'root'
 })
 export class AccessDeniedService {
-  private router = inject(Router);
+  private readonly router = inject(Router);
 
-  public isOpen = signal<boolean>(false);
-  public title = signal<string>('Acceso No Autorizado');
-  public message = signal<string>('No tiene permiso para acceder a esta página.');
-  public redirectUrl = signal<string>('/');
-  public secondsRemaining = signal<number>(4);
+  public readonly isOpen = signal<boolean>(false);
+  public readonly title = signal<string>('Acceso No Autorizado');
+  public readonly message = signal<string>('No tiene permiso para acceder a esta página.');
+  public readonly redirectUrl = signal<string>('/');
+  public readonly secondsRemaining = signal<number>(4);
 
   private timerId: any = null;
 

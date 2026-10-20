@@ -1,5 +1,5 @@
-<div class="modal-backdrop" *ngIf="modalService.isOpen()" (click)="onConfirm()">
-  <div class="modal-dialog" (click)="$event.stopPropagation()">
+<dialog class="modal-backdrop" [open]="modalService.isOpen()" *ngIf="modalService.isOpen()" (click)="onBackdropClick($event)" (keydown.escape)="onConfirm()" aria-labelledby="access-denied-title">
+  <div class="modal-dialog">
     <!-- Top Security Ribbon -->
     <div class="security-ribbon">
       <div class="ribbon-indicator">
@@ -29,7 +29,7 @@
       </div>
 
       <!-- Headings & Text -->
-      <h3 class="modal-title">{{ modalService.title() }}</h3>
+      <h3 class="modal-title" id="access-denied-title">{{ modalService.title() }}</h3>
 
       <div class="message-callout">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="callout-icon">
@@ -68,4 +68,4 @@
       </div>
     </div>
   </div>
-</div>
+</dialog>

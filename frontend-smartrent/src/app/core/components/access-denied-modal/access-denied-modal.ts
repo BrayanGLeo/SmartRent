@@ -1,4 +1,4 @@
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, inject, ChangeDetectorRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AccessDeniedService } from '../../services/modal/access-denied.service';
 
@@ -10,12 +10,26 @@ import { AccessDeniedService } from '../../services/modal/access-denied.service'
   styleUrl: './access-denied-modal.css'
 })
 export class AccessDeniedModalComponent {
-  modalService = inject(AccessDeniedService);
+  readonly modalService = inject(AccessDeniedService);
+  private readonly cdr = inject(ChangeDetectorRef);
+
+  constructor() {
+    effect(() => {
+      this.modalService.isOpen();
+      this.cdr.markForCheck();
+    });
+  }
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
     if (this.modalService.isOpen()) {
       this.modalService.confirmAndRedirect();
+    }
+  }
+
+  onBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.onConfirm();
     }
   }
 
