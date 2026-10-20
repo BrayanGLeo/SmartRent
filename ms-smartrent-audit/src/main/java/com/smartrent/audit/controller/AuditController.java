@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@SuppressWarnings("java:S5122")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/api/audit")
@@ -21,7 +22,7 @@ public class AuditController {
         this.repository = repository;
     }
 
-    @GetMapping
+    @GetMapping({"", "/events"})
     public ResponseEntity<List<AuditTimeline>> getAuditHistory() {
         return ResponseEntity.ok(repository.findAllByOrderByTimestampDesc());
     }

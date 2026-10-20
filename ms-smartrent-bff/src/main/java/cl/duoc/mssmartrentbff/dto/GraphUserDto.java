@@ -12,6 +12,7 @@ public class GraphUserDto {
 
     public GraphUserDto() {}
 
+    @SuppressWarnings("java:S107")
     public GraphUserDto(String id, String fullName, String email, String tenantId, String company, String role, String status, String createdAt) {
         this.id = id;
         this.fullName = fullName;

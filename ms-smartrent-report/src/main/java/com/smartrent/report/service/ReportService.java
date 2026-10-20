@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ReportService {
@@ -40,6 +39,6 @@ public class ReportService {
         return machineRequests.entrySet().stream()
                 .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
                 .limit(5)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

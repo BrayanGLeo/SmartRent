@@ -13,14 +13,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("null")
 class RentalServiceTest {
 
     @Mock
@@ -50,20 +53,20 @@ class RentalServiceTest {
 
     @Test
     void createRental_ShouldSetStatusAndPublishEvent() {
-        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+        when(rentalRepository.save(Objects.requireNonNull(testRental))).thenReturn(testRental);
 
         Rental result = rentalService.createRental(testRental);
 
         assertNotNull(result);
         assertEquals(RentalStatus.SOLICITADO, result.getStatus());
-        verify(rentalRepository, times(1)).save(testRental);
+        verify(rentalRepository, times(1)).save(Objects.requireNonNull(testRental));
         verify(eventPublisher, times(1)).publishAuditAndReportEvent(testRental.getId(), testRental.getUserId(), testRental.getStatus().name());
     }
 
     @Test
     void changeRentalStatus_ToAprobado_ShouldCallCatalogAndPublishEvents() {
         when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
-        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+        when(rentalRepository.save(Objects.requireNonNull(testRental))).thenReturn(testRental);
 
         Rental result = rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "admin@test.com");
 
@@ -77,7 +80,7 @@ class RentalServiceTest {
     void changeRentalStatus_ToEnPreparacion_ShouldPublishPrepEvent() {
         testRental.setStatus(RentalStatus.APROBADO);
         when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
-        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+        when(rentalRepository.save(Objects.requireNonNull(testRental))).thenReturn(testRental);
 
         Rental result = rentalService.changeRentalStatus(1L, RentalStatus.EN_PREPARACION, "admin@test.com");
 
@@ -88,12 +91,11 @@ class RentalServiceTest {
 
     @Test
     void changeRentalStatus_InvalidTransition_ShouldThrowException() {
-        // testRental is SOLICITADO. Attempting to jump directly to EN_TERRENO is invalid
         when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            rentalService.changeRentalStatus(1L, RentalStatus.EN_TERRENO, "admin@test.com");
-        });
+        RuntimeException exception = assertThrows(RuntimeException.class, () ->
+            rentalService.changeRentalStatus(1L, RentalStatus.EN_TERRENO, "admin@test.com")
+        );
 
         assertTrue(exception.getMessage().contains("Transición de estado inválida"));
     }
@@ -102,16 +104,16 @@ class RentalServiceTest {
     void changeRentalStatus_ShouldThrowExceptionWhenNotFound() {
         when(rentalRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> {
-            rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "test@test.com");
-        });
+        assertThrows(RuntimeException.class, () ->
+            rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "test@test.com")
+        );
     }
 
     @Test
     void changeRentalStatus_ToEnTerreno_ShouldOnlyPublishAudit() {
         testRental.setStatus(RentalStatus.EN_PREPARACION);
         when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
-        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+        when(rentalRepository.save(Objects.requireNonNull(testRental))).thenReturn(testRental);
 
         rentalService.changeRentalStatus(1L, RentalStatus.EN_TERRENO, "test@test.com");
 
@@ -123,7 +125,7 @@ class RentalServiceTest {
     void changeRentalStatus_ToDevuelto_ShouldUpdateAvailabilityAndEmail() {
         testRental.setStatus(RentalStatus.EN_TERRENO);
         when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
-        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+        when(rentalRepository.save(Objects.requireNonNull(testRental))).thenReturn(testRental);
 
         rentalService.changeRentalStatus(1L, RentalStatus.DEVUELTO, "test@test.com");
 
@@ -135,7 +137,7 @@ class RentalServiceTest {
     void changeRentalStatus_ToCancelado_FromAprobado_ShouldUpdateAvailabilityAndEmail() {
         testRental.setStatus(RentalStatus.APROBADO);
         when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
-        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+        when(rentalRepository.save(Objects.requireNonNull(testRental))).thenReturn(testRental);
 
         rentalService.changeRentalStatus(1L, RentalStatus.CANCELADO, "test@test.com");
 
@@ -147,25 +149,24 @@ class RentalServiceTest {
     void changeRentalStatus_ToCancelado_FromSolicitado_ShouldNotUpdateAvailability() {
         testRental.setStatus(RentalStatus.SOLICITADO);
         when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
-        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+        when(rentalRepository.save(Objects.requireNonNull(testRental))).thenReturn(testRental);
 
         rentalService.changeRentalStatus(1L, RentalStatus.CANCELADO, "test@test.com");
 
         verify(catalogClient, never()).updateAvailability(anyLong(), anyBoolean());
         verify(eventPublisher).publishEmailEvent(1L, "test@test.com", "CANCELADO");
     }
+
     @Test
     void changeRentalStatus_ToCancelado_FromEnPreparacion_ShouldUpdateAvailability() {
         testRental.setStatus(RentalStatus.EN_PREPARACION);
         when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
-        when(rentalRepository.save(any(Rental.class))).thenReturn(testRental);
+        when(rentalRepository.save(Objects.requireNonNull(testRental))).thenReturn(testRental);
 
         rentalService.changeRentalStatus(1L, RentalStatus.CANCELADO, "test@test.com");
 
         verify(catalogClient).updateAvailability(100L, true);
     }
-
-
 
     @Test
     void changeRentalStatus_SameStatus_ShouldDoNothing() {
@@ -182,9 +183,9 @@ class RentalServiceTest {
         testRental.setStatus(RentalStatus.DEVUELTO);
         when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
 
-        assertThrows(IllegalStateException.class, () -> {
-            rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "test@test.com");
-        });
+        assertThrows(IllegalStateException.class, () ->
+            rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "test@test.com")
+        );
     }
 
     @Test
@@ -192,8 +193,8 @@ class RentalServiceTest {
         testRental.setStatus(RentalStatus.CANCELADO);
         when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
 
-        assertThrows(IllegalStateException.class, () -> {
-            rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "test@test.com");
-        });
+        assertThrows(IllegalStateException.class, () ->
+            rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "test@test.com")
+        );
     }
 }

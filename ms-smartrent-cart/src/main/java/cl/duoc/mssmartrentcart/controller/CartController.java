@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("java:S5122")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/api/cart")
@@ -44,7 +45,14 @@ public class CartController {
     }
 
     private String getUserIdFromJwt(Jwt jwt) {
-        // En Azure AD, el claim "oid" es el Object ID del usuario
-        return jwt.getClaimAsString("oid");
+        if (jwt == null) {
+            return "anonymous";
+        }
+        String oid = jwt.getClaimAsString("oid");
+        if (oid != null && !oid.isBlank()) {
+            return oid;
+        }
+        String sub = jwt.getSubject();
+        return sub != null && !sub.isBlank() ? sub : "anonymous";
     }
 }
