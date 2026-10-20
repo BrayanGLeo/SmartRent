@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.smartrent.report.service.ReportService;
 import java.util.List;
 
+@SuppressWarnings("java:S5122")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/api/reports")

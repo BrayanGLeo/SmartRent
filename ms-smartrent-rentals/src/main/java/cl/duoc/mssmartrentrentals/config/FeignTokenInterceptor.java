@@ -19,7 +19,7 @@ public class FeignTokenInterceptor implements RequestInterceptor {
 
         if (authentication instanceof JwtAuthenticationToken jwtAuthToken) {
             String tokenValue = jwtAuthToken.getToken().getTokenValue();
-            template.header(AUTHORIZATION_HEADER, String.format("%s %s", BEARER_TOKEN_TYPE, tokenValue));
+            template.header(AUTHORIZATION_HEADER, BEARER_TOKEN_TYPE + " " + tokenValue);
         }
     }
 }

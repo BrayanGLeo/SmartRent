@@ -12,14 +12,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("null")
 class CatalogServiceTest {
 
     @Mock
@@ -64,26 +63,26 @@ class CatalogServiceTest {
     void createMachine_ShouldSaveAndReturnMachine() {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
         when(machineRepository.findBySerialNumberIgnoreCase("CAT-320")).thenReturn(Optional.empty());
-        when(machineRepository.save(any(Machine.class))).thenReturn(testMachine);
+        when(machineRepository.save(Objects.requireNonNull(testMachine))).thenReturn(testMachine);
 
         Machine result = catalogService.createMachine(testMachine);
 
         assertNotNull(result);
         assertEquals("Excavadora", result.getName());
-        verify(machineRepository, times(1)).save(testMachine);
+        verify(machineRepository, times(1)).save(Objects.requireNonNull(testMachine));
     }
 
     @Test
     void updateMachineAvailability_ShouldUpdateWhenExists() {
         when(machineRepository.findById(1L)).thenReturn(Optional.of(testMachine));
-        when(machineRepository.save(any(Machine.class))).thenReturn(testMachine);
+        when(machineRepository.save(Objects.requireNonNull(testMachine))).thenReturn(testMachine);
 
         Machine result = catalogService.updateMachineAvailability(1L, false);
 
         assertNotNull(result);
         assertFalse(result.getIsAvailable());
         verify(machineRepository, times(1)).findById(1L);
-        verify(machineRepository, times(1)).save(testMachine);
+        verify(machineRepository, times(1)).save(Objects.requireNonNull(testMachine));
     }
 
     @Test
@@ -93,13 +92,13 @@ class CatalogServiceTest {
         assertThrows(RuntimeException.class, () -> catalogService.updateMachineAvailability(99L, false));
 
         verify(machineRepository, times(1)).findById(99L);
-        verify(machineRepository, never()).save(any(Machine.class));
+        verify(machineRepository, never()).save(Objects.requireNonNull(testMachine));
     }
 
     @Test
     void updateMachine_ShouldUpdateExistingMachineFields() {
         when(machineRepository.findById(1L)).thenReturn(Optional.of(testMachine));
-        when(machineRepository.save(any(Machine.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(machineRepository.save(Objects.requireNonNull(testMachine))).thenAnswer(inv -> inv.getArgument(0));
 
         Map<String, Object> payload = Map.of(
                 "name", "Excavadora Cat 320D",

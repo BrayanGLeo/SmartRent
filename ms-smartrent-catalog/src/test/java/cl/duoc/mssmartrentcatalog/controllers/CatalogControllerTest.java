@@ -18,7 +18,6 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -81,7 +80,7 @@ class CatalogControllerTest {
     @Test
     void updateMachine_ShouldReturnUpdatedMachine() {
         Map<String, Object> body = Map.of("dailyPrice", 150000, "availableStock", 5, "isAvailable", true);
-        when(catalogService.updateMachine(eq(1L), any())).thenReturn(testMachine);
+        when(catalogService.updateMachine(1L, body)).thenReturn(testMachine);
 
         ResponseEntity<Machine> response = catalogController.updateMachine(1L, body);
 
