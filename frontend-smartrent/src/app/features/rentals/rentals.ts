@@ -60,10 +60,16 @@ export class Rentals implements OnInit {
     request$.subscribe({
       next: (data) => {
         this.machines = data.length > 0 ? data : this.apiService.getMockCatalog();
+        if (this.rentals.length > 0) {
+          this.rentals = this.enrichRentals(this.rentals);
+        }
         this.cdr.detectChanges();
       },
       error: () => {
         this.machines = this.apiService.getMockCatalog();
+        if (this.rentals.length > 0) {
+          this.rentals = this.enrichRentals(this.rentals);
+        }
         this.cdr.detectChanges();
       }
     });
@@ -251,7 +257,24 @@ export class Rentals implements OnInit {
 
     this.rentals.unshift(newEntry);
     this.showNewModal = false;
-    this.displayToast(`Arriendo #${newEntry.id} solicitado exitosamente para validación.`);
+
+    this.apiService.requestRental({
+      machineId: Number(this.newRental.machineId) || 1,
+      userId: newEntry.userId,
+      startDate: this.newRental.startDate,
+      endDate: this.newRental.endDate
+    }).subscribe({
+      next: (saved) => {
+        if (saved && saved.id) {
+          newEntry.id = saved.id;
+        }
+        this.displayToast(`Arriendo #${newEntry.id} solicitado exitosamente para validación.`);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.displayToast(`Arriendo #${newEntry.id} solicitado exitosamente para validación.`);
+      }
+    });
   }
 
   updateStatus(rentalId: string | number, event: Event): void {

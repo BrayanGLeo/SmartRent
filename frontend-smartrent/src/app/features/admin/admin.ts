@@ -679,6 +679,7 @@ export class AdminPanel implements OnInit {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
           this.inventory.set(parsed);
+          this.syncRemoteInventory();
           return;
         }
       } catch (e) {
@@ -795,6 +796,42 @@ export class AdminPanel implements OnInit {
 
     this.inventory.set(initialMachines);
     this.saveInventoryToStorage();
+    this.syncRemoteInventory();
+  }
+
+  private syncRemoteInventory(): void {
+    this.apiService.getAllCatalog().subscribe({
+      next: (remoteMachines) => {
+        if (!Array.isArray(remoteMachines) || remoteMachines.length === 0) {
+          return;
+        }
+        const currentList = this.inventory();
+        const merged = [...currentList];
+        for (const rm of remoteMachines) {
+          const exists = merged.some(
+            m => String(m.id) === String(rm.id) || (rm.sku && m.sku === rm.sku) || (rm.serialNumber && m.sku === rm.serialNumber)
+          );
+          if (!exists) {
+            merged.unshift({
+              id: rm.id,
+              sku: rm.sku || rm.serialNumber || `SKU-${rm.id}`,
+              name: rm.name,
+              category: 'MOVIMIENTO_TIERRA',
+              dailyRate: rm.dailyPrice || rm.pricePerDay || 50000,
+              totalStock: rm.totalStock || 5,
+              availableStock: rm.availableStock ?? (rm.isAvailable ? 2 : 0),
+              status: rm.isAvailable ? 'DISPONIBLE' : 'SIN_STOCK',
+              imageUrl: rm.imageUrl || '/images/cat-320.jpg',
+              serialNumber: rm.serialNumber,
+              assignedDepot: rm.locationDepot || 'Patio Pudahuel Sur'
+            });
+          }
+        }
+        this.inventory.set(merged);
+        this.saveInventoryToStorage();
+      },
+      error: () => {}
+    });
   }
 
   private saveInventoryToStorage(): void {
@@ -1178,6 +1215,7 @@ export class AdminPanel implements OnInit {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
           this.validationOrders.set(parsed);
+          this.syncRemoteValidationOrders();
           return;
         }
       } catch (e) {
@@ -1276,6 +1314,44 @@ export class AdminPanel implements OnInit {
 
     this.validationOrders.set(defaultOrders);
     this.saveValidationOrdersToStorage();
+    this.syncRemoteValidationOrders();
+  }
+
+  private syncRemoteValidationOrders(): void {
+    this.apiService.getRentals().subscribe({
+      next: (remoteRentals) => {
+        if (!Array.isArray(remoteRentals) || remoteRentals.length === 0) {
+          return;
+        }
+        const currentOrders = this.validationOrders();
+        const merged = [...currentOrders];
+        for (const r of remoteRentals) {
+          const exists = merged.some(o => String(o.id) === String(r.id));
+          if (!exists) {
+            const matchedMach = this.inventory().find(m => String(m.id) === String(r.machineId));
+            merged.unshift({
+              id: r.id,
+              rentalCode: `ARR-2026-${r.id}`,
+              machineId: r.machineId,
+              machineName: r.machineName || matchedMach?.name || `Equipo Serie #${r.machineId}`,
+              sku: matchedMach?.sku || `SKU-${r.machineId}`,
+              lesseeName: r.lesseeName || r.userId || 'Cliente Corporativo',
+              company: 'SmartRent Red CIAM',
+              tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087',
+              workSiteAddress: r.workSiteAddress || 'Faena Central RM',
+              startDate: r.startDate,
+              endDate: r.endDate,
+              status: (r.status as any) || 'SOLICITADO',
+              horometerOut: 1000,
+              notes: 'Orden sincronizada desde ms-smartrent-rentals.'
+            });
+          }
+        }
+        this.validationOrders.set(merged);
+        this.saveValidationOrdersToStorage();
+      },
+      error: () => {}
+    });
   }
 
   private saveValidationOrdersToStorage(): void {
