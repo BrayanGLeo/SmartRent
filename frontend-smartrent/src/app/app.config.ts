@@ -54,8 +54,14 @@ export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
     protectedResourceMap.set(`${environment.apiBaseUrl}/${resource}*`, [environment.azure.apiScope])
   );
 
-  // Catálogo: GET público de lectura sin token, pero operaciones de escritura (POST, PUT, DELETE, PATCH)
-  // desde el panel de Administración requieren adjuntar el Bearer token JWT.
+  // Catálogo interno completo (/catalog/services/all) para paneles de Admin y Jefe de Bodega:
+  // siempre requiere Bearer token JWT.
+  protectedResourceMap.set(`${environment.apiBaseUrl}/catalog/services/all*`, [
+    environment.azure.apiScope
+  ]);
+
+  // Catálogo de clientes (/catalog*): GET público para visitantes y Arrendatarios,
+  // pero operaciones de escritura (POST, PUT, DELETE, PATCH) requieren Bearer token JWT.
   protectedResourceMap.set(`${environment.apiBaseUrl}/catalog*`, [
     { httpMethod: 'GET', scopes: null },
     { httpMethod: 'POST', scopes: [environment.azure.apiScope] },

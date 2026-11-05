@@ -81,12 +81,31 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher(HttpMethod.GET, "/api/catalog/services/all/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher(HttpMethod.GET, "/v1/api/catalog/services/all/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher(HttpMethod.GET, "/v2/api/catalog/services/all/**"))
+                .hasAnyAuthority(ROLE_ADMIN, ADMIN_ROLE_NAME, ROLE_JEFEBODEGA, JEFEBODEGA_ROLE_NAME)
+                .requestMatchers(
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher(HttpMethod.GET, "/api/catalog/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher(HttpMethod.GET, "/v1/api/catalog/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher(HttpMethod.GET, "/v2/api/catalog/**"))
-                .permitAll()
+                .access((authentication, context) -> {
+                    var authObj = authentication.get();
+                    if (authObj == null || !authObj.isAuthenticated()) {
+                        return new org.springframework.security.authorization.AuthorizationDecision(true);
+                    }
+                    boolean isInternalRole = authObj.getAuthorities().stream()
+                            .map(GrantedAuthority::getAuthority)
+                            .anyMatch(a -> a.equals(ROLE_ADMIN) || a.equals(ADMIN_ROLE_NAME)
+                                    || a.equals(ROLE_JEFEBODEGA) || a.equals(JEFEBODEGA_ROLE_NAME)
+                                    || a.equals(ROLE_AUDITOR) || a.equals(AUDITOR_ROLE_NAME));
+                    return new org.springframework.security.authorization.AuthorizationDecision(!isInternalRole);
+                })
                 .requestMatchers(
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/api/catalog/**"),

@@ -411,7 +411,15 @@ export class ApiService {
   }
 
   getCatalog(): Observable<Machine[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/catalog/services`).pipe(
+    return this.fetchCatalogFromEndpoint(`${this.baseUrl}/catalog/services`);
+  }
+
+  getAllCatalog(): Observable<Machine[]> {
+    return this.fetchCatalogFromEndpoint(`${this.baseUrl}/catalog/services/all`);
+  }
+
+  private fetchCatalogFromEndpoint(url: string): Observable<Machine[]> {
+    return this.http.get<any[]>(url).pipe(
       map((data: any[]) => {
         const invMap = this.getLocalInventoryMap();
         return data.map(m => {

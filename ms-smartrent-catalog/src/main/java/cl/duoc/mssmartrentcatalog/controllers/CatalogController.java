@@ -17,6 +17,8 @@ public class CatalogController {
 
     private static final String ADMIN_OR_BODEGA_AUTH =
             "hasAnyAuthority('ROLE_ADMIN', 'ROLE_JEFEBODEGA', 'Administrador', 'Admin', 'JefeBodega')";
+    private static final String CLIENT_OR_PUBLIC_CATALOG_AUTH =
+            "!hasAnyAuthority('ROLE_ADMIN', 'ROLE_JEFEBODEGA', 'ROLE_AUDITOR', 'Administrador', 'Admin', 'JefeBodega', 'Auditor')";
 
     private final CatalogService catalogService;
 
@@ -24,8 +26,10 @@ public class CatalogController {
         this.catalogService = catalogService;
     }
 
-    // Lectura pública de catálogo
+    // Lectura de catálogo exclusiva para visitantes no autenticados y Arrendatarios
+    // (Admin y Jefe de Bodega utilizan su propio endpoint /all desde sus paneles)
     @GetMapping
+    @PreAuthorize(CLIENT_OR_PUBLIC_CATALOG_AUTH)
     public ResponseEntity<List<Machine>> getCatalog() {
         return ResponseEntity.ok(catalogService.getAllAvailableMachines());
     }
