@@ -40,5 +40,25 @@ class RabbitMQConfigTest {
         Binding prepBinding = config.prepBinding(config.prepQueue(), exchange);
         assertNotNull(prepBinding);
         assertEquals("prep", prepBinding.getRoutingKey());
+
+        DirectExchange cmdExchange = config.cmdDirectExchange();
+        assertNotNull(cmdExchange);
+        assertEquals(RabbitMQConfig.EXCHANGE_CMD_DIRECT, cmdExchange.getName());
+
+        Binding cmdEmailBinding = config.cmdEmailBinding(config.emailQueue(), cmdExchange);
+        assertNotNull(cmdEmailBinding);
+        assertEquals(RabbitMQConfig.ROUTING_KEY_CMD_EMAIL, cmdEmailBinding.getRoutingKey());
+
+        DirectExchange smartrentExchange = config.smartrentExchange();
+        assertNotNull(smartrentExchange);
+        assertEquals(RabbitMQConfig.EXCHANGE_SMARTRENT, smartrentExchange.getName());
+
+        Binding orderCreatedBinding = config.orderCreatedBinding(config.emailQueue(), smartrentExchange);
+        assertNotNull(orderCreatedBinding);
+        assertEquals(RabbitMQConfig.ROUTING_KEY_ORDER_CREATED, orderCreatedBinding.getRoutingKey());
+
+        Binding checkoutBinding = config.checkoutRoutingBinding(config.emailQueue(), smartrentExchange);
+        assertNotNull(checkoutBinding);
+        assertEquals(RabbitMQConfig.ROUTING_KEY_CHECKOUT, checkoutBinding.getRoutingKey());
     }
 }

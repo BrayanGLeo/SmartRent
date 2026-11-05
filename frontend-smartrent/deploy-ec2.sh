@@ -12,7 +12,7 @@ if [ ! -f /swapfile ]; then
     sudo chmod 600 /swapfile
     sudo mkswap /swapfile
     sudo swapon /swapfile
-    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+    grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 else
     echo "✅ Memoria Swap ya configurada."
 fi
@@ -33,7 +33,7 @@ fi
 
 # 4. Compilar el proyecto Angular
 echo "⚙️ Instalando dependencias NPM y compilando Angular para producción..."
-npm install
+npm ci
 NODE_OPTIONS="--max-old-space-size=2048" npm run build
 
 # 5. Publicar los archivos en Nginx
@@ -52,9 +52,16 @@ server {
     index index.html;
 
     server_name _;
+    server_tokens off;
 
     gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
     location / {
         try_files $uri $uri/ /index.html;
@@ -63,11 +70,17 @@ server {
     # Soporte para ruta raiz desde AWS HTTP API Gateway (proxy /{proxy+})
     location = /index.html {
         add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     }
 
     location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff2)$ {
         expires 7d;
         add_header Cache-Control "public, no-transform";
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     }
 }
 EOF

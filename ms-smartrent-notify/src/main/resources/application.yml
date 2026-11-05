@@ -14,5 +14,6 @@ spring:
           max-attempts: 3
           max-interval: 10000
           multiplier: 2.0
+        missing-queues-fatal: false
 server:
-  port: 8085
+  port: ${SERVER_PORT:8087}

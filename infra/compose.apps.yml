@@ -6,9 +6,9 @@ services:
     restart: unless-stopped
     container_name: smartrent-postgres
     environment:
-      POSTGRES_USER: smartrent
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: smartrent_audit
+      POSTGRES_USER: ${POSTGRES_USER:-smartrent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-smartrent_audit}
     ports:
       - "5432:5432"
     networks:
@@ -21,7 +21,9 @@ services:
     restart: unless-stopped
     container_name: smartrent-catalog
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/smartrent_audit
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
     depends_on:
       - postgres
     networks:
@@ -32,9 +34,11 @@ services:
     restart: unless-stopped
     container_name: smartrent-rentals
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/smartrent_audit
-      - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST}:9092
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST:-localhost}
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-localhost}:9092
       - CATALOG_URL=http://smartrent-catalog:8081
     depends_on:
       - postgres
@@ -47,7 +51,7 @@ services:
     restart: unless-stopped
     container_name: smartrent-notify
     environment:
-      - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST}
+      - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST:-localhost}
     networks:
       - smartrent-network
 
@@ -56,8 +60,10 @@ services:
     restart: unless-stopped
     container_name: smartrent-audit
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/smartrent_audit
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST}:9092
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-localhost}:9092
     depends_on:
       - postgres
     networks:
@@ -68,8 +74,10 @@ services:
     restart: unless-stopped
     container_name: smartrent-cart
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/smartrent_audit
-      - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST:-localhost}
     depends_on:
       - postgres
     networks:
@@ -80,8 +88,10 @@ services:
     restart: unless-stopped
     container_name: smartrent-checkout
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/smartrent_audit
-      - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST:-localhost}
     depends_on:
       - postgres
     networks:
@@ -92,7 +102,7 @@ services:
     restart: unless-stopped
     container_name: smartrent-report
     environment:
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST}:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-localhost}:9092
     networks:
       - smartrent-network
 
