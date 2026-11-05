@@ -52,8 +52,13 @@ public class RentalEventPublisher {
     }
 
     public void publishAuditAndReportEvent(Long rentalId, String userId, String status) {
+        publishAuditAndReportEvent(rentalId, rentalId, userId, status);
+    }
+
+    public void publishAuditAndReportEvent(Long rentalId, Long machineId, String userId, String status) {
         Map<String, Object> payload = Map.of(
             RENTAL_ID_KEY, rentalId,
+            "machineId", machineId != null ? machineId : 1L,
             "userId", userId,
             "status", status,
             "timestamp", System.currentTimeMillis()
