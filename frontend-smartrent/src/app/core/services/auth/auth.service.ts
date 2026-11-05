@@ -15,43 +15,47 @@ export function getUserRoleFromAccount(currentAccount: AccountInfo | null): User
 
   const claims = (currentAccount.idTokenClaims ?? {}) as any;
   const rawRoles = claims.roles ?? claims.role ?? claims.extension_Role ?? claims.groups ?? [];
-  const rolesList: string[] = Array.isArray(rawRoles) ? rawRoles : [rawRoles];
+  const rolesList: string[] = (Array.isArray(rawRoles) ? rawRoles : [rawRoles]).filter(
+    r => typeof r === 'string' && r.trim().length > 0
+  );
 
   const hasRole = (name: string) =>
-    rolesList.some(r => typeof r === 'string' && r.toLowerCase() === name.toLowerCase());
+    rolesList.some(r => r.toLowerCase() === name.toLowerCase());
 
+  // 1. Priorizar claims explícitos de roles emitidos por Azure Entra ID (RBAC estricto)
+  if (rolesList.length > 0) {
+    if (hasRole('ROLE_ADMIN') || hasRole('Administrador') || hasRole('Admin')) {
+      return 'Administrador';
+    }
+    if (hasRole('ROLE_AUDITOR') || hasRole('Auditor')) {
+      return 'Auditor';
+    }
+    if (
+      hasRole('ROLE_JEFEBODEGA') ||
+      hasRole('JefeBodega') ||
+      hasRole('Operador') ||
+      hasRole('Bodega')
+    ) {
+      return 'JefeBodega';
+    }
+    if (hasRole('ROLE_ARRENDATARIO') || hasRole('Arrendatario') || hasRole('Cliente')) {
+      return 'Arrendatario';
+    }
+    return 'None';
+  }
+
+  // 2. Fallback únicamente cuando el token CIAM no incluye el claim 'roles'
   const username = (currentAccount.username ?? '').toLowerCase();
   const displayName = (currentAccount.name ?? '').toLowerCase();
 
-  if (
-    hasRole('ROLE_ADMIN') ||
-    hasRole('Administrador') ||
-    hasRole('Admin') ||
-    username.includes('admin') ||
-    displayName.includes('admin')
-  ) {
+  if (username.includes('admin') || displayName.includes('admin')) {
     return 'Administrador';
   }
-  if (
-    hasRole('ROLE_AUDITOR') ||
-    hasRole('Auditor') ||
-    username.includes('auditor') ||
-    displayName.includes('auditor')
-  ) {
+  if (username.includes('auditor') || displayName.includes('auditor')) {
     return 'Auditor';
   }
-  if (
-    hasRole('ROLE_JEFEBODEGA') ||
-    hasRole('JefeBodega') ||
-    hasRole('Operador') ||
-    hasRole('Bodega') ||
-    username.includes('bodega') ||
-    displayName.includes('bodega')
-  ) {
+  if (username.includes('bodega') || displayName.includes('bodega')) {
     return 'JefeBodega';
-  }
-  if (hasRole('ROLE_ARRENDATARIO') || hasRole('Arrendatario') || hasRole('Cliente')) {
-    return 'Arrendatario';
   }
 
   return 'None';

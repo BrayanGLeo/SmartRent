@@ -3,6 +3,7 @@ package cl.duoc.mssmartrentbff.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -39,6 +40,10 @@ public class SecurityConfig {
     private static final String ADMIN_ROLE_NAME = "Administrador";
     private static final String ROLE_AUDITOR = "ROLE_AUDITOR";
     private static final String AUDITOR_ROLE_NAME = "Auditor";
+    private static final String ROLE_JEFEBODEGA = "ROLE_JEFEBODEGA";
+    private static final String JEFEBODEGA_ROLE_NAME = "JefeBodega";
+    private static final String EXPECTED_CLIENT_ID = "749dc676-d557-460a-b138-dac9a6744b6e";
+    private static final String EXPECTED_APP_ID_URI = "api://749dc676-d557-460a-b138-dac9a6744b6e";
 
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:https://753ae9df-d5ec-4c6b-8227-b334fc775087.ciamlogin.com/753ae9df-d5ec-4c6b-8227-b334fc775087/discovery/v2.0/keys}")
     private String jwkSetUri;
@@ -54,9 +59,13 @@ public class SecurityConfig {
         OAuth2TokenValidator<Jwt> audienceValidator = new JwtClaimValidator<Object>(
                 "aud",
                 aud -> {
-                    if (aud == null) return false;
-                    String audStr = aud.toString();
-                    return audStr.contains("749dc676-d557-460a-b138-dac9a6744b6e");
+                    if (aud instanceof java.util.Collection<?> col) {
+                        return col.contains(EXPECTED_CLIENT_ID) || col.contains(EXPECTED_APP_ID_URI);
+                    }
+                    if (aud instanceof String str) {
+                        return EXPECTED_CLIENT_ID.equals(str) || EXPECTED_APP_ID_URI.equals(str);
+                    }
+                    return false;
                 }
         );
 
@@ -72,11 +81,40 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher(HttpMethod.GET, "/api/catalog/services/all/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher(HttpMethod.GET, "/v1/api/catalog/services/all/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher(HttpMethod.GET, "/v2/api/catalog/services/all/**"))
+                .hasAnyAuthority(ROLE_ADMIN, ADMIN_ROLE_NAME, ROLE_JEFEBODEGA, JEFEBODEGA_ROLE_NAME)
+                .requestMatchers(
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher(HttpMethod.GET, "/api/catalog/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher(HttpMethod.GET, "/v1/api/catalog/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher(HttpMethod.GET, "/v2/api/catalog/**"))
+                .access((authentication, context) -> {
+                    var authObj = authentication.get();
+                    if (authObj == null || !authObj.isAuthenticated()) {
+                        return new org.springframework.security.authorization.AuthorizationDecision(true);
+                    }
+                    boolean isInternalRole = authObj.getAuthorities().stream()
+                            .map(GrantedAuthority::getAuthority)
+                            .anyMatch(a -> a.equals(ROLE_ADMIN) || a.equals(ADMIN_ROLE_NAME)
+                                    || a.equals(ROLE_JEFEBODEGA) || a.equals(JEFEBODEGA_ROLE_NAME)
+                                    || a.equals(ROLE_AUDITOR) || a.equals(AUDITOR_ROLE_NAME));
+                    return new org.springframework.security.authorization.AuthorizationDecision(!isInternalRole);
+                })
+                .requestMatchers(
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/api/catalog/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/v1/api/catalog/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/v2/api/catalog/**"),
+                                .antMatcher("/v2/api/catalog/**"))
+                .hasAnyAuthority(ROLE_ADMIN, ADMIN_ROLE_NAME, ROLE_JEFEBODEGA, JEFEBODEGA_ROLE_NAME)
+                .requestMatchers(
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/api/users/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
@@ -87,7 +125,7 @@ public class SecurityConfig {
                                 .antMatcher("/users/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/api/admin/**"))
-                .permitAll()
+                .hasAnyAuthority(ROLE_ADMIN, ADMIN_ROLE_NAME)
                 .requestMatchers(
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/reports/**"),

@@ -51,7 +51,13 @@ export class Rentals implements OnInit {
   }
 
   loadMachines() {
-    this.apiService.getCatalog().subscribe({
+    const role = this.authService.userRole();
+    const request$ =
+      role === 'JefeBodega' || role === 'Administrador'
+        ? this.apiService.getAllCatalog()
+        : this.apiService.getCatalog();
+
+    request$.subscribe({
       next: (data) => {
         this.machines = data.length > 0 ? data : this.apiService.getMockCatalog();
         this.cdr.detectChanges();

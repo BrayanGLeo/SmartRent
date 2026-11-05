@@ -3,6 +3,7 @@ package cl.duoc.mssmartrentbff.controllers;
 import cl.duoc.mssmartrentbff.dto.GraphUserDto;
 import cl.duoc.mssmartrentbff.services.AzureGraphService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,6 +19,7 @@ public class AdminUserController {
     }
 
     @GetMapping({"/api/users", "/v1/api/users", "/v2/api/users", "/users"})
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'Administrador')")
     public ResponseEntity<List<GraphUserDto>> getTenantUsers() {
         List<GraphUserDto> users = azureGraphService.getAllTenantUsers();
         return ResponseEntity.ok(users);

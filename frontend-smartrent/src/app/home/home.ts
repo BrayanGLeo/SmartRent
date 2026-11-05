@@ -90,8 +90,17 @@ export class Home {
   }
 
   onQuickSearch(): void {
-    if (this.authService.userRole() === 'Administrador') {
+    const role = this.authService.userRole();
+    if (role === 'Administrador') {
       void this.router.navigate(['/admin']);
+      return;
+    }
+    if (role === 'JefeBodega') {
+      void this.router.navigate(['/rentals']);
+      return;
+    }
+    if (role === 'Auditor') {
+      void this.router.navigate(['/audit']);
       return;
     }
     const queryParams: Record<string, string> = {};
@@ -112,8 +121,17 @@ export class Home {
   }
 
   filterByCategory(categoryName: string): void {
-    if (this.authService.userRole() === 'Administrador') {
+    const role = this.authService.userRole();
+    if (role === 'Administrador') {
       void this.router.navigate(['/admin']);
+      return;
+    }
+    if (role === 'JefeBodega') {
+      void this.router.navigate(['/rentals']);
+      return;
+    }
+    if (role === 'Auditor') {
+      void this.router.navigate(['/audit']);
       return;
     }
     void this.router.navigate(['/catalog'], {

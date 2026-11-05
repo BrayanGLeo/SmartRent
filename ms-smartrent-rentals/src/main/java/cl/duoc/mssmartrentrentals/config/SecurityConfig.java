@@ -57,9 +57,15 @@ public class SecurityConfig {
         OAuth2TokenValidator<Jwt> audienceValidator = new JwtClaimValidator<Object>(
                 "aud",
                 aud -> {
-                    if (aud == null) return false;
-                    String audStr = aud.toString();
-                    return audStr.contains("749dc676-d557-460a-b138-dac9a6744b6e");
+                    if (aud instanceof java.util.Collection<?> col) {
+                        return col.contains("749dc676-d557-460a-b138-dac9a6744b6e")
+                                || col.contains("api://749dc676-d557-460a-b138-dac9a6744b6e");
+                    }
+                    if (aud instanceof String str) {
+                        return "749dc676-d557-460a-b138-dac9a6744b6e".equals(str)
+                                || "api://749dc676-d557-460a-b138-dac9a6744b6e".equals(str);
+                    }
+                    return false;
                 }
         );
 
