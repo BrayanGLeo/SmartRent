@@ -7,11 +7,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -31,21 +33,33 @@ public class AzureGraphService {
     private static final String DEFAULT_CREATED_AT = "2024-01-15";
     private static final String COMPANY_CIAM = "SmartRent Red CIAM";
     private static final String COMPANY_CIAM_DOMAIN = "SmartRent Red CIAM (pepito123.onmicrosoft.com)";
+    private static final long TOKEN_REFRESH_MARGIN_SECONDS = 300L;
 
     private final AzureGraphProperties azureGraphProperties;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private volatile String cachedAccessToken;
+    private volatile Instant tokenExpiresAt = Instant.MIN;
 
     public AzureGraphService(AzureGraphProperties azureGraphProperties) {
         this.azureGraphProperties = azureGraphProperties;
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(5000);
+        requestFactory.setReadTimeout(10000);
+        this.restTemplate = new RestTemplate(requestFactory);
     }
 
     /**
-     * Obtiene el Access Token de Microsoft Graph mediante Client Credentials Grant
+     * Obtiene el Access Token de Microsoft Graph mediante Client Credentials Grant con caché en memoria
      */
-    public String getGraphAccessToken() {
+    public synchronized String getGraphAccessToken() {
         if (azureGraphProperties.getClientSecret() == null || azureGraphProperties.getClientSecret().isBlank()) {
             throw new IllegalStateException("azure.graph.client-secret no configurado (defina AZURE_GRAPH_CLIENT_SECRET)");
+        }
+        Instant now = Instant.now();
+        if (cachedAccessToken != null && now.isBefore(tokenExpiresAt)) {
+            return cachedAccessToken;
         }
         String tokenUrl = "https://login.microsoftonline.com/" + azureGraphProperties.getTenantId() + "/oauth2/v2.0/token";
 
@@ -64,7 +78,10 @@ public class AzureGraphService {
             ResponseEntity<String> response = restTemplate.postForEntity(tokenUrl, request, String.class);
             JsonNode root = objectMapper.readTree(response.getBody());
             if (root.has("access_token")) {
-                return root.get("access_token").asText();
+                long expiresIn = root.path("expires_in").asLong(3599L);
+                this.cachedAccessToken = root.get("access_token").asText();
+                this.tokenExpiresAt = Instant.now().plusSeconds(Math.max(60L, expiresIn - TOKEN_REFRESH_MARGIN_SECONDS));
+                return this.cachedAccessToken;
             }
             throw new IllegalStateException("Respuesta de Azure no contiene access_token");
         } catch (Exception e) {

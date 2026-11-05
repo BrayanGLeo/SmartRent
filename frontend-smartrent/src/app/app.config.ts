@@ -39,7 +39,17 @@ export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   // Endpoints que requieren Authorization Bearer token hacia microservicios protegidos.
   // Una sola entrada por recurso: con strictMatching el patrón está anclado (^...$) y
   // "/reports*" cubre tanto "/reports" como "/reports/kpis?range=..." sin solapamientos.
-  const protectedResources = ['rentals', 'reports', 'audit', 'users', 'cart', 'checkout'];
+  const protectedResources = [
+    'rentals',
+    'reports',
+    'audit',
+    'users',
+    'cart',
+    'checkout',
+    'queues',
+    'exchanges',
+    'bindings'
+  ];
   protectedResources.forEach(resource =>
     protectedResourceMap.set(`${environment.apiBaseUrl}/${resource}*`, [environment.azure.apiScope])
   );

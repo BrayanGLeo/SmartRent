@@ -1,7 +1,7 @@
-import { Injectable, NgZone, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
+import { catchError, delay, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import {
   Machine,
@@ -38,7 +38,6 @@ export type {
 })
 export class ApiService {
   public readonly http = inject(HttpClient);
-  private readonly ngZone = inject(NgZone);
   public readonly baseUrl = environment.apiBaseUrl;
 
   private readonly mockCatalog: Machine[] = [
@@ -412,59 +411,45 @@ export class ApiService {
   }
 
   getCatalog(): Observable<Machine[]> {
-    return new Observable<Machine[]>(observer => {
-      fetch(`${this.baseUrl}/catalog/services`)
-        .then(response => {
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          return response.json();
-        })
-        .then((data: any[]) => {
-          this.ngZone.run(() => {
-            const invMap = this.getLocalInventoryMap();
-            const machines: Machine[] = data.map(m => {
-              const matchedMock = this.mockCatalog.find(mock =>
-                (m.serialNumber && mock.serialNumber === m.serialNumber) ||
-                (m.name && mock.name.toLowerCase() === m.name.toLowerCase()) ||
-                (m.id && mock.id.toString() === m.id.toString())
-              );
-              const sku = matchedMock?.sku || m.serialNumber || (m.name ? m.name.toUpperCase().slice(0, 7) : 'SKU-GEN');
-              const inv = invMap[sku] || (m.name ? invMap[m.name.toLowerCase()] : null) || (m.id ? invMap[m.id.toString()] : null);
+    return this.http.get<any[]>(`${this.baseUrl}/catalog/services`).pipe(
+      map((data: any[]) => {
+        const invMap = this.getLocalInventoryMap();
+        return data.map(m => {
+          const matchedMock = this.mockCatalog.find(mock =>
+            (m.serialNumber && mock.serialNumber === m.serialNumber) ||
+            (m.name && mock.name.toLowerCase() === m.name.toLowerCase()) ||
+            (m.id && mock.id.toString() === m.id.toString())
+          );
+          const sku = matchedMock?.sku || m.serialNumber || (m.name ? m.name.toUpperCase().slice(0, 7) : 'SKU-GEN');
+          const inv = invMap[sku] || (m.name ? invMap[m.name.toLowerCase()] : null) || (m.id ? invMap[m.id.toString()] : null);
 
-              const totalStock = inv?.totalStock !== undefined ? inv.totalStock : (m.totalStock ?? 5);
-              const availableStock = inv?.availableStock !== undefined ? inv.availableStock : (m.isAvailable ? Math.min(2, totalStock) : 0);
-              const isAvail = availableStock > 0 && inv?.status !== 'EN_MANTENCION';
+          const totalStock = inv?.totalStock !== undefined ? inv.totalStock : (m.totalStock ?? 5);
+          const availableStock = inv?.availableStock !== undefined ? inv.availableStock : (m.isAvailable ? Math.min(2, totalStock) : 0);
+          const isAvail = availableStock > 0 && inv?.status !== 'EN_MANTENCION';
 
-              return {
-                id: m.id ? m.id.toString() : crypto.randomUUID(),
-                name: m.name,
-                serialNumber: m.serialNumber,
-                description: m.description || matchedMock?.description || 'Sin descripción',
-                category: m.category?.name || matchedMock?.category || 'General',
-                status: isAvail ? 'DISPONIBLE' : (inv?.status === 'EN_MANTENCION' ? 'EN_MANTENCION' : 'SIN_STOCK'),
-                isAvailable: isAvail,
-                availableStock,
-                totalStock,
-                dailyPrice: inv?.dailyRate || m.dailyPrice || matchedMock?.dailyPrice || 0,
-                pricePerDay: inv?.dailyRate || m.dailyPrice || matchedMock?.dailyPrice || 0,
-                brand: matchedMock?.brand,
-                sku,
-                specs: matchedMock?.specs,
-                imageUrl: matchedMock?.imageUrl,
-                locationDepot: matchedMock?.locationDepot,
-                warrantyDepositClp: matchedMock?.warrantyDepositClp
-              };
-            });
-            observer.next(machines);
-            observer.complete();
-          });
-        })
-        .catch(err => {
-          this.ngZone.run(() => {
-            observer.next(this.getMockCatalog());
-            observer.complete();
-          });
+          return {
+            id: m.id ? m.id.toString() : crypto.randomUUID(),
+            name: m.name,
+            serialNumber: m.serialNumber,
+            description: m.description || matchedMock?.description || 'Sin descripción',
+            category: m.category?.name || matchedMock?.category || 'General',
+            status: isAvail ? 'DISPONIBLE' : (inv?.status === 'EN_MANTENCION' ? 'EN_MANTENCION' : 'SIN_STOCK'),
+            isAvailable: isAvail,
+            availableStock,
+            totalStock,
+            dailyPrice: inv?.dailyRate || m.dailyPrice || matchedMock?.dailyPrice || 0,
+            pricePerDay: inv?.dailyRate || m.dailyPrice || matchedMock?.dailyPrice || 0,
+            brand: matchedMock?.brand,
+            sku,
+            specs: matchedMock?.specs,
+            imageUrl: matchedMock?.imageUrl,
+            locationDepot: matchedMock?.locationDepot,
+            warrantyDepositClp: matchedMock?.warrantyDepositClp
+          };
         });
-    });
+      }),
+      catchError(() => of(this.getMockCatalog()))
+    );
   }
 
   addMachine(machine: Partial<Machine>): Observable<Machine> {
