@@ -49,7 +49,8 @@ export class Catalog implements OnInit {
   showNotification = false;
 
   ngOnInit() {
-    if (this.authService.userRole() === 'Administrador') {
+    const role = this.authService.userRole();
+    if (role === 'Administrador' || role === 'JefeBodega' || role === 'Auditor') {
       this.accessDeniedService.show('No tiene permiso para acceder a esta página.', '/');
       void this.router.navigate(['/']);
       return;
