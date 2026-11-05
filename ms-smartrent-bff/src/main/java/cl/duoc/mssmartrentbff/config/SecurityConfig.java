@@ -124,7 +124,25 @@ public class SecurityConfig {
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/users/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/api/admin/**"))
+                                .antMatcher("/api/admin/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/api/queues/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v1/api/queues/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v2/api/queues/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/api/exchanges/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v1/api/exchanges/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v2/api/exchanges/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/api/bindings/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v1/api/bindings/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v2/api/bindings/**"))
                 .hasAnyAuthority(ROLE_ADMIN, ADMIN_ROLE_NAME)
                 .requestMatchers(
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher

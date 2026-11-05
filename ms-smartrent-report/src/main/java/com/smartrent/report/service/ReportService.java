@@ -23,10 +23,20 @@ public class ReportService {
     }
 
     private String extractMachineFromMessage(String message) {
-        if (message != null && message.contains("excavadora")) {
+        if (message == null) {
+            return "Maquina_Generica";
+        }
+        String lower = message.toLowerCase(java.util.Locale.ROOT);
+        if (lower.contains("excavadora") || lower.contains("\"machineid\":1") || lower.contains("\"rentalid\":1")) {
             return "Excavadora";
-        } else if (message != null && message.contains("grua")) {
+        } else if (lower.contains("grua") || lower.contains("grúa") || lower.contains("\"machineid\":7") || lower.contains("\"machineid\":8")) {
             return "Grua";
+        } else if (lower.contains("rodillo") || lower.contains("\"machineid\":3")) {
+            return "Rodillo Compactador";
+        } else if (lower.contains("generador") || lower.contains("\"machineid\":9") || lower.contains("\"machineid\":10")) {
+            return "Generador Industrial";
+        } else if (lower.contains("demoledor") || lower.contains("\"machineid\":5")) {
+            return "Martillo Demoledor";
         }
         return "Maquina_Generica";
     }
