@@ -211,4 +211,13 @@ class RentalServiceTest {
         verify(rentalRepository, never()).save(any(Rental.class));
         verifyNoInteractions(eventPublisher);
     }
+
+    @Test
+    void getRentalsByUserAndGetAllRentals_ShouldDelegateToRepository() {
+        when(rentalRepository.findByUserId("user123")).thenReturn(java.util.List.of(testRental));
+        when(rentalRepository.findAll()).thenReturn(java.util.List.of(testRental));
+
+        assertEquals(1, rentalService.getRentalsByUser("user123").size());
+        assertEquals(1, rentalService.getAllRentals().size());
+    }
 }

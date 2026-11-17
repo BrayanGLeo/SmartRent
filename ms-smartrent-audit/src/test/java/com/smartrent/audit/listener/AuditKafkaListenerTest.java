@@ -57,5 +57,10 @@ class AuditKafkaListenerTest {
         Mockito.when(repository.save(Mockito.any(AuditTimeline.class)))
                 .thenThrow(new RuntimeException("DB down"));
         auditKafkaListener.handleDlt("another payload");
+
+        Mockito.reset(repository);
+        auditKafkaListener.handleDlt(null);
+        auditKafkaListener.handleDlt("   ");
+        Mockito.verifyNoInteractions(repository);
     }
 }

@@ -3,6 +3,7 @@ package cl.duoc.mssmartrentrentals.controllers;
 import cl.duoc.mssmartrentrentals.controllers.RentalsController.RentalRequest;
 import cl.duoc.mssmartrentrentals.entities.Rental;
 import cl.duoc.mssmartrentrentals.entities.RentalStatus;
+import cl.duoc.mssmartrentrentals.repositories.RentalRepository;
 import cl.duoc.mssmartrentrentals.services.RentalService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,9 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -238,5 +242,89 @@ class RentalsControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         Rental body = java.util.Objects.requireNonNull(response.getBody());
         assertEquals("client@test.com", body.getUserId());
+    }
+
+    @Test
+    void updateRentalStatus_WithBodyMap_ShouldHandleValidInvalidAndNull() {
+        when(rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "user123@test.com"))
+                .thenReturn(testRental);
+
+        ResponseEntity<Rental> okResp = rentalsController.updateRentalStatus(1L, null, Map.of("status", "aprobado"));
+        assertEquals(HttpStatus.OK, okResp.getStatusCode());
+
+        ResponseEntity<Rental> badInvalid = rentalsController.updateRentalStatus(1L, null, Map.of("status", "ESTADO_INVALIDO"));
+        assertEquals(HttpStatus.BAD_REQUEST, badInvalid.getStatusCode());
+
+        ResponseEntity<Rental> badNull = rentalsController.updateRentalStatus(1L, null, null);
+        assertEquals(HttpStatus.BAD_REQUEST, badNull.getStatusCode());
+    }
+
+    @Test
+    void updateRentalStatus_WithFallbackRepository_ShouldHandleNotFoundAndGatewayError() {
+        RentalRepository repo = mock(RentalRepository.class);
+        RentalsController controllerWithRepo = new RentalsController(rentalService, repo);
+
+        when(rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "user123@test.com"))
+                .thenThrow(new NoSuchElementException("Not found"));
+        when(repo.findById(1L)).thenReturn(Optional.of(testRental));
+        when(repo.save(any(Rental.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ResponseEntity<Rental> updatedExisting = controllerWithRepo.updateRentalStatus(1L, RentalStatus.APROBADO);
+        assertEquals(HttpStatus.OK, updatedExisting.getStatusCode());
+        assertEquals(RentalStatus.APROBADO, updatedExisting.getBody().getStatus());
+
+        when(rentalService.changeRentalStatus(99L, RentalStatus.EN_PREPARACION, "user123@test.com"))
+                .thenThrow(new NoSuchElementException("Not found"));
+        when(repo.findById(99L)).thenReturn(Optional.empty());
+
+        ResponseEntity<Rental> createdFallback = controllerWithRepo.updateRentalStatus(99L, RentalStatus.EN_PREPARACION);
+        assertEquals(HttpStatus.OK, createdFallback.getStatusCode());
+        assertEquals(99L, createdFallback.getBody().getId());
+
+        when(rentalService.changeRentalStatus(2L, RentalStatus.APROBADO, "user123@test.com"))
+                .thenThrow(new RuntimeException("Feign error"));
+
+        ResponseEntity<Rental> badGateway = controllerWithRepo.updateRentalStatus(2L, RentalStatus.APROBADO);
+        assertEquals(HttpStatus.BAD_GATEWAY, badGateway.getStatusCode());
+    }
+
+    @Test
+    void createRental_WithNullFieldsAndEmailClaim_ShouldUseDefaults() {
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("email", "mail@test.com")
+                .build();
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt);
+        when(securityContext.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(rentalService.createRental(any(Rental.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ResponseEntity<Rental> response = rentalsController.createRental(new RentalRequest(null, null, null, null));
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Rental body = java.util.Objects.requireNonNull(response.getBody());
+        assertEquals(1L, body.getMachineId());
+        assertEquals("mail@test.com", body.getUserId());
+        assertNotNull(body.getStartDate());
+        assertNotNull(body.getEndDate());
+    }
+
+    @Test
+    void getMyRentals_AdditionalAuthorizationBranches() {
+        assertEquals(HttpStatus.FORBIDDEN, rentalsController.getMyRentals("").getStatusCode());
+
+        when(rentalService.getRentalsByUser("user123@other.com")).thenReturn(List.of(testRental));
+        assertEquals(HttpStatus.OK, rentalsController.getMyRentals("user123@other.com").getStatusCode());
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Jwt jwt = Jwt.withTokenValue("token").header("alg", "none").claim("oid", "admin-id").build();
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        when(securityContext.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(rentalService.getRentalsByUser("anyUser")).thenReturn(List.of(testRental));
+        assertEquals(HttpStatus.OK, rentalsController.getMyRentals("anyUser").getStatusCode());
     }
 }

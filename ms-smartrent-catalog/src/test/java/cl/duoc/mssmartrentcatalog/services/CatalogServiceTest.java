@@ -124,4 +124,119 @@ class CatalogServiceTest {
 
         verify(machineRepository, times(1)).deleteById(1L);
     }
+
+    @Test
+    void getAllMachinesAndDeleteNonExistent_ShouldBehaveCorrectly() {
+        when(machineRepository.findAll()).thenReturn(List.of(testMachine));
+        assertEquals(1, catalogService.getAllMachines().size());
+
+        when(machineRepository.existsById(99L)).thenReturn(false);
+        catalogService.deleteMachine(99L);
+        verify(machineRepository, never()).deleteById(99L);
+    }
+
+    @Test
+    void oneArgConstructor_ShouldHandleNullCategoryRepoAndNullAvailability() {
+        CatalogService simpleService = new CatalogService(machineRepository);
+        Machine m = new Machine();
+        m.setName("Taladro");
+        when(machineRepository.save(any(Machine.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Machine created = simpleService.createMachine(m);
+        assertTrue(created.getIsAvailable());
+
+        when(machineRepository.findById(99L)).thenReturn(Optional.empty());
+        Machine updated = simpleService.updateMachine(99L, Map.of("name", "Nueva", "isAvailable", "false"));
+        assertEquals("Nueva", updated.getName());
+        assertFalse(updated.getIsAvailable());
+    }
+
+    @Test
+    void createMachine_ShouldUpdateExistingBySerialAndResolveCategoryBranches() {
+        Machine existing = new Machine();
+        existing.setId(5L);
+        existing.setSerialNumber("CAT-320");
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
+        when(machineRepository.findBySerialNumberIgnoreCase("CAT-320")).thenReturn(Optional.of(existing));
+        when(machineRepository.save(any(Machine.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Machine updatedExisting = catalogService.createMachine(testMachine);
+        assertEquals("Excavadora", updatedExisting.getName());
+
+        // Resolve by existing category name
+        Machine byCatName = new Machine();
+        byCatName.setName("Compactador");
+        byCatName.setSerialNumber("SN-NEW-1");
+        Category catByName = new Category();
+        catByName.setName("Compactación");
+        byCatName.setCategory(catByName);
+        when(categoryRepository.findByNameIgnoreCase("Compactación")).thenReturn(Optional.of(testCategory));
+        when(machineRepository.findBySerialNumberIgnoreCase("SN-NEW-1")).thenReturn(Optional.empty());
+        assertNotNull(catalogService.createMachine(byCatName));
+
+        // Resolve by creating new category name
+        Machine byNewCatName = new Machine();
+        byNewCatName.setName("Sierra");
+        Category newCat = new Category();
+        newCat.setName("Herramientas");
+        byNewCatName.setCategory(newCat);
+        when(categoryRepository.findByNameIgnoreCase("Herramientas")).thenReturn(Optional.empty());
+        when(categoryRepository.save(any(Category.class))).thenAnswer(inv -> inv.getArgument(0));
+        assertEquals("Herramientas", catalogService.createMachine(byNewCatName).getCategory().getName());
+
+        // Resolve using first existing category, then fallback when empty
+        Machine noCat = new Machine();
+        noCat.setName("Generador");
+        when(categoryRepository.findAll()).thenReturn(List.of(testCategory)).thenReturn(List.of());
+        assertEquals("Maquinaria Pesada", catalogService.createMachine(noCat).getCategory().getName());
+
+        Machine fallbackCat = new Machine();
+        fallbackCat.setName("Torre");
+        assertEquals("Maquinaria Pesada", catalogService.createMachine(fallbackCat).getCategory().getName());
+    }
+
+    @Test
+    void updateMachine_ShouldHandleSerialLookupFallbackAndPayloadVariants() {
+        when(machineRepository.findById(10L)).thenReturn(Optional.empty());
+        when(machineRepository.findBySerialNumberIgnoreCase("CAT-320")).thenReturn(Optional.of(testMachine));
+        when(machineRepository.save(any(Machine.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(categoryRepository.findByNameIgnoreCase("Elevación")).thenReturn(Optional.of(testCategory));
+
+        Machine bySerial = catalogService.updateMachine(10L, Map.of(
+                "serialNumber", "CAT-320",
+                "status", "SIN_STOCK",
+                "category", Map.of("name", "Elevación")
+        ));
+        assertFalse(bySerial.getIsAvailable());
+
+        when(machineRepository.findById(20L)).thenReturn(Optional.empty());
+        when(categoryRepository.findAll()).thenReturn(List.of(testCategory));
+        Machine fallbackBuilt = catalogService.updateMachine(20L, Map.of(
+                "status", "EN_MANTENCION",
+                "categoryId", "not-a-number",
+                "category", "Elevación"
+        ));
+        assertEquals("Equipo Industrial #20", fallbackBuilt.getName());
+        assertFalse(fallbackBuilt.getIsAvailable());
+
+        Machine rented = catalogService.updateMachine(20L, Map.of(
+                "status", "ARRENDADO",
+                "availableStock", 3
+        ));
+        assertFalse(rented.getIsAvailable());
+
+        Machine otherStatus = catalogService.updateMachine(20L, Map.of(
+                "status", "OTRO",
+                "availableStock", "2",
+                "categoryId", 1L
+        ));
+        assertTrue(otherStatus.getIsAvailable());
+
+        Machine stockOnly = catalogService.updateMachine(20L, Map.of(
+                "availableStock", 0,
+                "dailyPrice", "99000"
+        ));
+        assertFalse(stockOnly.getIsAvailable());
+        assertEquals(99000.0, stockOnly.getDailyPrice());
+    }
 }

@@ -45,4 +45,26 @@ class ReportServiceTest {
         assertEquals(2, reportService.getDailyRentals());
         assertEquals(2, topServices.size());
     }
+
+    @Test
+    void recordRentalEvent_coversAllMachinePatternsAndNull() {
+        reportService.recordRentalEvent(null);
+        reportService.recordRentalEvent("rodillo compactador");
+        reportService.recordRentalEvent("generador");
+        reportService.recordRentalEvent("martillo demoledor");
+        reportService.recordRentalEvent("grúa torre");
+        reportService.recordRentalEvent("{\"machineId\":1}");
+        reportService.recordRentalEvent("{\"rentalId\":1}");
+        reportService.recordRentalEvent("{\"machineId\":3}");
+        reportService.recordRentalEvent("{\"machineId\":5}");
+        reportService.recordRentalEvent("{\"machineId\":7}");
+        reportService.recordRentalEvent("{\"machineId\":8}");
+        reportService.recordRentalEvent("{\"machineId\":9}");
+        reportService.recordRentalEvent("{\"machineId\":10}");
+        reportService.recordRentalEvent("{\"machineName\":\"Maquina_Generica\"}");
+        reportService.recordRentalEvent("{\"machineName\":\"   \"}");
+
+        assertEquals(15, reportService.getDailyRentals());
+        assertEquals(5, reportService.getTopServices().size());
+    }
 }
