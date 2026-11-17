@@ -155,9 +155,16 @@ docker exec -it smartrent-postgres psql -U smartrent -d smartrent_audit
    Todos los archivos compose (`compose.apps.yml`, `compose.kafka.yml`, `compose.mq.yml`) tienen configurado `restart: unless-stopped`.  
    * **Tip:** Al terminar tu sesión de estudio, **no** ejecutes `docker compose down`. Deja los contenedores corriendo y simplemente apaga la instancia en la consola de AWS. Al volver a encenderla en el siguiente laboratorio, Docker levantará todo automáticamente.
 
-2. **Cuidado con las IPs dinámicas:**  
-   En AWS Learner Lab, la **IP Pública** de la instancia cambia cada vez que se detiene e inicia.  
-   * Si tus instancias están en la misma VPC/Subred, utiliza la **IP Privada (Private IPv4)** en tus variables de entorno (`.env` para `RABBITMQ_HOST` y `KAFKA_HOST`). Las IPs privadas **no cambian** al apagar y encender la máquina.
+2. **Cuidado con las IPs dinámicas (IPs Privadas Fijas de la VPC):**  
+   En AWS Learner Lab, la **IP Pública** de la instancia cambia cada vez que se detiene e inicia, pero las **IPs Privadas (Private IPv4)** dentro de la misma VPC **no cambian**. Los archivos `infra/compose.apps.yml` e `infra/compose.kafka.yml` ya vienen preconfigurados por defecto con estas IPs privadas para autoarranque sin intervención manual:
+
+   | Instancia EC2 | Instance ID | Rol / Compose | IP Privada Fija (VPC) |
+   | :--- | :--- | :--- | :--- |
+   | **EC2-Apps** | `i-0f64ef75cc7bcb761` | Microservicios + BFF + PostgreSQL (`infra/compose.apps.yml`) | `172.31.76.200` |
+   | **EC2-MQ** | `i-0965eaa82b5d4db5f` | RabbitMQ (`infra/compose.mq.yml`) | `172.31.29.239` |
+   | **EC2-Kafka** | `i-0c90ee30cdfc784a7` | Apache Kafka + Zookeeper (`infra/compose.kafka.yml`) | `172.31.30.107` |
+
+   *(Nota: Si alguna vez recreas una instancia y cambia su IP privada, puedes sobreescribirla con `RABBITMQ_HOST` y `KAFKA_HOST` o actualizar los valores por defecto en `infra/`).*
 
 
 ---
