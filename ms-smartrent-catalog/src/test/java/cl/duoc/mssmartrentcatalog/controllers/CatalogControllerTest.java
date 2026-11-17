@@ -169,4 +169,38 @@ class CatalogControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(catalogService, times(1)).createMachine(any(Machine.class));
     }
+
+    @Test
+    void createMachine_ShouldHandleBlankFieldsStatusesAndStock() {
+        when(catalogService.createMachine(any(Machine.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        MachineRequest blankReq = new MachineRequest("  ", "  ", null, null, null, null, null, null, null, null);
+        Machine blankRes = Objects.requireNonNull(catalogController.createMachine(blankReq).getBody());
+        assertEquals("Equipo Nuevo", blankRes.getName());
+        assertTrue(blankRes.getSerialNumber().startsWith("SKU-"));
+        assertEquals(0.0, blankRes.getDailyPrice());
+        assertTrue(blankRes.getIsAvailable());
+
+        MachineRequest sinStockReq = new MachineRequest("M1", null, null, 100.0, null, "SKU-1", null, "Cat", 2, "SIN_STOCK");
+        assertFalse(Objects.requireNonNull(catalogController.createMachine(sinStockReq).getBody()).getIsAvailable());
+
+        MachineRequest mantReq = new MachineRequest("M2", null, null, 100.0, null, "SKU-2", null, "Cat", 2, "EN_MANTENCION");
+        assertFalse(Objects.requireNonNull(catalogController.createMachine(mantReq).getBody()).getIsAvailable());
+
+        MachineRequest zeroStockReq = new MachineRequest("M3", "SN-3", 1L, 100.0, null, null, null, null, 0, null);
+        assertFalse(Objects.requireNonNull(catalogController.createMachine(zeroStockReq).getBody()).getIsAvailable());
+
+        MachineRequest positiveStockReq = new MachineRequest("M4", "SN-4", 1L, 100.0, null, null, null, null, 2, null);
+        assertTrue(Objects.requireNonNull(catalogController.createMachine(positiveStockReq).getBody()).getIsAvailable());
+    }
+
+    @Test
+    void updateAvailability_WithNullParams_ShouldDefaultToTrue() {
+        when(catalogService.updateMachineAvailability(1L, true)).thenReturn(testMachine);
+
+        ResponseEntity<Machine> response = catalogController.updateAvailability(1L, null, null);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(catalogService).updateMachineAvailability(1L, true);
+    }
 }

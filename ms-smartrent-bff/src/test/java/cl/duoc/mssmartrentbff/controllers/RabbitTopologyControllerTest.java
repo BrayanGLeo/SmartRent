@@ -42,4 +42,20 @@ class RabbitTopologyControllerTest {
         controller.deleteExchange("cmd.custom");
         assertEquals(initialExchanges, controller.getExchanges().getBody().size());
     }
+
+    @Test
+    void nullInputsAndAttributeBasedDeleteBinding_ShouldBeHandledSafely() {
+        assertTrue(controller.createQueue(null).getBody().isEmpty());
+        assertTrue(controller.createExchange(null).getBody().isEmpty());
+        assertTrue(controller.createBinding(null).getBody().isEmpty());
+        assertEquals(204, controller.deleteBinding(null).getStatusCode().value());
+
+        int before = controller.getBindings().getBody().size();
+        controller.deleteBinding(Map.of(
+                "source", "cmd.direct",
+                "destination", "q.cmd.email",
+                "routingKey", "email.send"
+        ));
+        assertEquals(before - 1, controller.getBindings().getBody().size());
+    }
 }

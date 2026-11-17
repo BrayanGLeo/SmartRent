@@ -96,4 +96,47 @@ class CartControllerTest {
         assertNotNull(response.getBody());
         assertEquals("Cotización solicitada", response.getBody().get("message"));
     }
+
+    @Test
+    void getCart_nullJwt_usesAnonymousUser() {
+        when(cartService.getCart("anonymous")).thenReturn(new Cart("anonymous"));
+
+        ResponseEntity<Cart> response = cartController.getCart(null);
+
+        assertEquals(200, response.getStatusCode().value());
+        verify(cartService).getCart("anonymous");
+    }
+
+    @Test
+    void getCart_blankOidWithSub_usesSubject() {
+        Jwt jwtWithSub = Jwt.withTokenValue("tok")
+                .header("alg", "none")
+                .claim("oid", "  ")
+                .subject("sub-user-1")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+        when(cartService.getCart("sub-user-1")).thenReturn(new Cart("sub-user-1"));
+
+        ResponseEntity<Cart> response = cartController.getCart(jwtWithSub);
+
+        assertEquals(200, response.getStatusCode().value());
+        verify(cartService).getCart("sub-user-1");
+    }
+
+    @Test
+    void getCart_noOidAndNoSub_usesAnonymousUser() {
+        Jwt jwtEmpty = Jwt.withTokenValue("tok")
+                .header("alg", "none")
+                .claim("other", "val")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+        when(cartService.getCart("anonymous")).thenReturn(new Cart("anonymous"));
+
+        ResponseEntity<Cart> response = cartController.getCart(jwtEmpty);
+
+        assertEquals(200, response.getStatusCode().value());
+        verify(cartService).getCart("anonymous");
+    }
 }
