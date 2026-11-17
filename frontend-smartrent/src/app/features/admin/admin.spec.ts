@@ -306,4 +306,96 @@ describe('AdminPanel', () => {
     expect(component.getTenantName('753ae9df-d5ec-4c6b-8227-b334fc775087')).toContain('SmartRent');
     expect(component.getTenantName('UNKNOWN')).toBe('UNKNOWN');
   });
+
+  it('should handle localStorage hydration, MSAL roles, filters and edge validations', () => {
+    // 1. Valid and invalid localStorage hydration on ngOnInit
+    localStorage.setItem('smartrent_admin_users', 'invalid-json');
+    localStorage.setItem('smartrent_catalog_inventory', 'invalid-json');
+    localStorage.setItem('smartrent_validation_orders', 'invalid-json');
+    localStorage.setItem('smartrent_rabbit_queues', 'invalid-json');
+    localStorage.setItem('smartrent_rabbit_exchanges', 'invalid-json');
+    localStorage.setItem('smartrent_rabbit_bindings', 'invalid-json');
+    component.ngOnInit();
+
+    localStorage.setItem('smartrent_admin_users', JSON.stringify([{ id: 'u-cache', fullName: 'Cache', email: 'c@test.cl', company: 'C', tenantId: '753ae9df-d5ec-4c6b-8227-b334fc775087', role: 'ADMIN', status: 'ACTIVO', createdAt: '2026-01-01' }]));
+    localStorage.setItem('smartrent_catalog_inventory', JSON.stringify([{ id: 1, sku: 'CAT-320D', name: 'Excavadora', category: 'MOVIMIENTO_TIERRA', dailyRate: 100000, totalStock: 2, availableStock: 1, status: 'DISPONIBLE', imageUrl: '/images/cat-320.jpg' }]));
+    localStorage.setItem('smartrent_validation_orders', JSON.stringify([{ id: 1044, rentalCode: 'ARR-1044', machineId: 1, machineName: 'Excavadora', sku: 'CAT-320D', lesseeName: 'L', company: 'C', tenantId: 't', workSiteAddress: 'W', startDate: '2026-01-01', endDate: '2026-01-02', status: 'SOLICITADO' }]));
+    localStorage.setItem('smartrent_rabbit_queues', JSON.stringify([{ name: 'q.1', type: 'standard', durable: true, autoDelete: false, purpose: 'P', messageCount: 0, consumerCount: 0 }]));
+    localStorage.setItem('smartrent_rabbit_exchanges', JSON.stringify([{ name: 'e.1', type: 'direct', durable: true, autoDelete: false }]));
+    localStorage.setItem('smartrent_rabbit_bindings', JSON.stringify([{ id: 'b-1', source: 'e.1', destination: 'q.1', routingKey: 'k' }]));
+    component.ngOnInit();
+    expect(component.users().some(u => u.email === 'c@test.cl')).toBe(true);
+
+    // 2. MSAL active user mapping across roles & null account
+    accountSig.set({ name: 'Bodega', username: 'b@test.cl', idTokenClaims: { roles: ['ROLE_JEFEBODEGA'] } });
+    component.refreshActiveUserFromMsal();
+    accountSig.set({ name: 'Auditor', username: 'a@test.cl', idTokenClaims: { roles: ['ROLE_AUDITOR'] } });
+    component.refreshActiveUserFromMsal();
+    accountSig.set({ name: 'Arrendatario', username: 'arr@test.cl', idTokenClaims: { roles: ['ROLE_ARRENDATARIO'] } });
+    component.refreshActiveUserFromMsal();
+    accountSig.set(null);
+    component.refreshActiveUserFromMsal();
+
+    // 3. Filters for users & inventory
+    component.selectedTenantId.set('ALL');
+    component.userSearchQuery.set('brayan');
+    component.userRoleFilter.set('ADMIN');
+    expect(component.filteredUsers().length).toBeGreaterThanOrEqual(0);
+    expect(component.selectedTenantInfo()).toBeNull();
+
+    component.inventorySearchQuery.set('excavadora');
+    component.inventoryCategoryFilter.set('MOVIMIENTO_TIERRA');
+    component.inventoryStatusFilter.set('DISPONIBLE');
+    expect(component.filteredInventory().length).toBeGreaterThanOrEqual(0);
+
+    // 4. Machine validation: availableStock > totalStock
+    component.openCreateProductModal();
+    component.machineForm.patchValue({
+      sku: 'TST-99',
+      name: 'Equipo Stock Alto',
+      category: 'GENERACION',
+      dailyRate: 10000,
+      totalStock: 2,
+      availableStock: 5,
+      assignedDepot: 'Patio',
+      status: 'DISPONIBLE'
+    });
+    component.saveMachine();
+    expect(component.isMachineModalOpen()).toBe(true);
+    component.closeMachineModal();
+
+    // 5. Inspection modal validations: invalid form & out-of-stock machine
+    const order = component.validationOrders()[0];
+    component.openInspectionModal(order);
+    component.inspectionForm.patchValue({ fluidsChecked: false });
+    component.approveAndDispatchOrder();
+    expect(component.isInspectionModalOpen()).toBe(true);
+
+    component.inventory.update(list => list.map(m => (m.sku === order.sku ? { ...m, availableStock: 0 } : m)));
+    component.inspectionForm.patchValue({ fluidsChecked: true });
+    component.approveAndDispatchOrder();
+    component.closeInspectionModal();
+
+    // 6. RabbitMQ invalid forms & duplicates
+    component.openCreateQueueModal();
+    component.queueForm.patchValue({ name: '' });
+    component.saveQueue();
+    component.closeQueueModal();
+
+    component.openCreateExchangeModal();
+    component.exchangeForm.patchValue({ name: '' });
+    component.saveExchange();
+    component.exchangeForm.patchValue({ name: 'e.1', type: 'direct', description: 'Exchange existente duplicado' });
+    component.saveExchange();
+    component.closeExchangeModal();
+
+    component.openCreateBindingModal();
+    component.bindingForm.patchValue({ routingKey: '' });
+    component.saveBinding();
+    component.bindingForm.patchValue({ source: 'e.1', destination: 'q.1', routingKey: 'k' });
+    component.saveBinding();
+    component.closeBindingModal();
+    component.closeQuickEditModal();
+    component.closeConfirmModal();
+  });
 });

@@ -186,21 +186,40 @@ describe('Core Services, Guards, Interceptors & Components', () => {
 
       cartService.updateRentalDays(20, 5, '2026-10-01', '2026-10-06');
       expect(cartService.quoteItems()[0].days).toBe(5);
+      cartService.updateRentalDays(20, 4);
+      expect(cartService.quoteItems()[0].days).toBe(4);
 
+      const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+        throw new Error('QuotaExceeded');
+      });
       cartService.removeItem(10);
+      setItemSpy.mockRestore();
       expect(cartService.totalItemsCount()).toBe(1);
 
       cartService.clear();
       expect(cartService.totalItemsCount()).toBe(0);
     });
 
-    it('should recover cleanly from corrupted localStorage cart data', () => {
+    it('should recover cleanly from corrupted, non-array or minimal legacy localStorage cart data', () => {
       localStorage.setItem('smartrent_cart', 'invalid-json');
       TestBed.configureTestingModule({
         providers: [provideHttpClient()]
       });
       const cartService = TestBed.inject(CartService);
       expect(cartService.items()).toEqual([]);
+
+      TestBed.resetTestingModule();
+      localStorage.setItem('smartrent_cart', '{"not":"an-array"}');
+      TestBed.configureTestingModule({ providers: [provideHttpClient()] });
+      expect(TestBed.inject(CartService).items()).toEqual([]);
+
+      TestBed.resetTestingModule();
+      localStorage.setItem('smartrent_cart', JSON.stringify([{ machine: { id: 9, name: 'M', pricePerDay: 2000 } }]));
+      TestBed.configureTestingModule({ providers: [provideHttpClient()] });
+      const legacyCart = TestBed.inject(CartService);
+      expect(legacyCart.items()[0].type).toBe('quote');
+      expect(legacyCart.items()[0].days).toBe(3);
+      expect(legacyCart.items()[0].dailyPrice).toBe(2000);
     });
   });
 
@@ -235,13 +254,22 @@ describe('Core Services, Guards, Interceptors & Components', () => {
       expect(list[1].availableStock).toBe(4);
     });
 
-    it('should fetch catalog and fallback to mock catalog on error', () => {
+    it('should fetch catalog with serial/name/unknown variants and fallback on error', () => {
       let result: any[] = [];
       apiService.getCatalog().subscribe(res => (result = res));
       const req = httpMock.expectOne(`${apiService.baseUrl}/catalog/services`);
-      req.flush([{ id: 1, name: 'Excavadora Oruga Cat 320', dailyPrice: 150000, isAvailable: true }]);
-      expect(result.length).toBe(1);
+      req.flush([
+        { id: 1, name: 'Excavadora Oruga Cat 320', dailyPrice: 150000, isAvailable: true },
+        { serialNumber: 'CAT-320-001', dailyPrice: 140000, isAvailable: false, category: { name: 'Pesada' }, description: 'Propia' },
+        { name: 'Retroexcavadora John Deere 310L', isAvailable: true },
+        {}
+      ]);
+      expect(result.length).toBe(4);
       expect(result[0].name).toBe('Excavadora Oruga Cat 320');
+      expect(result[1].description).toBe('Propia');
+      expect(result[1].category).toBe('Pesada');
+      expect(result[3].category).toBe('General');
+      expect(result[3].description).toBe('Sin descripción');
 
       let fallback: any[] = [];
       apiService.getAllCatalog().subscribe(res => (fallback = res));
@@ -293,9 +321,21 @@ describe('Core Services, Guards, Interceptors & Components', () => {
       httpMock.expectOne(`${apiService.baseUrl}/reports/kpis`).flush({ dailyRentals: 9 });
       expect(kpi.rentalsPerDay[0]).toBe(9);
 
+      apiService.getKpis().subscribe(res => (kpi = res));
+      httpMock.expectOne(`${apiService.baseUrl}/reports/kpis`).flush({ rentalsPerDay: [1, 2], labels: ['L', 'M'] });
+      expect(kpi.labels).toEqual(['L', 'M']);
+
+      apiService.getKpis().subscribe(res => (kpi = res));
+      httpMock.expectOne(`${apiService.baseUrl}/reports/kpis`).flush({});
+      expect(kpi.labels.length).toBe(7);
+
+      apiService.getReportKpis().subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/reports/kpis?range=last24h`).flush({});
       apiService.getReportKpis('last7d').subscribe();
       httpMock.expectOne(`${apiService.baseUrl}/reports/kpis?range=last7d`).flush({});
 
+      apiService.getTopServices().subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/reports/top-services?range=last7d`).flush([]);
       apiService.getTopServices('last30d').subscribe();
       httpMock.expectOne(`${apiService.baseUrl}/reports/top-services?range=last30d`).flush([]);
 

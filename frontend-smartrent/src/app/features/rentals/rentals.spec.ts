@@ -77,10 +77,22 @@ describe('Rentals', () => {
     expect(component.filteredRentals.length).toBe(1);
     component.searchTerm = 'excavadora';
     expect(component.filteredRentals.length).toBe(1);
+    component.searchTerm = '101';
+    expect(component.filteredRentals.length).toBe(1);
+    component.searchTerm = 'Faena Central';
+    expect(component.filteredRentals.length).toBe(1);
     component.selectedFilter = 'APROBADO';
     expect(component.filteredRentals.length).toBe(0);
 
     expect(component.getStatusConfig('DESCONOCIDO').label).toBe('DESCONOCIDO');
+
+    // Empty arrays fallback
+    mockApiService.getRentals.mockReturnValue(of([]));
+    mockApiService.getCatalog.mockReturnValue(of([]));
+    component.loadRentals();
+    component.loadMachines();
+    expect(component.rentals.length).toBeGreaterThan(1);
+    expect(component.machines.length).toBe(2);
   });
 
   it('should handle API errors with mocks and submit rental / status updates', () => {

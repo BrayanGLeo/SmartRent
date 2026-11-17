@@ -158,6 +158,12 @@ describe('CheckoutComponent', () => {
     expect(component.getImageUrl({ machineId: 11, machineName: 'Sullair 185', type: 'express', dailyPrice: 1 })).toBe('/images/sullair-185.jpg');
     expect(component.getImageUrl({ machineId: 12, machineName: 'Motosierra Husqvarna', type: 'express', dailyPrice: 1 })).toBe('/images/husqvarna-450.jpg');
     expect(component.getImageUrl({ machineId: 13, machineName: 'Césped HRN', type: 'express', dailyPrice: 1 })).toBe('/images/honda-hrn216.jpg');
-    expect(component.getImageUrl({ machineId: 14, machineName: 'Gen', type: 'express', dailyPrice: 1, machine: { id: 14, name: 'Gen', dailyPrice: 1, isAvailable: true, category: 'Elevación' } as any })).toBe('/images/jlg-450aj.jpg');
+    expect(component.getImageUrl({ machineId: 14, machineName: 'Gen', type: 'express', dailyPrice: 1, machine: { id: 14, name: 'Gen', dailyPrice: 1, isAvailable: true, status: 'DISPONIBLE', category: 'Elevación' } })).toBe('/images/jlg-450aj.jpg');
+    expect(component.getImageUrl({ machineId: 15, machineName: 'Custom', type: 'express', dailyPrice: 1, machine: { id: 15, name: 'Custom', dailyPrice: 1, isAvailable: true, status: 'DISPONIBLE', category: 'General', imageUrl: '/custom-img.jpg' } })).toBe('/custom-img.jpg');
+    expect(component.getImageUrl({ machineId: 16, machineName: 'Gen', type: 'express', dailyPrice: 1, machine: { id: 16, name: 'Gen', dailyPrice: 1, isAvailable: true, status: 'DISPONIBLE', category: 'Pesada' } })).toBe('/images/cat-320.jpg');
+    expect(component.getImageUrl({ machineId: 17, machineName: 'Gen', type: 'express', dailyPrice: 1, machine: { id: 17, name: 'Gen', dailyPrice: 1, isAvailable: true, status: 'DISPONIBLE', category: 'Generador' } })).toBe('/images/cummins-50kva.jpg');
+    expect(component.getImageUrl({ machineId: 18, machineName: 'Gen', type: 'express', dailyPrice: 1, machine: { id: 18, name: 'Gen', dailyPrice: 1, isAvailable: true, status: 'DISPONIBLE', category: 'Herramienta' } })).toBe('/images/makita-18v.jpg');
+    expect(component.getImageUrl({ machineId: 19, machineName: 'Gen', type: 'express', dailyPrice: 1, machine: { id: 19, name: 'Gen', dailyPrice: 1, isAvailable: true, status: 'DISPONIBLE', category: { id: 1, name: 'Jardín', description: 'd' } } })).toBe('/images/husqvarna-450.jpg');
+    expect(component.getImageUrl({ machineId: 20, machineName: 'Desconocido', type: 'express', dailyPrice: 1, machine: { id: 20, name: 'Desconocido', dailyPrice: 1, isAvailable: true, status: 'DISPONIBLE', category: 'Otro' } })).toBe('/images/cat-320.jpg');
   });
 });
