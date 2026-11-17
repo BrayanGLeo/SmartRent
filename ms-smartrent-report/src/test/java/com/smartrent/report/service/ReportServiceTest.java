@@ -34,4 +34,15 @@ class ReportServiceTest {
         assertEquals("Grua", topServices.get(1).getKey());
         assertEquals(1, topServices.get(1).getValue());
     }
+
+    @Test
+    void recordRentalEvent_extractsExplicitMachineNameFromJsonAndRetroexcavadora() {
+        reportService.recordRentalEvent("{\"rentalId\":20,\"machineId\":2,\"machineName\":\"Retroexcavadora\"}");
+        reportService.recordRentalEvent("{\"rentalId\":21,\"machineId\":99,\"machineName\":\"Camion Pluma\"}");
+
+        List<Map.Entry<String, Integer>> topServices = reportService.getTopServices();
+
+        assertEquals(2, reportService.getDailyRentals());
+        assertEquals(2, topServices.size());
+    }
 }

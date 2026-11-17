@@ -4,6 +4,7 @@ import cl.duoc.mssmartrentcart.model.Cart;
 import cl.duoc.mssmartrentcart.model.CartItem;
 import cl.duoc.mssmartrentcart.service.CartService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import java.util.Map;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/api/cart")
+@PreAuthorize("hasAnyAuthority('ROLE_ARRENDATARIO', 'Arrendatario', 'Cliente', 'ROLE_ADMIN', 'Administrador')")
 public class CartController {
 
     private final CartService cartService;

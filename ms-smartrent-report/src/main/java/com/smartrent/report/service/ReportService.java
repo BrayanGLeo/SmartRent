@@ -2,32 +2,46 @@ package com.smartrent.report.service;
 
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class ReportService {
+
+    private static final Pattern MACHINE_NAME_PATTERN =
+            Pattern.compile("\"machineName\"\\s*:\\s*\"([^\"]+)\"", Pattern.CASE_INSENSITIVE);
 
     private final AtomicInteger dailyRentals = new AtomicInteger(0);
     private final Map<String, Integer> machineRequests = new ConcurrentHashMap<>();
 
     public void recordRentalEvent(String message) {
         dailyRentals.incrementAndGet();
-        
-        // Simulación: Extraer nombre de máquina del mensaje (ej. si el mensaje incluye "maquinaId")
-        // Como es una prueba, vamos a registrar una máquina de ejemplo u obtener algo simple.
+
         String machineName = extractMachineFromMessage(message);
-        machineRequests.put(machineName, machineRequests.getOrDefault(machineName, 0) + 1);
+        machineRequests.merge(machineName, 1, Integer::sum);
     }
 
     private String extractMachineFromMessage(String message) {
         if (message == null) {
             return "Maquina_Generica";
         }
-        String lower = message.toLowerCase(java.util.Locale.ROOT);
-        if (lower.contains("excavadora") || lower.contains("\"machineid\":1") || lower.contains("\"rentalid\":1")) {
+        Matcher matcher = MACHINE_NAME_PATTERN.matcher(message);
+        if (matcher.find()) {
+            String explicitName = matcher.group(1).trim();
+            if (!explicitName.isEmpty() && !"Maquina_Generica".equalsIgnoreCase(explicitName)) {
+                return explicitName;
+            }
+        }
+
+        String lower = message.toLowerCase(Locale.ROOT);
+        if (lower.contains("retroexcavadora") || lower.contains("\"machineid\":2")) {
+            return "Retroexcavadora";
+        } else if (lower.contains("excavadora") || lower.contains("\"machineid\":1") || lower.contains("\"rentalid\":1")) {
             return "Excavadora";
         } else if (lower.contains("grua") || lower.contains("grúa") || lower.contains("\"machineid\":7") || lower.contains("\"machineid\":8")) {
             return "Grua";

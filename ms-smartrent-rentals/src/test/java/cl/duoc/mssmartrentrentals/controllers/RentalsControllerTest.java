@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -147,5 +148,95 @@ class RentalsControllerTest {
 
         ResponseEntity<Rental> response = rentalsController.updateRentalStatus(1L, RentalStatus.APROBADO);
         assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void getMyRentals_ShouldReturnForbiddenWhenRequestingOtherUser() {
+        ResponseEntity<List<Rental>> response = rentalsController.getMyRentals("otherUser999");
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        verify(rentalService, never()).getRentalsByUser(anyString());
+    }
+
+    @Test
+    void getAllRentals_ShouldFilterForArrendatario() {
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("oid", "user123")
+                .build();
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(
+                jwt,
+                List.of(new SimpleGrantedAuthority("ROLE_ARRENDATARIO"))
+        );
+        when(securityContext.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(securityContext);
+
+        Rental otherRental = new Rental();
+        otherRental.setId(2L);
+        otherRental.setMachineId(200L);
+        otherRental.setUserId("other-user-999");
+        otherRental.setStatus(RentalStatus.APROBADO);
+
+        when(rentalService.getAllRentals()).thenReturn(List.of(testRental, otherRental));
+
+        ResponseEntity<List<Rental>> response = rentalsController.getAllRentals();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        List<Rental> body = java.util.Objects.requireNonNull(response.getBody());
+        assertEquals(1, body.size());
+        assertEquals("user123", body.get(0).getUserId());
+    }
+
+    @Test
+    void getAllRentals_ShouldReturnAllForAdmin() {
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("oid", "admin-oid")
+                .build();
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(
+                jwt,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+        when(securityContext.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(securityContext);
+
+        Rental otherRental = new Rental();
+        otherRental.setId(2L);
+        otherRental.setMachineId(200L);
+        otherRental.setUserId("other-user-999");
+
+        when(rentalService.getAllRentals()).thenReturn(List.of(testRental, otherRental));
+
+        ResponseEntity<List<Rental>> response = rentalsController.getAllRentals();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        List<Rental> body = java.util.Objects.requireNonNull(response.getBody());
+        assertEquals(2, body.size());
+    }
+
+    @Test
+    void createRental_ShouldOverrideSpoofedUserIdForArrendatario() {
+        SecurityContext securityContext = mock(SecurityContext.class);
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("preferred_username", "client@test.com")
+                .build();
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(
+                jwt,
+                List.of(new SimpleGrantedAuthority("ROLE_ARRENDATARIO"))
+        );
+        when(securityContext.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(rentalService.createRental(any(Rental.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        RentalRequest request = new RentalRequest(100L, "victim@test.com", LocalDate.now(), LocalDate.now().plusDays(3));
+        ResponseEntity<Rental> response = rentalsController.createRental(request);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Rental body = java.util.Objects.requireNonNull(response.getBody());
+        assertEquals("client@test.com", body.getUserId());
     }
 }

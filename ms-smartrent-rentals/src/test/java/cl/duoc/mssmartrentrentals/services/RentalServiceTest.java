@@ -197,4 +197,18 @@ class RentalServiceTest {
             rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "test@test.com")
         );
     }
+
+    @Test
+    void changeRentalStatus_ToAprobado_WhenCatalogFails_ShouldNotSaveOrPublishEvents() {
+        when(rentalRepository.findById(1L)).thenReturn(Optional.of(testRental));
+        doThrow(new RuntimeException("Catalog unavailable"))
+                .when(catalogClient).updateAvailability(100L, false);
+
+        assertThrows(RuntimeException.class, () ->
+            rentalService.changeRentalStatus(1L, RentalStatus.APROBADO, "admin@test.com")
+        );
+
+        verify(rentalRepository, never()).save(any(Rental.class));
+        verifyNoInteractions(eventPublisher);
+    }
 }

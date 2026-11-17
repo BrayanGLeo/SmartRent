@@ -69,11 +69,11 @@ public class CartService {
 
         CheckoutEvent event = new CheckoutEvent(userId, checkoutType, dtoItems);
 
-        // Publish to RabbitMQ
-        rabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY_CHECKOUT, event);
-
-        // Remove processed items from cart
+        // Remove processed items from cart and persist first so DB failures abort event publication
         itemsToProcess.forEach(cart::removeItem);
         cartRepository.save(cart);
+
+        // Publish to RabbitMQ
+        rabbitTemplate.convertAndSend(EXCHANGE, ROUTING_KEY_CHECKOUT, event);
     }
 }

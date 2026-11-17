@@ -25,4 +25,18 @@ class ReportKafkaListenerTest {
         
         Mockito.verify(reportService, Mockito.times(1)).recordRentalEvent(message);
     }
+
+    @Test
+    void consumeEvent_ignoresNullOrBlank() {
+        reportKafkaListener.consumeEvent(null);
+        reportKafkaListener.consumeEvent("   ");
+
+        Mockito.verifyNoInteractions(reportService);
+    }
+
+    @Test
+    void handleDlt_doesNotThrow() {
+        reportKafkaListener.handleDlt("dead letter payload");
+        Mockito.verifyNoInteractions(reportService);
+    }
 }

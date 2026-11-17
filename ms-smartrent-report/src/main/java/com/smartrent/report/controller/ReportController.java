@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +19,9 @@ import java.util.List;
 @RequestMapping("/api/reports")
 public class ReportController {
 
+    private static final String REPORT_ROLES_AUTH =
+            "hasAnyAuthority('ROLE_ADMIN', 'Administrador', 'ROLE_JEFEBODEGA', 'JefeBodega', 'ROLE_AUDITOR', 'Auditor')";
+
     private final ReportService reportService;
 
     public ReportController(ReportService reportService) {
@@ -25,6 +29,7 @@ public class ReportController {
     }
 
     @GetMapping("/kpis")
+    @PreAuthorize(REPORT_ROLES_AUTH)
     public ResponseEntity<Map<String, Object>> getKpis() {
         Map<String, Object> response = new HashMap<>();
         int count = reportService.getDailyRentals();
@@ -35,6 +40,7 @@ public class ReportController {
     }
 
     @GetMapping("/top-services")
+    @PreAuthorize(REPORT_ROLES_AUTH)
     public ResponseEntity<Object> getTopServices() {
         return ResponseEntity.ok(reportService.getTopServices());
     }

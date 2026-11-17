@@ -50,8 +50,15 @@ class RentalEventPublisherTest {
     }
 
     @Test
-    void publishAuditAndReportEvent_ShouldSendToKafka() {
-        publisher.publishAuditAndReportEvent(1L, "user@test.com", "APROBADO");
+    void publishAuditAndReportEvent_ShouldSendToKafkaWithKeyAndMachineName() {
+        publisher.publishAuditAndReportEvent(1L, 1L, "user@test.com", "APROBADO");
         assertFalse(Mockito.mockingDetails(kafkaTemplate).getInvocations().isEmpty());
+        verify(kafkaTemplate).send(
+                Mockito.eq("rentals.events"),
+                Mockito.eq("1"),
+                Mockito.argThat(payload -> payload instanceof Map<?, ?> map
+                        && "Excavadora".equals(map.get("machineName"))
+                        && Long.valueOf(1L).equals(map.get("machineId")))
+        );
     }
 }

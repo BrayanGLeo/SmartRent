@@ -4,6 +4,7 @@ import cl.duoc.mssmartrentcheckout.dto.CheckoutRequest;
 import cl.duoc.mssmartrentcheckout.model.Order;
 import cl.duoc.mssmartrentcheckout.service.CheckoutService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ public class CheckoutController {
     }
 
     @PostMapping("/process")
+    @PreAuthorize("hasAnyAuthority('ROLE_ARRENDATARIO', 'Arrendatario', 'Cliente', 'ROLE_ADMIN', 'Administrador')")
     public ResponseEntity<Map<String, Object>> processCheckout(
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody CheckoutRequest request) {
