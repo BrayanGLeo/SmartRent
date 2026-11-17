@@ -5,19 +5,25 @@ import cl.duoc.mssmartrentrentals.entities.RentalStatus;
 import cl.duoc.mssmartrentrentals.repositories.RentalRepository;
 import cl.duoc.mssmartrentrentals.services.RentalService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/rentals")
@@ -28,6 +34,12 @@ public class RentalsController {
     private static final String ADMIN_OR_BODEGA_AUTH =
             "hasAnyAuthority('ROLE_ADMIN', 'ROLE_JEFEBODEGA', 'Administrador', 'Admin', 'JefeBodega')";
     private static final String UNKNOWN_EMAIL = "unknown@user.com";
+    private static final Set<String> ADMIN_OR_BODEGA_AUTHORITIES = Set.of(
+            "ROLE_ADMIN", "Administrador", "Admin", "ROLE_JEFEBODEGA", "JefeBodega", "Operador", "Bodega"
+    );
+    private static final Set<String> ARRENDATARIO_AUTHORITIES = Set.of(
+            "ROLE_ARRENDATARIO", "Arrendatario", "Cliente"
+    );
 
     private final RentalService rentalService;
     private final RentalRepository rentalRepository;
@@ -50,25 +62,41 @@ public class RentalsController {
     public ResponseEntity<Rental> createRental(@RequestBody RentalRequest request) {
         Rental rental = new Rental();
         rental.setMachineId(request.machineId() != null ? request.machineId() : 1L);
-        rental.setUserId(request.userId() != null && !request.userId().isBlank() ? request.userId() : getUserEmailFromToken());
+        String resolvedUserId = request.userId() != null && !request.userId().isBlank()
+                ? request.userId()
+                : getUserEmailFromToken();
+        if (isStrictlyArrendatario() && !isAuthorizedForUser(resolvedUserId)) {
+            resolvedUserId = getUserEmailFromToken();
+        }
+        rental.setUserId(resolvedUserId);
         LocalDate today = LocalDate.now(ZoneId.systemDefault());
         rental.setStartDate(request.startDate() != null ? request.startDate() : today);
         rental.setEndDate(request.endDate() != null ? request.endDate() : today.plusDays(7));
         return ResponseEntity.ok(rentalService.createRental(rental));
     }
 
-    // Usuario ve sus propios arriendos
+    // Usuario ve sus propios arriendos (prevención de IDOR)
     @GetMapping("/my-rentals")
     @PreAuthorize(ALL_RENTAL_ROLES_AUTH)
     public ResponseEntity<List<Rental>> getMyRentals(@RequestParam String userId) {
+        if (!isAuthorizedForUser(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(rentalService.getRentalsByUser(userId));
     }
 
-    // Consulta de arriendos para el panel de arriendos (Arrendatario, Jefe de Bodega o Admin)
+    // Consulta de arriendos: Admin/Bodega ven todos; Arrendatario solo sus propios arriendos
     @GetMapping
     @PreAuthorize(ALL_RENTAL_ROLES_AUTH)
     public ResponseEntity<List<Rental>> getAllRentals() {
-        return ResponseEntity.ok(rentalService.getAllRentals());
+        List<Rental> all = rentalService.getAllRentals();
+        if (isStrictlyArrendatario()) {
+            List<Rental> ownRentals = all.stream()
+                    .filter(r -> isAuthorizedForUser(r.getUserId()))
+                    .toList();
+            return ResponseEntity.ok(ownRentals);
+        }
+        return ResponseEntity.ok(all);
     }
 
     // Jefe de Bodega o Admin cambia el estado del arriendo
@@ -98,17 +126,91 @@ public class RentalsController {
         try {
             updatedRental = rentalService.changeRentalStatus(id, status, userEmail);
         } catch (IllegalStateException ignored) {
+            return ResponseEntity.badRequest().build();
+        } catch (NoSuchElementException ignored) {
             if (rentalRepository == null) {
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.notFound().build();
             }
             updatedRental = saveOrUpdateFallbackRental(id, status, userEmail);
         } catch (RuntimeException ignored) {
             if (rentalRepository == null) {
                 return ResponseEntity.notFound().build();
             }
-            updatedRental = saveOrUpdateFallbackRental(id, status, userEmail);
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
         }
         return ResponseEntity.ok(updatedRental);
+    }
+
+    private boolean isAdminOrBodega() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(ADMIN_OR_BODEGA_AUTHORITIES::contains);
+    }
+
+    private boolean isStrictlyArrendatario() {
+        if (isAdminOrBodega()) {
+            return false;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(ARRENDATARIO_AUTHORITIES::contains);
+    }
+
+    private Set<String> extractTokenUserIdentifiers() {
+        Set<String> identifiers = new LinkedHashSet<>();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication instanceof JwtAuthenticationToken jwtToken) {
+            Jwt jwt = jwtToken.getToken();
+            addIdentifier(identifiers, jwt.getClaimAsString("oid"));
+            addIdentifier(identifiers, jwt.getSubject());
+            addIdentifierWithLocalPart(identifiers, jwt.getClaimAsString("email"));
+            addIdentifierWithLocalPart(identifiers, jwt.getClaimAsString("preferred_username"));
+        }
+        return identifiers;
+    }
+
+    private static void addIdentifier(Set<String> identifiers, String value) {
+        if (value != null && !value.isBlank()) {
+            identifiers.add(value.trim().toLowerCase(Locale.ROOT));
+        }
+    }
+
+    private static void addIdentifierWithLocalPart(Set<String> identifiers, String value) {
+        if (value != null && !value.isBlank()) {
+            String lower = value.trim().toLowerCase(Locale.ROOT);
+            identifiers.add(lower);
+            int atIndex = lower.indexOf('@');
+            if (atIndex > 0) {
+                identifiers.add(lower.substring(0, atIndex));
+            }
+        }
+    }
+
+    private boolean isAuthorizedForUser(String requestedUserId) {
+        if (requestedUserId == null || requestedUserId.isBlank()) {
+            return false;
+        }
+        if (isAdminOrBodega()) {
+            return true;
+        }
+        Set<String> ids = extractTokenUserIdentifiers();
+        if (ids.isEmpty()) {
+            return true;
+        }
+        String normalizedRequested = requestedUserId.trim().toLowerCase(Locale.ROOT);
+        if (ids.contains(normalizedRequested)) {
+            return true;
+        }
+        int atIndex = normalizedRequested.indexOf('@');
+        return atIndex > 0 && ids.contains(normalizedRequested.substring(0, atIndex));
     }
 
     private Rental saveOrUpdateFallbackRental(@org.springframework.lang.NonNull Long id, RentalStatus status, String userEmail) {

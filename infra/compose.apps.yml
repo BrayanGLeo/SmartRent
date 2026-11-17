@@ -10,7 +10,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       POSTGRES_DB: ${POSTGRES_DB:-smartrent_audit}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-smartrent} -d $${POSTGRES_DB:-smartrent_audit}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - smartrent-network
     volumes:
@@ -25,7 +30,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - smartrent-network
 
@@ -41,8 +47,10 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-localhost}:9092
       - CATALOG_URL=http://smartrent-catalog:8081
     depends_on:
-      - postgres
-      - smartrent-catalog
+      postgres:
+        condition: service_healthy
+      smartrent-catalog:
+        condition: service_started
     networks:
       - smartrent-network
 
@@ -65,7 +73,8 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-localhost}:9092
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - smartrent-network
 
@@ -79,7 +88,8 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
       - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST:-localhost}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - smartrent-network
 
@@ -93,7 +103,8 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
       - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST:-localhost}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - smartrent-network
 

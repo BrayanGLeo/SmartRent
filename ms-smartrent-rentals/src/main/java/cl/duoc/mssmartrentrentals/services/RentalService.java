@@ -7,8 +7,10 @@ import cl.duoc.mssmartrentrentals.events.RentalEventPublisher;
 import cl.duoc.mssmartrentrentals.repositories.RentalRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class RentalService {
@@ -23,10 +25,11 @@ public class RentalService {
         this.eventPublisher = eventPublisher;
     }
 
+    @Transactional
     public Rental createRental(Rental rental) {
         rental.setStatus(RentalStatus.SOLICITADO);
         Rental savedRental = rentalRepository.save(rental);
-        
+
         eventPublisher.publishAuditAndReportEvent(savedRental.getId(), savedRental.getUserId(), savedRental.getStatus().name());
         return savedRental;
     }
@@ -39,9 +42,10 @@ public class RentalService {
         return rentalRepository.findAll();
     }
 
+    @Transactional
     public Rental changeRentalStatus(@org.springframework.lang.NonNull Long rentalId, RentalStatus newStatus, String userEmail) {
         Rental rental = rentalRepository.findById(rentalId)
-            .orElseThrow(() -> new RuntimeException("Rental not found"));
+            .orElseThrow(() -> new NoSuchElementException("Rental not found"));
 
         RentalStatus currentStatus = rental.getStatus();
 
@@ -52,33 +56,32 @@ public class RentalService {
         // Máquina de estados básica
         validateTransition(currentStatus, newStatus);
 
-        rental.setStatus(newStatus);
-        Rental updatedRental = rentalRepository.save(rental);
-
-        // Lógica síncrona y asíncrona según el nuevo estado
+        // Actualización síncrona de catálogo antes de persistir el cambio de estado para evitar inconsistencias
         switch (newStatus) {
-            case APROBADO:
-                catalogClient.updateAvailability(rental.getMachineId(), false);
-                eventPublisher.publishEmailEvent(rental.getId(), userEmail, "APROBADO");
-                break;
-            case EN_PREPARACION:
-                eventPublisher.publishPrepEvent(rental.getId(), rental.getMachineId());
-                break;
-            case EN_TERRENO:
-                // Solo registramos el cambio de estado en Kafka
-                break;
-            case DEVUELTO:
-                catalogClient.updateAvailability(rental.getMachineId(), true);
-                eventPublisher.publishEmailEvent(rental.getId(), userEmail, "DEVUELTO");
-                break;
-            case CANCELADO:
+            case APROBADO -> catalogClient.updateAvailability(rental.getMachineId(), false);
+            case DEVUELTO -> catalogClient.updateAvailability(rental.getMachineId(), true);
+            case CANCELADO -> {
                 if (currentStatus == RentalStatus.APROBADO || currentStatus == RentalStatus.EN_PREPARACION) {
                     catalogClient.updateAvailability(rental.getMachineId(), true);
                 }
-                eventPublisher.publishEmailEvent(rental.getId(), userEmail, "CANCELADO");
-                break;
-            default:
-                break;
+            }
+            default -> {
+                // Otros estados no modifican disponibilidad en catálogo
+            }
+        }
+
+        rental.setStatus(newStatus);
+        Rental updatedRental = rentalRepository.save(rental);
+
+        // Eventos asíncronos según el nuevo estado
+        switch (newStatus) {
+            case APROBADO -> eventPublisher.publishEmailEvent(updatedRental.getId(), userEmail, "APROBADO");
+            case EN_PREPARACION -> eventPublisher.publishPrepEvent(updatedRental.getId(), updatedRental.getMachineId());
+            case DEVUELTO -> eventPublisher.publishEmailEvent(updatedRental.getId(), userEmail, "DEVUELTO");
+            case CANCELADO -> eventPublisher.publishEmailEvent(updatedRental.getId(), userEmail, "CANCELADO");
+            default -> {
+                // EN_TERRENO solo registra el cambio de estado en Kafka
+            }
         }
 
         // Siempre mandamos el evento de auditoría a Kafka

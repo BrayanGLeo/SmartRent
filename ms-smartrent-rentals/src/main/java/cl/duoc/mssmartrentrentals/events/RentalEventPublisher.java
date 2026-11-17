@@ -56,16 +56,19 @@ public class RentalEventPublisher {
     }
 
     public void publishAuditAndReportEvent(Long rentalId, Long machineId, String userId, String status) {
+        Long resolvedMachineId = machineId != null ? machineId : 1L;
         Map<String, Object> payload = Map.of(
             RENTAL_ID_KEY, rentalId,
-            "machineId", machineId != null ? machineId : 1L,
+            "machineId", resolvedMachineId,
+            "machineName", resolveMachineName(resolvedMachineId),
             "userId", userId,
             "status", status,
             "timestamp", System.currentTimeMillis()
         );
         try {
-            // Enviando al tópico de Kafka "rentals.events"
-            var future = kafkaTemplate.send("rentals.events", payload);
+            // Enviando al tópico de Kafka "rentals.events" con rentalId como partition key
+            String key = rentalId != null ? String.valueOf(rentalId) : "0";
+            var future = kafkaTemplate.send("rentals.events", key, payload);
             if (future != null) {
                 future.whenComplete((result, ex) -> {
                     if (ex != null) {
@@ -77,5 +80,20 @@ public class RentalEventPublisher {
         } catch (Exception ex) {
             log.error("Error enviando evento a Kafka (rentals.events) para rentalId={}: {}", rentalId, ex.getMessage());
         }
+    }
+
+    static String resolveMachineName(Long machineId) {
+        if (machineId == null) {
+            return "Maquina_Generica";
+        }
+        return switch (machineId.intValue()) {
+            case 1 -> "Excavadora";
+            case 2 -> "Retroexcavadora";
+            case 3 -> "Rodillo Compactador";
+            case 5 -> "Martillo Demoledor";
+            case 7, 8 -> "Grua";
+            case 9, 10 -> "Generador Industrial";
+            default -> "Maquina_Generica";
+        };
     }
 }
