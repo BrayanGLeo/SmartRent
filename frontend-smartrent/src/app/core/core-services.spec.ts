@@ -366,6 +366,36 @@ describe('Core Services, Guards, Interceptors & Components', () => {
       apiService.deleteRabbitBinding({}).subscribe();
       httpMock.expectOne(`${apiService.baseUrl}/bindings`).flush({});
 
+      apiService.getKafkaCluster().subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/kafka/cluster`).flush({});
+
+      apiService.getKafkaTopics().subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/kafka/topics?includeInternal=false`).flush([]);
+
+      apiService.getKafkaTopicDetail('rentals.events').subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/kafka/topics/rentals.events`).flush({});
+
+      apiService.createKafkaTopic({ name: 'test.topic' }).subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/kafka/topics`).flush({});
+
+      apiService.updateKafkaTopicConfig('test.topic', { partitions: 3 }).subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/kafka/topics/test.topic/config`).flush({});
+
+      apiService.deleteKafkaTopic('test.topic').subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/kafka/topics/test.topic`).flush({});
+
+      apiService.getKafkaConsumerGroups().subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/kafka/consumer-groups`).flush([]);
+
+      apiService.getKafkaConsumerGroupDetail('audit-group').subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/kafka/consumer-groups/audit-group`).flush({});
+
+      apiService.deleteKafkaConsumerGroup('audit-group').subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/kafka/consumer-groups/audit-group`).flush({});
+
+      apiService.getCatalogReportActivity().subscribe();
+      httpMock.expectOne(`${apiService.baseUrl}/reports/catalog-activity`).flush({});
+
       apiService.getAuditTimeline().subscribe();
       httpMock.expectOne(`${apiService.baseUrl}/audit/events`).flush([]);
 

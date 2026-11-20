@@ -1,12 +1,12 @@
 package com.smartrent.report.listener;
 
+import com.smartrent.report.dto.RentalEventDto;
 import com.smartrent.report.service.ReportService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.annotation.RetryableTopic;
-import org.springframework.retry.annotation.Backoff;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,24 +19,32 @@ public class ReportKafkaListener {
         this.reportService = reportService;
     }
 
-    @RetryableTopic(
-        attempts = "3",
-        backoff = @Backoff(delay = 1000, multiplier = 2.0),
-        autoCreateTopics = "false",
-        dltTopicSuffix = "-dlt"
+    @KafkaListener(
+            topics = "${smartrent.kafka.topics.rentals:rentals.events}",
+            groupId = "${smartrent.kafka.consumer.group-id:report-group}",
+            containerFactory = "rentalKafkaListenerContainerFactory"
     )
-    @KafkaListener(topics = "rentals.events", groupId = "report-group")
-    public void consumeEvent(String message) {
-        if (message == null || message.isBlank()) {
-            log.warn("Mensaje nulo o vacío ignorado en tópico rentals.events (reportería)");
-            return;
-        }
-        log.info("Evento recibido para reportería: {}", message);
-        reportService.recordRentalEvent(message);
+    public void consumeEvent(
+            RentalEventDto event,
+            @Header(name = KafkaHeaders.RECEIVED_TOPIC, required = false) String topic,
+            @Header(name = KafkaHeaders.RECEIVED_PARTITION, defaultValue = "0") int partition,
+            @Header(name = KafkaHeaders.OFFSET, defaultValue = "0") long offset) {
+        log.info("Evento de arriendo recibido para reportería: topic={}, partition={}, offset={}, rentalId={}",
+                topic, partition, offset, event != null ? event.getRentalId() : null);
+        reportService.recordRentalEvent(event);
     }
 
-    @DltHandler
-    public void handleDlt(String message) {
-        log.error("Evento de reportería enviado a Dead Letter Topic (rentals.events-dlt): {}", message);
+    @KafkaListener(
+            topics = "${smartrent.kafka.topics.rentals-dlt:rentals.events-dlt}",
+            groupId = "${smartrent.kafka.consumer.dlt-group-id:report-group-dlt}",
+            containerFactory = "dltKafkaListenerContainerFactory"
+    )
+    public void handleDlt(
+            String message,
+            @Header(name = KafkaHeaders.RECEIVED_TOPIC, required = false) String topic,
+            @Header(name = KafkaHeaders.RECEIVED_PARTITION, defaultValue = "0") int partition,
+            @Header(name = KafkaHeaders.OFFSET, defaultValue = "0") long offset) {
+        log.error("Evento de reportería recibido en DLT: topic={}, partition={}, offset={}, payload={}",
+                topic, partition, offset, message);
     }
 }

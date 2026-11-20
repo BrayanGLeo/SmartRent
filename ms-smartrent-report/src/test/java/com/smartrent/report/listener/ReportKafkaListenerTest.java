@@ -1,5 +1,6 @@
 package com.smartrent.report.listener;
 
+import com.smartrent.report.dto.RentalEventDto;
 import com.smartrent.report.service.ReportService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,24 +20,21 @@ class ReportKafkaListenerTest {
 
     @Test
     void consumeEvent_delegatesToService() {
-        String message = "test event excavadora";
-        
-        reportKafkaListener.consumeEvent(message);
-        
-        Mockito.verify(reportService, Mockito.times(1)).recordRentalEvent(message);
-    }
+        RentalEventDto dto = new RentalEventDto();
+        dto.setRentalId(1L);
+        dto.setStatus("APROBADO");
 
-    @Test
-    void consumeEvent_ignoresNullOrBlank() {
-        reportKafkaListener.consumeEvent(null);
-        reportKafkaListener.consumeEvent("   ");
+        reportKafkaListener.consumeEvent(dto, "rentals.events", 1, 20L);
 
-        Mockito.verifyNoInteractions(reportService);
+        Mockito.verify(reportService, Mockito.times(1)).recordRentalEvent(dto);
+
+        reportKafkaListener.consumeEvent(null, "rentals.events", 1, 21L);
+        Mockito.verify(reportService, Mockito.times(1)).recordRentalEvent((RentalEventDto) null);
     }
 
     @Test
     void handleDlt_doesNotThrow() {
-        reportKafkaListener.handleDlt("dead letter payload");
+        reportKafkaListener.handleDlt("dead letter payload", "rentals.events-dlt", 0, 1L);
         Mockito.verifyNoInteractions(reportService);
     }
 }

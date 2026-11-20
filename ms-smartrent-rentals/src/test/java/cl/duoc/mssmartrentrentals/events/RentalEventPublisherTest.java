@@ -1,5 +1,9 @@
 package cl.duoc.mssmartrentrentals.events;
 
+import cl.duoc.mssmartrentrentals.dto.RentalEventDto;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -8,6 +12,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -17,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -56,15 +62,49 @@ class RentalEventPublisherTest {
     }
 
     @Test
-    void publishAuditAndReportEvent_ShouldSendToKafkaWithKeyAndMachineName() {
-        publisher.publishAuditAndReportEvent(1L, 1L, "user@test.com", "APROBADO");
+    void publishAuditAndReportEvent_ShouldSendTypedDtoToKafkaWithKeyAndMachineName() {
+        RecordMetadata metadata = new RecordMetadata(
+                new TopicPartition("rentals.events", 2), 0L, 42, 0L, 0, 0);
+        SendResult<String, Object> sendResult = new SendResult<>(
+                new ProducerRecord<>("rentals.events", "1", "ok"), metadata);
+        when(kafkaTemplate.send(anyString(), anyString(), any()))
+                .thenReturn(CompletableFuture.completedFuture(sendResult));
+
+        publisher.publishAuditAndReportEvent(1L, 1L, "user@test.com", "SOLICITADO", "APROBADO", "RENTAL_STATUS_CHANGED");
         assertFalse(Mockito.mockingDetails(kafkaTemplate).getInvocations().isEmpty());
         verify(kafkaTemplate).send(
                 Mockito.eq("rentals.events"),
                 Mockito.eq("1"),
-                Mockito.argThat(payload -> payload instanceof Map<?, ?> map
-                        && "Excavadora".equals(map.get("machineName"))
-                        && Long.valueOf(1L).equals(map.get("machineId")))
+                Mockito.argThat(payload -> payload instanceof RentalEventDto dto
+                        && "Excavadora".equals(dto.getMachineName())
+                        && Long.valueOf(1L).equals(dto.getMachineId())
+                        && Long.valueOf(1L).equals(dto.getRentalId())
+                        && "SOLICITADO".equals(dto.getPreviousStatus())
+                        && "APROBADO".equals(dto.getStatus())
+                        && "RENTAL_STATUS_CHANGED".equals(dto.getEventType())
+                        && "ms-smartrent-rentals".equals(dto.getSourceService())
+                        && dto.getEventId() != null
+                        && dto.getTimestamp() != null
+                        && dto.getOccurredAt() != null)
+        );
+    }
+
+    @Test
+    void publishAuditAndReportEvent_ShouldSkipInvalidInputsAndSupportCustomTopic() {
+        RentalEventPublisher customPublisher = new RentalEventPublisher(rabbitTemplate, kafkaTemplate, "custom.rentals");
+
+        customPublisher.publishAuditAndReportEvent(null, 1L, "u1", null, "APROBADO", "RENTAL_CREATED");
+        customPublisher.publishAuditAndReportEvent(1L, 1L, "u1", null, "  ", "RENTAL_CREATED");
+        customPublisher.publishAuditAndReportEvent(1L, 1L, "u1", null, null, "RENTAL_CREATED");
+        verify(kafkaTemplate, never()).send(anyString(), anyString(), any());
+
+        customPublisher.publishAuditAndReportEvent(5L, 5L, " ", null, "APROBADO", " ");
+        verify(kafkaTemplate).send(
+                Mockito.eq("custom.rentals"),
+                Mockito.eq("5"),
+                Mockito.argThat(payload -> payload instanceof RentalEventDto dto
+                        && "unknown".equals(dto.getUserId())
+                        && "RENTAL_EVENT".equals(dto.getEventType()))
         );
     }
 

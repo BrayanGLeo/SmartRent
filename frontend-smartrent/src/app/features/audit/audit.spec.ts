@@ -20,7 +20,9 @@ describe('Audit', () => {
         { id: 2, eventType: 'RENTAL_STATUS_CHANGED', eventPayload: 'not-json', timestamp: '2026-10-15T11:00:00Z' },
         { id: 3, eventType: 'INVENTORY_MAINTENANCE', eventPayload: '{"machineId":5}', timestamp: '2026-10-15T12:00:00Z' },
         { id: 4, eventType: 'CART_CANCELLED', eventPayload: '{"cart":1}', timestamp: '2026-10-15T13:00:00Z' },
-        { id: 5, eventType: 'SYSTEM_OTHER', eventPayload: '{}', timestamp: '2026-10-15T14:00:00Z' }
+        { id: 5, eventType: 'SYSTEM_OTHER', eventPayload: '{}', timestamp: '2026-10-15T14:00:00Z' },
+        { id: 6, eventType: 'MACHINE_DELETED', eventPayload: '{"machineId":9}', timestamp: '2026-10-15T15:00:00Z' },
+        { id: 7, eventType: 'CATALOG_EVENT_DLT', eventPayload: '{"bad":true}', timestamp: '2026-10-15T16:00:00Z' }
       ])
     );
 
@@ -39,7 +41,7 @@ describe('Audit', () => {
   });
 
   it('should load, parse, filter and expand events, and fallback on empty/error', () => {
-    expect(component.events.length).toBe(5);
+    expect(component.events.length).toBe(7);
     expect(component.events[0].originService).toBe('ms-smartrent-checkout');
     expect(component.events[0].severity).toBe('AUDIT');
     expect(component.events[1].originService).toBe('ms-smartrent-rentals');
@@ -48,6 +50,10 @@ describe('Audit', () => {
     expect(component.events[3].originService).toBe('ms-smartrent-cart');
     expect(component.events[3].severity).toBe('ERROR');
     expect(component.events[4].originService).toBe('ms-smartrent-bff');
+    expect(component.events[5].originService).toBe('ms-smartrent-catalog');
+    expect(component.events[5].severity).toBe('WARN');
+    expect(component.events[6].originService).toBe('ms-smartrent-catalog');
+    expect(component.events[6].severity).toBe('ERROR');
 
     component.selectedFilter = 'ORDER_CREATED';
     expect(component.filteredEvents.length).toBe(1);

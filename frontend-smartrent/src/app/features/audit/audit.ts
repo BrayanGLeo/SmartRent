@@ -22,8 +22,15 @@ export class Audit implements OnInit {
 
   eventTypes: string[] = [
     'TODOS',
-    'ORDER_CREATED',
+    'RENTAL_CREATED',
     'RENTAL_STATUS_CHANGED',
+    'MACHINE_CREATED',
+    'MACHINE_UPDATED',
+    'MACHINE_AVAILABILITY_CHANGED',
+    'MACHINE_DELETED',
+    'RENTAL_EVENT_DLT',
+    'CATALOG_EVENT_DLT',
+    'ORDER_CREATED',
     'MACHINE_DISPATCHED',
     'INVENTORY_MAINTENANCE',
     'CART_CHECKOUT_INITIATED'
@@ -75,16 +82,16 @@ export class Audit implements OnInit {
     const t = eventType.toUpperCase();
     if (t.includes('ORDER') || t.includes('CHECKOUT')) return 'ms-smartrent-checkout';
     if (t.includes('RENTAL') || t.includes('DISPATCH')) return 'ms-smartrent-rentals';
-    if (t.includes('MACHINE') || t.includes('INVENTORY')) return 'ms-smartrent-catalog';
+    if (t.includes('CATALOG') || t.includes('MACHINE') || t.includes('INVENTORY')) return 'ms-smartrent-catalog';
     if (t.includes('CART')) return 'ms-smartrent-cart';
     return 'ms-smartrent-bff';
   }
 
   private resolveSeverity(eventType: string = ''): 'INFO' | 'WARN' | 'ERROR' | 'AUDIT' {
     const t = eventType.toUpperCase();
-    if (t.includes('CANCEL') || t.includes('FAIL')) return 'ERROR';
-    if (t.includes('MAINTENANCE') || t.includes('OVERDUE')) return 'WARN';
-    if (t.includes('ORDER') || t.includes('STATUS')) return 'AUDIT';
+    if (t.includes('CANCEL') || t.includes('FAIL') || t.includes('DLT')) return 'ERROR';
+    if (t.includes('MAINTENANCE') || t.includes('OVERDUE') || t.includes('DELETED')) return 'WARN';
+    if (t.includes('ORDER') || t.includes('STATUS') || t.includes('CREATED')) return 'AUDIT';
     return 'INFO';
   }
 

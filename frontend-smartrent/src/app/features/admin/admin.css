@@ -1000,3 +1000,82 @@
 .toast-dismiss { background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 0; display: flex; }
 .toast-dismiss svg { width: 0.95rem; height: 0.95rem; }
 .toast-dismiss:hover { color: #ffffff; }
+
+/* KAFKA TOPOLOGY */
+.kafka-summary-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.25rem;
+  color: #ffffff;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.live-dot-kafka {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
+}
+.live-dot-kafka.dot-online {
+  background-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+}
+.brokers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+.broker-chip {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #0284c7;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.broker-chip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.broker-role-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+.broker-endpoint {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.775rem;
+  color: #475569;
+}
+.kafka-detail-panel {
+  border-left: 4px solid #0284c7;
+}
+.lag-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background-color: #dcfce7;
+  color: #15803d;
+}
+.lag-badge.lag-high {
+  background-color: #fef3c7;
+  color: #b45309;
+}

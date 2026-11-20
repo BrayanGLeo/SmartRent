@@ -142,7 +142,13 @@ public class SecurityConfig {
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
                                 .antMatcher("/v1/api/bindings/**"),
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher
-                                .antMatcher("/v2/api/bindings/**"))
+                                .antMatcher("/v2/api/bindings/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/api/kafka/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v1/api/kafka/**"),
+                        org.springframework.security.web.util.matcher.AntPathRequestMatcher
+                                .antMatcher("/v2/api/kafka/**"))
                 .hasAnyAuthority(ROLE_ADMIN, ADMIN_ROLE_NAME)
                 .requestMatchers(
                         org.springframework.security.web.util.matcher.AntPathRequestMatcher

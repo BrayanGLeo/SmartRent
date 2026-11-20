@@ -30,7 +30,14 @@ public class RentalService {
         rental.setStatus(RentalStatus.SOLICITADO);
         Rental savedRental = rentalRepository.save(rental);
 
-        eventPublisher.publishAuditAndReportEvent(savedRental.getId(), savedRental.getUserId(), savedRental.getStatus().name());
+        eventPublisher.publishAuditAndReportEvent(
+                savedRental.getId(),
+                savedRental.getMachineId(),
+                savedRental.getUserId(),
+                null,
+                savedRental.getStatus().name(),
+                "RENTAL_CREATED"
+        );
         return savedRental;
     }
 
@@ -85,7 +92,14 @@ public class RentalService {
         }
 
         // Siempre mandamos el evento de auditoría a Kafka
-        eventPublisher.publishAuditAndReportEvent(updatedRental.getId(), updatedRental.getUserId(), updatedRental.getStatus().name());
+        eventPublisher.publishAuditAndReportEvent(
+                updatedRental.getId(),
+                updatedRental.getMachineId(),
+                updatedRental.getUserId(),
+                currentStatus.name(),
+                updatedRental.getStatus().name(),
+                "RENTAL_STATUS_CHANGED"
+        );
 
         return updatedRental;
     }
