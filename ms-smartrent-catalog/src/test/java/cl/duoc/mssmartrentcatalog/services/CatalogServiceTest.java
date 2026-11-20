@@ -2,6 +2,7 @@ package cl.duoc.mssmartrentcatalog.services;
 
 import cl.duoc.mssmartrentcatalog.entities.Category;
 import cl.duoc.mssmartrentcatalog.entities.Machine;
+import cl.duoc.mssmartrentcatalog.events.CatalogEventPublisher;
 import cl.duoc.mssmartrentcatalog.repositories.CategoryRepository;
 import cl.duoc.mssmartrentcatalog.repositories.MachineRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -238,5 +239,28 @@ class CatalogServiceTest {
         ));
         assertFalse(stockOnly.getIsAvailable());
         assertEquals(99000.0, stockOnly.getDailyPrice());
+    }
+
+    @Test
+    void operationsWithEventPublisher_ShouldPublishKafkaCatalogEvents() {
+        CatalogEventPublisher publisher = mock(CatalogEventPublisher.class);
+        CatalogService publishingService = new CatalogService(machineRepository, categoryRepository, publisher);
+
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(testCategory));
+        when(machineRepository.findBySerialNumberIgnoreCase("CAT-320")).thenReturn(Optional.empty());
+        when(machineRepository.save(any(Machine.class))).thenReturn(testMachine);
+        publishingService.createMachine(testMachine);
+        verify(publisher).publishMachineEvent("MACHINE_CREATED", testMachine);
+
+        when(machineRepository.findById(1L)).thenReturn(Optional.of(testMachine));
+        publishingService.updateMachineAvailability(1L, false);
+        verify(publisher).publishMachineEvent("MACHINE_AVAILABILITY_CHANGED", testMachine);
+
+        publishingService.updateMachine(1L, Map.of("name", "Excavadora Editada"));
+        verify(publisher).publishMachineEvent("MACHINE_UPDATED", testMachine);
+
+        when(machineRepository.existsById(1L)).thenReturn(true);
+        publishingService.deleteMachine(1L);
+        verify(publisher).publishMachineDeleted(1L);
     }
 }

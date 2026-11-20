@@ -564,6 +564,47 @@ export class ApiService {
     return this.http.request<any>('delete', `${this.baseUrl}/bindings`, { body: binding });
   }
 
+  // Kafka Cluster, Topics & Consumer Groups Administration
+  getKafkaCluster(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/kafka/cluster`);
+  }
+
+  getKafkaTopics(includeInternal: boolean = false): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/kafka/topics`, { params: { includeInternal } });
+  }
+
+  getKafkaTopicDetail(name: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/kafka/topics/${encodeURIComponent(name)}`);
+  }
+
+  createKafkaTopic(topic: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/kafka/topics`, topic);
+  }
+
+  updateKafkaTopicConfig(name: string, update: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/kafka/topics/${encodeURIComponent(name)}/config`, update);
+  }
+
+  deleteKafkaTopic(name: string): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/kafka/topics/${encodeURIComponent(name)}`);
+  }
+
+  getKafkaConsumerGroups(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/kafka/consumer-groups`);
+  }
+
+  getKafkaConsumerGroupDetail(groupId: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/kafka/consumer-groups/${encodeURIComponent(groupId)}`);
+  }
+
+  deleteKafkaConsumerGroup(groupId: string): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/kafka/consumer-groups/${encodeURIComponent(groupId)}`);
+  }
+
+  getCatalogReportActivity(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/reports/catalog-activity`);
+  }
+
   // Audit
   getAuditTimeline(): Observable<AuditEvent[]> {
     return this.http.get<AuditEvent[]>(`${this.baseUrl}/audit/events`);

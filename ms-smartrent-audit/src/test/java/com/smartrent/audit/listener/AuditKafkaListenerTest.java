@@ -1,66 +1,39 @@
 package com.smartrent.audit.listener;
 
-import com.smartrent.audit.entity.AuditTimeline;
-import com.smartrent.audit.repository.AuditTimelineRepository;
+import com.smartrent.audit.dto.RentalEventDto;
+import com.smartrent.audit.service.AuditService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class AuditKafkaListenerTest {
 
     @Mock
-    private AuditTimelineRepository repository;
+    private AuditService auditService;
 
     @InjectMocks
     private AuditKafkaListener auditKafkaListener;
 
     @Test
-    @SuppressWarnings("null")
-    void consumeEvent_savesAuditTimeline() {
-        String message = "Rental accepted event";
+    void consumeEvent_delegatesToAuditService() {
+        RentalEventDto dto = new RentalEventDto();
+        dto.setRentalId(1L);
+        dto.setStatus("APROBADO");
 
-        auditKafkaListener.consumeEvent(message);
+        auditKafkaListener.consumeEvent(dto, "rentals.events", 2, 15L);
 
-        ArgumentCaptor<AuditTimeline> captor = ArgumentCaptor.forClass(AuditTimeline.class);
-        Mockito.verify(repository, Mockito.times(1)).save(captor.capture());
-
-        AuditTimeline savedEntity = captor.getValue();
-        assertEquals(message, savedEntity.getEventPayload());
-        assertNotNull(savedEntity.getTimestamp());
+        verify(auditService).processRentalEvent(dto, "rentals.events", 2, 15L);
     }
 
     @Test
-    void consumeEvent_ignoresBlankMessage() {
-        auditKafkaListener.consumeEvent("   ");
-        auditKafkaListener.consumeEvent(null);
-        Mockito.verifyNoInteractions(repository);
-    }
+    void handleDlt_delegatesToAuditService() {
+        auditKafkaListener.handleDlt("failed payload", "rentals.events-dlt", 1, 9L);
 
-    @Test
-    @SuppressWarnings("null")
-    void handleDlt_savesDltTimelineAndSwallowsPersistenceErrors() {
-        auditKafkaListener.handleDlt("failed payload");
-
-        ArgumentCaptor<AuditTimeline> captor = ArgumentCaptor.forClass(AuditTimeline.class);
-        Mockito.verify(repository, Mockito.times(1)).save(captor.capture());
-        assertEquals("RENTAL_EVENT_DLT", captor.getValue().getEventType());
-        assertEquals("failed payload", captor.getValue().getEventPayload());
-
-        Mockito.when(repository.save(Mockito.any(AuditTimeline.class)))
-                .thenThrow(new RuntimeException("DB down"));
-        auditKafkaListener.handleDlt("another payload");
-
-        Mockito.reset(repository);
-        auditKafkaListener.handleDlt(null);
-        auditKafkaListener.handleDlt("   ");
-        Mockito.verifyNoInteractions(repository);
+        verify(auditService).recordDeadLetterEvent("RENTAL_EVENT_DLT", "failed payload", "rentals.events-dlt", 1, 9L);
     }
 }

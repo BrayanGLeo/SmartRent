@@ -2,6 +2,7 @@ package cl.duoc.mssmartrentcatalog.services;
 
 import cl.duoc.mssmartrentcatalog.entities.Category;
 import cl.duoc.mssmartrentcatalog.entities.Machine;
+import cl.duoc.mssmartrentcatalog.events.CatalogEventPublisher;
 import cl.duoc.mssmartrentcatalog.repositories.CategoryRepository;
 import cl.duoc.mssmartrentcatalog.repositories.MachineRepository;
 
@@ -21,15 +22,24 @@ public class CatalogService {
 
     private final MachineRepository machineRepository;
     private final CategoryRepository categoryRepository;
+    private final CatalogEventPublisher eventPublisher;
 
     public CatalogService(MachineRepository machineRepository) {
-        this(machineRepository, null);
+        this(machineRepository, null, null);
+    }
+
+    public CatalogService(MachineRepository machineRepository, CategoryRepository categoryRepository) {
+        this(machineRepository, categoryRepository, null);
     }
 
     @Autowired
-    public CatalogService(MachineRepository machineRepository, @Autowired(required = false) CategoryRepository categoryRepository) {
+    public CatalogService(
+            MachineRepository machineRepository,
+            @Autowired(required = false) CategoryRepository categoryRepository,
+            @Autowired(required = false) CatalogEventPublisher eventPublisher) {
         this.machineRepository = machineRepository;
         this.categoryRepository = categoryRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public List<Machine> getAllAvailableMachines() {
@@ -45,15 +55,21 @@ public class CatalogService {
             machine.setIsAvailable(true);
         }
         if (categoryRepository == null) {
-            return machineRepository.save(Objects.requireNonNull(machine));
+            Machine saved = machineRepository.save(Objects.requireNonNull(machine));
+            publishCatalogEvent("MACHINE_CREATED", saved);
+            return saved;
         }
 
         machine.setCategory(resolveCategory(machine.getCategory(), null));
         Optional<Machine> existing = findBySerialIfPresent(machine.getSerialNumber());
         if (existing.isPresent()) {
-            return updateExistingFromMachine(Objects.requireNonNull(existing.get()), machine);
+            Machine updated = updateExistingFromMachine(Objects.requireNonNull(existing.get()), machine);
+            publishCatalogEvent("MACHINE_UPDATED", updated);
+            return updated;
         }
-        return machineRepository.save(Objects.requireNonNull(machine));
+        Machine saved = machineRepository.save(Objects.requireNonNull(machine));
+        publishCatalogEvent("MACHINE_CREATED", saved);
+        return saved;
     }
 
     public Optional<Machine> getMachineById(@org.springframework.lang.NonNull Long id) {
@@ -65,7 +81,9 @@ public class CatalogService {
         if (optionalMachine.isPresent()) {
             Machine machine = optionalMachine.get();
             machine.setIsAvailable(isAvailable);
-            return machineRepository.save(Objects.requireNonNull(machine));
+            Machine saved = machineRepository.save(Objects.requireNonNull(machine));
+            publishCatalogEvent("MACHINE_AVAILABILITY_CHANGED", saved);
+            return saved;
         }
         throw new jakarta.persistence.EntityNotFoundException("Machine not found with id " + id);
     }
@@ -77,12 +95,23 @@ public class CatalogService {
         applyBasicFields(machine, payload, skuOrSerial);
         applyCategoryField(machine, payload);
 
-        return machineRepository.save(Objects.requireNonNull(machine));
+        Machine saved = machineRepository.save(Objects.requireNonNull(machine));
+        publishCatalogEvent("MACHINE_UPDATED", saved);
+        return saved;
     }
 
     public void deleteMachine(@org.springframework.lang.NonNull Long id) {
         if (machineRepository.existsById(id)) {
             machineRepository.deleteById(id);
+            if (eventPublisher != null) {
+                eventPublisher.publishMachineDeleted(id);
+            }
+        }
+    }
+
+    private void publishCatalogEvent(String eventType, Machine machine) {
+        if (eventPublisher != null) {
+            eventPublisher.publishMachineEvent(eventType, machine);
         }
     }
 

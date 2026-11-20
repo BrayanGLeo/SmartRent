@@ -1,65 +1,48 @@
 package com.smartrent.audit.listener;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-
+import com.smartrent.audit.dto.RentalEventDto;
+import com.smartrent.audit.service.AuditService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.annotation.RetryableTopic;
-import org.springframework.retry.annotation.Backoff;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
-
-import com.smartrent.audit.entity.AuditTimeline;
-import com.smartrent.audit.repository.AuditTimelineRepository;
 
 @Component
 public class AuditKafkaListener {
 
     private static final Logger log = LoggerFactory.getLogger(AuditKafkaListener.class);
-    private final AuditTimelineRepository repository;
+    private final AuditService auditService;
 
-    public AuditKafkaListener(AuditTimelineRepository repository) {
-        this.repository = repository;
+    public AuditKafkaListener(AuditService auditService) {
+        this.auditService = auditService;
     }
 
-    @RetryableTopic(
-        attempts = "3",
-        backoff = @Backoff(delay = 1000, multiplier = 2.0),
-        autoCreateTopics = "false",
-        dltTopicSuffix = "-dlt"
+    @KafkaListener(
+            topics = "${smartrent.kafka.topics.rentals:rentals.events}",
+            groupId = "${smartrent.kafka.consumer.group-id:audit-group}",
+            containerFactory = "rentalKafkaListenerContainerFactory"
     )
-    @KafkaListener(topics = "rentals.events", groupId = "audit-group")
-    public void consumeEvent(String message) {
-        if (message == null || message.isBlank()) {
-            log.warn("Mensaje nulo o vacío ignorado en tópico rentals.events");
-            return;
-        }
-        log.info("Evento recibido para auditoría: {}", message);
-        AuditTimeline timeline = new AuditTimeline(
-            "RENTAL_EVENT",
-            message,
-            LocalDateTime.now(ZoneId.systemDefault())
-        );
-        repository.save(timeline);
+    public void consumeEvent(
+            RentalEventDto event,
+            @Header(name = KafkaHeaders.RECEIVED_TOPIC, required = false) String topic,
+            @Header(name = KafkaHeaders.RECEIVED_PARTITION, defaultValue = "0") int partition,
+            @Header(name = KafkaHeaders.OFFSET, defaultValue = "0") long offset) {
+        log.debug("Mensaje recibido en AuditKafkaListener: topic={}, partition={}, offset={}", topic, partition, offset);
+        auditService.processRentalEvent(event, topic, partition, offset);
     }
 
-    @DltHandler
-    public void handleDlt(String message) {
-        log.error("Evento de auditoría enviado a Dead Letter Topic (rentals.events-dlt): {}", message);
-        if (message == null || message.isBlank()) {
-            return;
-        }
-        try {
-            AuditTimeline fallbackTimeline = new AuditTimeline(
-                "RENTAL_EVENT_DLT",
-                message,
-                LocalDateTime.now(ZoneId.systemDefault())
-            );
-            repository.save(fallbackTimeline);
-        } catch (Exception ex) {
-            log.error("No se pudo persistir evento DLT en base de datos de auditoría: {}", ex.getMessage());
-        }
+    @KafkaListener(
+            topics = "${smartrent.kafka.topics.rentals-dlt:rentals.events-dlt}",
+            groupId = "${smartrent.kafka.consumer.dlt-group-id:audit-group-dlt}",
+            containerFactory = "dltKafkaListenerContainerFactory"
+    )
+    public void handleDlt(
+            String message,
+            @Header(name = KafkaHeaders.RECEIVED_TOPIC, required = false) String topic,
+            @Header(name = KafkaHeaders.RECEIVED_PARTITION, defaultValue = "0") int partition,
+            @Header(name = KafkaHeaders.OFFSET, defaultValue = "0") long offset) {
+        auditService.recordDeadLetterEvent("RENTAL_EVENT_DLT", message, topic, partition, offset);
     }
 }

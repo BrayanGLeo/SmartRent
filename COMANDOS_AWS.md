@@ -85,7 +85,7 @@ sudo systemctl enable docker
 # Levantar aplicaciones (Microservicios + PostgreSQL)
 docker compose -f infra/compose.apps.yml up -d
 
-# Levantar Kafka y Zookeeper
+# Levantar Cluster Kafka HA (3 Zookeeper + 3 Brokers + Kafka Init + Kafka UI)
 docker compose -f infra/compose.kafka.yml up -d
 
 # Levantar RabbitMQ
@@ -186,4 +186,55 @@ chmod +x deploy-ec2.sh
 ```bash
 cd ~/SmartRent
 docker compose -f infra/compose.frontend.yml up -d --build
+```
+
+---
+
+## ⚡ 8. Operación y Monitoreo del Clúster Apache Kafka (HA 3 Brokers)
+
+### Puertos requeridos en el Security Group de `EC2-Kafka` (`172.31.30.107`):
+- **TCP 9092, 9093, 9094**: Origen `EC2-Apps` (`172.31.76.200/32` o Security Group de Apps) para conexión a los 3 brokers (`kafka-1`, `kafka-2`, `kafka-3`).
+- **TCP 8090**: Origen administrador/docente para acceder a **Kafka UI** (`http://<IP_PUBLICA_KAFKA>:8090`).
+
+### Administración replicable por CLI (`infra/kafka-scripts/`):
+```bash
+cd ~/SmartRent
+chmod +x infra/kafka-scripts/init-topics.sh infra/kafka-scripts/manage-kafka.sh
+
+# Verificar o recrear los 2 tópicos oficiales (3 particiones, 3 réplicas, min.insync.replicas=2) y DLTs
+docker compose -f infra/compose.kafka.yml run --rm kafka-init
+
+# Monitoreo consolidado (brokers, tópicos, líderes, ISR, consumer groups, offsets y lag)
+./infra/kafka-scripts/manage-kafka.sh monitor
+
+# Inspeccionar un tópico o un consumer group específico
+./infra/kafka-scripts/manage-kafka.sh describe-topic rentals.events
+./infra/kafka-scripts/manage-kafka.sh describe-topic catalog.events
+./infra/kafka-scripts/manage-kafka.sh describe-group audit-group
+./infra/kafka-scripts/manage-kafka.sh describe-group report-group
+
+# Crear, alterar configuración, ampliar particiones o eliminar tópicos
+./infra/kafka-scripts/manage-kafka.sh create-topic demo.events 3 3 604800000 delete
+./infra/kafka-scripts/manage-kafka.sh alter-config demo.events retention.ms=86400000
+./infra/kafka-scripts/manage-kafka.sh alter-partitions demo.events 6
+./infra/kafka-scripts/manage-kafka.sh delete-topic demo.events
+
+# Prueba en vivo de producción y consumo
+./infra/kafka-scripts/manage-kafka.sh produce-test rentals.events 99 '{"eventType":"RENTAL_CREATED","rentalId":99,"machineId":1,"machineName":"Excavadora","status":"SOLICITADO"}'
+./infra/kafka-scripts/manage-kafka.sh consume-test rentals.events 5
+```
+
+### API REST de Administración Kafka en BFF (Rol `Administrador`):
+- `GET /v2/api/kafka/cluster` — Estado del clúster, controller y los 3 brokers.
+- `GET /v2/api/kafka/topics` — Listado de tópicos, particiones, réplicas, ISR y políticas.
+- `GET /v2/api/kafka/topics/{name}` — Detalle por partición (líder, ISR, earliest/latest offsets).
+- `POST /v2/api/kafka/topics` — Creación declarativa de tópicos.
+- `PUT /v2/api/kafka/topics/{name}/config` — Actualización de retención, `cleanup.policy` y particiones.
+- `DELETE /v2/api/kafka/topics/{name}` — Eliminación de tópicos no internos.
+- `GET /v2/api/kafka/consumer-groups` y `GET /v2/api/kafka/consumer-groups/{groupId}` — Supervisión de miembros, offsets y **lag**.
+
+### Nota PostgreSQL (`ms-smartrent-audit`):
+Si la tabla `audit_timeline` ya existía en PostgreSQL de despliegues previos con `event_payload` como `VARCHAR(255)`, amplía el tipo a `TEXT` antes o durante el despliegue:
+```bash
+docker exec -i smartrent-postgres psql -U smartrent -d smartrent_audit -c "ALTER TABLE audit_timeline ALTER COLUMN event_payload TYPE TEXT;"
 ```

@@ -115,6 +115,26 @@
       <span>Topología RabbitMQ</span>
       <span class="tab-badge rabbit-badge">{{ queues().length }}Q</span>
     </button>
+
+    <!-- TAB 6: Topología Kafka -->
+    <button
+      type="button"
+      class="nav-tab-btn"
+      [class.active]="activeTab() === 'kafka'"
+      (click)="setTab('kafka')"
+    >
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3" />
+        <circle cx="19" cy="5" r="2" />
+        <circle cx="19" cy="19" r="2" />
+        <circle cx="5" cy="12" r="2" />
+        <line x1="7" y1="12" x2="9" y2="12" />
+        <line x1="14.5" y1="10" x2="17.5" y2="6.5" />
+        <line x1="14.5" y1="14" x2="17.5" y2="17.5" />
+      </svg>
+      <span>Topología Kafka</span>
+      <span class="tab-badge rabbit-badge">{{ kafkaTopics().length }}T</span>
+    </button>
   </nav>
 
   <!-- Main Work Area -->
@@ -1174,6 +1194,220 @@
       </div>
     </section>
 
+    <!-- ============================================================ -->
+    <!-- TAB 6: ADMINISTRACIÓN DE CLÚSTER Y TÓPICOS KAFKA             -->
+    <!-- ============================================================ -->
+    <section class="tab-panel" *ngIf="activeTab() === 'kafka'">
+      <div class="panel-header-row">
+        <div class="panel-heading">
+          <h2>Consola de Streaming Apache Kafka (HA 3 Brokers + 3 Zookeeper)</h2>
+          <p>Administración de tópicos particionados/replicados, políticas de retención, offsets y lag por Consumer Group vía BFF AdminClient.</p>
+        </div>
+        <div class="panel-actions rabbit-actions">
+          <button type="button" class="btn btn-secondary" (click)="loadKafkaTopology(true)" [disabled]="isKafkaLoading()">
+            <svg class="btn-icon" [class.animate-spin]="isKafkaLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+            Sincronizar Clúster Kafka
+          </button>
+          <button type="button" class="btn btn-primary" (click)="openCreateKafkaTopicModal()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Nuevo Tópico Kafka
+          </button>
+        </div>
+      </div>
+
+      <div class="kafka-summary-banner">
+        <div class="rabbit-conn-stat">
+          <span class="live-dot-kafka" [class.dot-online]="kafkaOnline()"></span>
+          <span class="banner-title">Clúster Kafka: {{ kafkaCluster().clusterId }}</span>
+          <span class="cluster-vhost">{{ kafkaOnline() ? 'CONECTADO (BFF AdminClient)' : 'TOPOLOGÍA BASE HA' }}</span>
+        </div>
+        <div class="topology-chips">
+          <span class="chip-item"><strong>{{ kafkaCluster().brokerCount }}</strong> Brokers Activos</span>
+          <span class="chip-item"><strong>{{ kafkaTopics().length }}</strong> Tópicos</span>
+          <span class="chip-item"><strong>{{ kafkaGroups().length }}</strong> Consumer Groups</span>
+          <span class="chip-item">Kafka UI: <strong>:8090</strong></span>
+        </div>
+      </div>
+
+      <!-- Brokers Grid -->
+      <div class="brokers-grid">
+        <div class="broker-chip" *ngFor="let broker of kafkaCluster().brokers">
+          <div class="broker-chip-header">
+            <span>Broker ID #{{ broker.id }}</span>
+            <span class="broker-role-tag">
+              {{ kafkaCluster().controller?.id === broker.id ? 'CONTROLLER' : 'FOLLOWER' }}
+            </span>
+          </div>
+          <span class="broker-endpoint">{{ broker.host }}:{{ broker.port }}</span>
+        </div>
+      </div>
+
+      <!-- Kafka Topics Table -->
+      <div class="sub-panel-card">
+        <div class="sub-panel-header">
+          <div>
+            <h3>Tópicos Kafka Configurados (3 Particiones / 3 Réplicas / min.insync.replicas=2)</h3>
+            <p>Flujos oficiales <code>rentals.events</code> (delete) y <code>catalog.events</code> (compact,delete) más Dead Letter Topics asociados.</p>
+          </div>
+          <span class="count-tag">{{ kafkaTopics().length }} tópicos</span>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tópico</th>
+                <th>Particiones</th>
+                <th>Réplicas (RF)</th>
+                <th>Sub-replicadas</th>
+                <th>Cleanup Policy</th>
+                <th>Retención</th>
+                <th>Gobernanza</th>
+                <th class="th-actions">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of kafkaTopics()">
+                <td>
+                  <span class="mono-rabbit-name font-bold" [class.dlq-name]="t.name.endsWith('-dlt')">{{ t.name }}</span>
+                </td>
+                <td><span class="tabular-nums">{{ t.partitions }}</span></td>
+                <td><span class="tabular-nums">{{ t.replicationFactor }}</span></td>
+                <td>
+                  <span class="badge-flag" [class.flag-true]="t.underReplicatedPartitions === 0" [class.type-dlq]="t.underReplicatedPartitions > 0">
+                    {{ t.underReplicatedPartitions }}
+                  </span>
+                </td>
+                <td>
+                  <span class="rabbit-type-badge">{{ t.configs['cleanup.policy'] || 'delete' }}</span>
+                </td>
+                <td>
+                  <span class="text-sm text-slate-700">{{ formatRetention(t.configs['retention.ms']) }}</span>
+                </td>
+                <td>
+                  <span class="badge-official" *ngIf="t.isOfficial">OFICIAL</span>
+                  <span class="badge-custom" *ngIf="!t.isOfficial">CUSTOM</span>
+                </td>
+                <td class="td-actions">
+                  <button
+                    type="button"
+                    class="btn-action-text"
+                    (click)="inspectKafkaTopic(t)"
+                    title="Inspeccionar particiones, líderes, ISR y offsets"
+                  >
+                    Particiones
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-icon-action"
+                    (click)="openEditKafkaTopicModal(t)"
+                    title="Editar retención, política o particiones"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-icon-action action-danger"
+                    [disabled]="t.isOfficial"
+                    [title]="t.isOfficial ? 'Tópico oficial protegido' : 'Eliminar Tópico'"
+                    (click)="confirmDeleteKafkaTopic(t)"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Topic Partition Detail Card -->
+      <div class="sub-panel-card kafka-detail-panel" *ngIf="selectedKafkaTopicDetail() as detail">
+        <div class="sub-panel-header">
+          <div>
+            <h3>Detalle de Particiones e ISR: <code>{{ detail.name }}</code></h3>
+            <p>Distribución de líderes, réplicas en sincronía (ISR) y conteo de mensajes por partición.</p>
+          </div>
+          <button type="button" class="btn btn-outline btn-xs" (click)="closeKafkaTopicDetail()">Cerrar Detalle</button>
+        </div>
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Partición</th>
+                <th>Broker Líder</th>
+                <th>Réplicas</th>
+                <th>In-Sync Replicas (ISR)</th>
+                <th>Offset Inicial</th>
+                <th>Offset Final</th>
+                <th>Mensajes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of detail.partitionDetails">
+                <td class="mono-code">#{{ p.partition }}</td>
+                <td>Broker {{ p.leader }}</td>
+                <td class="mono-code">[{{ p.replicas?.join(', ') }}]</td>
+                <td class="mono-code">[{{ p.isr?.join(', ') }}]</td>
+                <td class="tabular-nums">{{ p.earliestOffset }}</td>
+                <td class="tabular-nums">{{ p.latestOffset }}</td>
+                <td class="tabular-nums font-bold">{{ p.messageCount }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Consumer Groups Table -->
+      <div class="sub-panel-card">
+        <div class="sub-panel-header">
+          <div>
+            <h3>Consumer Groups & Monitoreo de Lag</h3>
+            <p>Grupos independientes consumiendo en paralelo ambos tópicos: <code>audit-group</code> y <code>report-group</code>.</p>
+          </div>
+          <span class="count-tag">{{ kafkaGroups().length }} grupos</span>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Group ID</th>
+                <th>Estado</th>
+                <th>Tipo</th>
+                <th class="th-actions">Supervisión</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let g of kafkaGroups()">
+                <td><span class="mono-rabbit-name font-bold">{{ g.groupId }}</span></td>
+                <td><span class="badge-flag flag-true">{{ g.state }}</span></td>
+                <td>{{ g.isSimpleConsumerGroup ? 'Simple' : 'Coordinado (Rebalanceo Automático)' }}</td>
+                <td class="td-actions">
+                  <button type="button" class="btn-action-text" (click)="inspectKafkaConsumerGroup(g)">
+                    Ver Offsets & Lag
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ============================================================ -->
@@ -1879,6 +2113,166 @@
           <button type="submit" class="btn btn-primary">Vincular Binding</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: CREAR TÓPICO KAFKA                                    -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop" *ngIf="isKafkaTopicModalOpen()" (click)="closeKafkaTopicModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Crear Nuevo Tópico Kafka</h3>
+          <p class="modal-subtitle">Microservicio Administrador: <code>POST /api/kafka/topics</code></p>
+        </div>
+        <button type="button" class="btn-close" (click)="closeKafkaTopicModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="kafkaTopicForm" (ngSubmit)="saveKafkaTopic()" class="modal-form">
+        <div class="form-group">
+          <label class="form-label">Nombre del Tópico <span class="req">*</span></label>
+          <input type="text" formControlName="name" class="form-control mono-input" placeholder="ej. audit.alerts" />
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Particiones</label>
+            <input type="number" formControlName="partitions" class="form-control tabular-nums" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Factor de Replicación</label>
+            <input type="number" formControlName="replicationFactor" class="form-control tabular-nums" />
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Cleanup Policy</label>
+            <select formControlName="cleanupPolicy" class="form-control">
+              <option value="delete">delete</option>
+              <option value="compact">compact</option>
+              <option value="compact,delete">compact,delete</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Retención (ms)</label>
+            <input type="text" formControlName="retentionMs" class="form-control mono-input" placeholder="604800000" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" (click)="closeKafkaTopicModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Crear Tópico</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: EDITAR CONFIGURACIÓN DE TÓPICO KAFKA                  -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop" *ngIf="isKafkaTopicConfigModalOpen()" (click)="closeKafkaTopicConfigModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Configurar Tópico: {{ editingKafkaTopic()?.name }}</h3>
+          <p class="modal-subtitle">Microservicio Administrador: <code>PUT /api/kafka/topics/{{ editingKafkaTopic()?.name }}/config</code></p>
+        </div>
+        <button type="button" class="btn-close" (click)="closeKafkaTopicConfigModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <form [formGroup]="kafkaTopicConfigForm" (ngSubmit)="saveKafkaTopicConfig()" class="modal-form">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Particiones (solo aumentar)</label>
+            <input type="number" formControlName="partitions" class="form-control tabular-nums" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Min In-Sync Replicas</label>
+            <input type="text" formControlName="minInsyncReplicas" class="form-control tabular-nums" />
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Cleanup Policy</label>
+            <select formControlName="cleanupPolicy" class="form-control">
+              <option value="delete">delete</option>
+              <option value="compact">compact</option>
+              <option value="compact,delete">compact,delete</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Retención (ms)</label>
+            <input type="text" formControlName="retentionMs" class="form-control mono-input" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" (click)="closeKafkaTopicConfigModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Aplicar Configuración</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: DETALLE DE CONSUMER GROUP Y LAG                       -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop" *ngIf="isKafkaGroupDetailModalOpen()" (click)="closeKafkaGroupDetailModal()">
+    <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3>Consumer Group: {{ selectedKafkaGroupDetail()?.groupId }}</h3>
+          <p class="modal-subtitle">
+            Estado: <strong>{{ selectedKafkaGroupDetail()?.state }}</strong> |
+            Miembros: <strong>{{ selectedKafkaGroupDetail()?.memberCount }}</strong> |
+            Lag Total: <strong>{{ selectedKafkaGroupDetail()?.totalLag }}</strong>
+          </p>
+        </div>
+        <button type="button" class="btn-close" (click)="closeKafkaGroupDetailModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-form" *ngIf="selectedKafkaGroupDetail() as cg">
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tópico</th>
+                <th>Partición</th>
+                <th>Current Offset</th>
+                <th>Log End Offset</th>
+                <th>Consumer Lag</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let off of cg.offsets">
+                <td class="mono-code">{{ off.topic }}</td>
+                <td class="tabular-nums">#{{ off.partition }}</td>
+                <td class="tabular-nums">{{ off.currentOffset }}</td>
+                <td class="tabular-nums">{{ off.endOffset }}</td>
+                <td>
+                  <span class="lag-badge" [class.lag-high]="off.lag > 0">{{ off.lag }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeKafkaGroupDetailModal()">Cerrar</button>
+        </div>
+      </div>
     </div>
   </div>
 

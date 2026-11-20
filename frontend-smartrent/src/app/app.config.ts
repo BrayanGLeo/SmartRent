@@ -48,7 +48,8 @@ export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
     'checkout',
     'queues',
     'exchanges',
-    'bindings'
+    'bindings',
+    'kafka'
   ];
   protectedResources.forEach(resource =>
     protectedResourceMap.set(`${environment.apiBaseUrl}/${resource}*`, [environment.azure.apiScope])

@@ -60,7 +60,8 @@ class RentalServiceTest {
         assertNotNull(result);
         assertEquals(RentalStatus.SOLICITADO, result.getStatus());
         verify(rentalRepository, times(1)).save(Objects.requireNonNull(testRental));
-        verify(eventPublisher, times(1)).publishAuditAndReportEvent(testRental.getId(), testRental.getUserId(), testRental.getStatus().name());
+        verify(eventPublisher, times(1)).publishAuditAndReportEvent(
+                testRental.getId(), testRental.getMachineId(), testRental.getUserId(), null, testRental.getStatus().name(), "RENTAL_CREATED");
     }
 
     @Test
@@ -73,7 +74,8 @@ class RentalServiceTest {
         assertEquals(RentalStatus.APROBADO, result.getStatus());
         verify(catalogClient, times(1)).updateAvailability(100L, false);
         verify(eventPublisher, times(1)).publishEmailEvent(1L, "admin@test.com", RentalStatus.APROBADO.name());
-        verify(eventPublisher, times(1)).publishAuditAndReportEvent(1L, "user123", RentalStatus.APROBADO.name());
+        verify(eventPublisher, times(1)).publishAuditAndReportEvent(
+                1L, 100L, "user123", "SOLICITADO", RentalStatus.APROBADO.name(), "RENTAL_STATUS_CHANGED");
     }
 
     @Test
@@ -86,7 +88,8 @@ class RentalServiceTest {
 
         assertEquals(RentalStatus.EN_PREPARACION, result.getStatus());
         verify(eventPublisher, times(1)).publishPrepEvent(1L, 100L);
-        verify(eventPublisher, times(1)).publishAuditAndReportEvent(1L, "user123", RentalStatus.EN_PREPARACION.name());
+        verify(eventPublisher, times(1)).publishAuditAndReportEvent(
+                1L, 100L, "user123", "APROBADO", RentalStatus.EN_PREPARACION.name(), "RENTAL_STATUS_CHANGED");
     }
 
     @Test
@@ -117,7 +120,8 @@ class RentalServiceTest {
 
         rentalService.changeRentalStatus(1L, RentalStatus.EN_TERRENO, "test@test.com");
 
-        verify(eventPublisher).publishAuditAndReportEvent(eq(1L), any(), eq("EN_TERRENO"));
+        verify(eventPublisher).publishAuditAndReportEvent(
+                eq(1L), eq(100L), any(), eq("EN_PREPARACION"), eq("EN_TERRENO"), eq("RENTAL_STATUS_CHANGED"));
         verifyNoInteractions(catalogClient);
     }
 

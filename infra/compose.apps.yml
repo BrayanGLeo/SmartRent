@@ -29,6 +29,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,7 +45,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
       - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST:-172.31.29.239}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
       - CATALOG_URL=http://smartrent-catalog:8081
     depends_on:
       postgres:
@@ -71,7 +72,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
     depends_on:
       postgres:
         condition: service_healthy
@@ -113,7 +114,7 @@ services:
     restart: unless-stopped
     container_name: smartrent-report
     environment:
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
     networks:
       - smartrent-network
 
@@ -123,6 +124,8 @@ services:
     container_name: smartrent-bff
     ports:
       - "8080:8080"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
     depends_on:
       - smartrent-catalog
       - smartrent-rentals

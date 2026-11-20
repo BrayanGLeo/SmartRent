@@ -1,5 +1,6 @@
 package com.smartrent.audit.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,6 +17,7 @@ public class AuditTimeline {
     private Long id;
     
     private String eventType;
+    @Column(columnDefinition = "TEXT")
     private String eventPayload;
     private LocalDateTime timestamp;
 

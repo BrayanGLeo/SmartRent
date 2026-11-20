@@ -35,7 +35,15 @@ describe('AdminPanel', () => {
     createRabbitExchange: vi.fn(),
     deleteRabbitExchange: vi.fn(),
     createRabbitBinding: vi.fn(),
-    deleteRabbitBinding: vi.fn()
+    deleteRabbitBinding: vi.fn(),
+    getKafkaCluster: vi.fn(),
+    getKafkaTopics: vi.fn(),
+    getKafkaTopicDetail: vi.fn(),
+    createKafkaTopic: vi.fn(),
+    updateKafkaTopicConfig: vi.fn(),
+    deleteKafkaTopic: vi.fn(),
+    getKafkaConsumerGroups: vi.fn(),
+    getKafkaConsumerGroupDetail: vi.fn()
   };
 
   beforeEach(async () => {
@@ -60,6 +68,27 @@ describe('AdminPanel', () => {
     mockApiService.deleteRabbitExchange.mockReturnValue(of({}));
     mockApiService.createRabbitBinding.mockReturnValue(of({}));
     mockApiService.deleteRabbitBinding.mockReturnValue(of({}));
+    mockApiService.getKafkaCluster.mockReturnValue(
+      of({ clusterId: 'smartrent-cluster', controller: { id: 1, host: 'kafka-1', port: 29092 }, brokerCount: 3, brokers: [{ id: 1, host: 'kafka-1', port: 9092 }, { id: 2, host: 'kafka-2', port: 9093 }, { id: 3, host: 'kafka-3', port: 9094 }] })
+    );
+    mockApiService.getKafkaTopics.mockReturnValue(
+      of([
+        { name: 'rentals.events', partitions: 3, replicationFactor: 3, underReplicatedPartitions: 0, configs: { 'cleanup.policy': 'delete', 'retention.ms': '604800000' } },
+        { name: 'catalog.events', partitions: 3, replicationFactor: 3, underReplicatedPartitions: 0, configs: { 'cleanup.policy': 'compact,delete', 'retention.ms': '1209600000' } }
+      ])
+    );
+    mockApiService.getKafkaTopicDetail.mockImplementation((name: string) =>
+      of({ name, partitions: 3, partitionDetails: [{ partition: 0, leader: 1, replicas: [1, 2, 3], isr: [1, 2, 3], earliestOffset: 0, latestOffset: 5, messageCount: 5 }] })
+    );
+    mockApiService.createKafkaTopic.mockReturnValue(of({ name: 'custom.kafka' }));
+    mockApiService.updateKafkaTopicConfig.mockReturnValue(of({ name: 'custom.kafka' }));
+    mockApiService.deleteKafkaTopic.mockReturnValue(of({}));
+    mockApiService.getKafkaConsumerGroups.mockReturnValue(
+      of([{ groupId: 'audit-group', state: 'STABLE', isSimpleConsumerGroup: false }])
+    );
+    mockApiService.getKafkaConsumerGroupDetail.mockReturnValue(
+      of({ groupId: 'audit-group', state: 'STABLE', memberCount: 1, members: [], totalLag: 0, offsets: [{ topic: 'rentals.events', partition: 0, currentOffset: 5, endOffset: 5, lag: 0 }] })
+    );
 
     await TestBed.configureTestingModule({
       imports: [AdminPanel],
@@ -397,5 +426,77 @@ describe('AdminPanel', () => {
     component.closeBindingModal();
     component.closeQuickEditModal();
     component.closeConfirmModal();
+  });
+
+  it('should manage Kafka cluster, topics, config updates, partition details and consumer groups', () => {
+    component.setTab('kafka');
+    fixture.detectChanges();
+    expect(component.kafkaOnline()).toBe(true);
+    expect(component.kafkaTopics().length).toBeGreaterThanOrEqual(2);
+
+    // Create topic validation & success & duplicate
+    component.openCreateKafkaTopicModal();
+    component.kafkaTopicForm.patchValue({ name: '' });
+    component.saveKafkaTopic();
+    expect(component.isKafkaTopicModalOpen()).toBe(true);
+
+    component.kafkaTopicForm.patchValue({ name: 'custom.kafka', partitions: 3, replicationFactor: 3, cleanupPolicy: 'delete', retentionMs: '604800000' });
+    component.saveKafkaTopic();
+    expect(component.kafkaTopics().some(t => t.name === 'custom.kafka')).toBe(true);
+
+    component.openCreateKafkaTopicModal();
+    component.kafkaTopicForm.patchValue({ name: 'custom.kafka' });
+    component.saveKafkaTopic(); // duplicate guard
+    component.closeKafkaTopicModal();
+
+    // Inspect & edit topic config
+    const custom = component.kafkaTopics().find(t => t.name === 'custom.kafka')!;
+    component.inspectKafkaTopic(custom);
+    expect(component.selectedKafkaTopicDetail()?.name).toBe('custom.kafka');
+
+    component.openEditKafkaTopicModal(custom);
+    component.kafkaTopicConfigForm.patchValue({ partitions: 1 });
+    component.saveKafkaTopicConfig(); // cannot reduce partitions
+    expect(component.isKafkaTopicConfigModalOpen()).toBe(true);
+
+    component.kafkaTopicConfigForm.patchValue({ partitions: 6, cleanupPolicy: 'compact,delete', retentionMs: '86400000', minInsyncReplicas: '2' });
+    component.saveKafkaTopicConfig();
+    expect(component.kafkaTopics().find(t => t.name === 'custom.kafka')?.partitions).toBe(6);
+
+    // Delete topic
+    component.confirmDeleteKafkaTopic(custom);
+    component.executeConfirmAction();
+    expect(component.kafkaTopics().some(t => t.name === 'custom.kafka')).toBe(false);
+    component.closeKafkaTopicDetail();
+
+    // Consumer group detail
+    const group = component.kafkaGroups()[0];
+    component.inspectKafkaConsumerGroup(group);
+    expect(component.isKafkaGroupDetailModalOpen()).toBe(true);
+    component.closeKafkaGroupDetailModal();
+
+    // Offline fallback coverage
+    mockApiService.getKafkaCluster.mockReturnValue(throwError(() => new Error('down')));
+    mockApiService.getKafkaTopics.mockReturnValue(throwError(() => new Error('down')));
+    mockApiService.getKafkaTopicDetail.mockReturnValue(throwError(() => new Error('down')));
+    mockApiService.getKafkaConsumerGroups.mockReturnValue(throwError(() => new Error('down')));
+    mockApiService.getKafkaConsumerGroupDetail.mockReturnValue(throwError(() => new Error('down')));
+    mockApiService.createKafkaTopic.mockReturnValue(throwError(() => new Error('down')));
+    mockApiService.updateKafkaTopicConfig.mockReturnValue(throwError(() => new Error('down')));
+
+    component.loadKafkaTopology(true);
+    expect(component.kafkaOnline()).toBe(false);
+    component.inspectKafkaTopic({ name: 'rentals.events', partitions: 3, replicationFactor: 3, underReplicatedPartitions: 0, configs: {} });
+    component.inspectKafkaConsumerGroup({ groupId: 'audit-group', state: 'STABLE' });
+    component.closeKafkaGroupDetailModal();
+    component.openCreateKafkaTopicModal();
+    component.kafkaTopicForm.patchValue({ name: 'offline.topic', partitions: 3, replicationFactor: 3, cleanupPolicy: 'delete', retentionMs: '3600000' });
+    component.saveKafkaTopic();
+    const offTopic = component.kafkaTopics().find(t => t.name === 'offline.topic')!;
+    component.openEditKafkaTopicModal(offTopic);
+    component.saveKafkaTopicConfig();
+    expect(component.formatRetention('604800000')).toContain('7 días');
+    expect(component.formatRetention('3600000')).toContain('1 h');
+    expect(component.formatRetention(undefined)).toBe('Default');
   });
 });

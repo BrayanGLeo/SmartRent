@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ApiService } from '../../core/services/api/api.service';
 import { AuthService } from '../../core/services/auth/auth.service';
 
-export type AdminTab = 'users' | 'inventory' | 'validation' | 'kpis' | 'rabbitmq';
+export type AdminTab = 'users' | 'inventory' | 'validation' | 'kpis' | 'rabbitmq' | 'kafka';
 
 export interface TenantInfo {
   id: string;
@@ -103,6 +103,54 @@ export interface RabbitBinding {
   source: string;
   destination: string;
   routingKey: string;
+}
+
+export interface KafkaBrokerInfo {
+  id: number;
+  host: string;
+  port: number;
+  rack?: string | null;
+}
+
+export interface KafkaClusterInfo {
+  clusterId: string;
+  controller?: KafkaBrokerInfo | null;
+  brokerCount: number;
+  brokers: KafkaBrokerInfo[];
+}
+
+export interface KafkaTopicInfo {
+  name: string;
+  internal?: boolean;
+  partitions: number;
+  replicationFactor: number;
+  underReplicatedPartitions: number;
+  configs: Record<string, string>;
+  isOfficial?: boolean;
+}
+
+export interface KafkaConsumerGroupSummary {
+  groupId: string;
+  state: string;
+  isSimpleConsumerGroup?: boolean;
+}
+
+export interface KafkaPartitionOffset {
+  topic: string;
+  partition: number;
+  currentOffset: number;
+  endOffset: number;
+  lag: number;
+}
+
+export interface KafkaConsumerGroupDetail {
+  groupId: string;
+  state: string;
+  coordinator?: KafkaBrokerInfo | null;
+  memberCount: number;
+  members: { consumerId: string; clientId: string; host: string; assignedPartitions: string[] }[];
+  totalLag: number;
+  offsets: KafkaPartitionOffset[];
 }
 
 export interface TopServiceMetric {
@@ -472,6 +520,45 @@ export class AdminPanel implements OnInit {
   });
 
   // ==========================================
+  // TAB 6: KAFKA CLUSTER & TOPICS STATE
+  // ==========================================
+  public kafkaOnline = signal<boolean>(false);
+  public isKafkaLoading = signal<boolean>(false);
+  public kafkaCluster = signal<KafkaClusterInfo>({
+    clusterId: 'smartrent-cluster-ha',
+    controller: { id: 1, host: 'kafka-1', port: 29092 },
+    brokerCount: 3,
+    brokers: [
+      { id: 1, host: 'kafka-1', port: 9092 },
+      { id: 2, host: 'kafka-2', port: 9093 },
+      { id: 3, host: 'kafka-3', port: 9094 }
+    ]
+  });
+  public kafkaTopics = signal<KafkaTopicInfo[]>([]);
+  public kafkaGroups = signal<KafkaConsumerGroupSummary[]>([]);
+  public selectedKafkaTopicDetail = signal<any | null>(null);
+  public isKafkaTopicModalOpen = signal<boolean>(false);
+  public isKafkaTopicConfigModalOpen = signal<boolean>(false);
+  public editingKafkaTopic = signal<KafkaTopicInfo | null>(null);
+  public isKafkaGroupDetailModalOpen = signal<boolean>(false);
+  public selectedKafkaGroupDetail = signal<KafkaConsumerGroupDetail | null>(null);
+
+  public kafkaTopicForm: FormGroup = this.fb.group({
+    name: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._-]+$/), Validators.minLength(3)]],
+    partitions: [3, [Validators.required, Validators.min(1), Validators.max(32)]],
+    replicationFactor: [3, [Validators.required, Validators.min(1), Validators.max(3)]],
+    cleanupPolicy: ['delete', [Validators.required]],
+    retentionMs: ['604800000', [Validators.required, Validators.pattern(/^[0-9]+$/)]]
+  });
+
+  public kafkaTopicConfigForm: FormGroup = this.fb.group({
+    partitions: [3, [Validators.required, Validators.min(1), Validators.max(32)]],
+    cleanupPolicy: ['delete', [Validators.required]],
+    retentionMs: ['604800000', [Validators.required, Validators.pattern(/^[0-9]+$/)]],
+    minInsyncReplicas: ['2', [Validators.required, Validators.pattern(/^[1-3]$/)]]
+  });
+
+  // ==========================================
   // LIFECYCLE HOOKS
   // ==========================================
   ngOnInit(): void {
@@ -480,6 +567,7 @@ export class AdminPanel implements OnInit {
     this.initializeValidationOrders();
     this.initializeKpis();
     this.initializeRabbitTopology();
+    this.initializeKafkaTopology();
   }
 
   public setTab(tab: AdminTab): void {
@@ -2002,6 +2090,313 @@ export class AdminPanel implements OnInit {
     this.saveRabbitTopologyToStorage();
     this.showToast('info', 'Binding eliminado', `Se desvinculó ${binding.source} de ${binding.destination}.`);
     this.apiService.deleteRabbitBinding(binding).subscribe({ error: () => {} });
+  }
+
+  // ==========================================
+  // TAB 6: KAFKA CLUSTER & TOPICS LOGIC
+  // ==========================================
+  private initializeKafkaTopology(): void {
+    const defaultTopics: KafkaTopicInfo[] = [
+      {
+        name: 'rentals.events',
+        partitions: 3,
+        replicationFactor: 3,
+        underReplicatedPartitions: 0,
+        configs: { 'cleanup.policy': 'delete', 'retention.ms': '604800000', 'min.insync.replicas': '2' },
+        isOfficial: true
+      },
+      {
+        name: 'catalog.events',
+        partitions: 3,
+        replicationFactor: 3,
+        underReplicatedPartitions: 0,
+        configs: { 'cleanup.policy': 'compact,delete', 'retention.ms': '1209600000', 'min.insync.replicas': '2' },
+        isOfficial: true
+      },
+      {
+        name: 'rentals.events-dlt',
+        partitions: 3,
+        replicationFactor: 3,
+        underReplicatedPartitions: 0,
+        configs: { 'cleanup.policy': 'delete', 'retention.ms': '2592000000', 'min.insync.replicas': '2' },
+        isOfficial: true
+      },
+      {
+        name: 'catalog.events-dlt',
+        partitions: 3,
+        replicationFactor: 3,
+        underReplicatedPartitions: 0,
+        configs: { 'cleanup.policy': 'delete', 'retention.ms': '2592000000', 'min.insync.replicas': '2' },
+        isOfficial: true
+      }
+    ];
+    this.kafkaTopics.set(defaultTopics);
+    this.kafkaGroups.set([
+      { groupId: 'audit-group', state: 'STABLE', isSimpleConsumerGroup: false },
+      { groupId: 'report-group', state: 'STABLE', isSimpleConsumerGroup: false }
+    ]);
+    this.loadKafkaTopology(false);
+  }
+
+  public loadKafkaTopology(showToastOnSuccess: boolean = true): void {
+    this.isKafkaLoading.set(true);
+    this.apiService.getKafkaCluster?.().subscribe({
+      next: (cluster: KafkaClusterInfo) => {
+        if (cluster && Array.isArray(cluster.brokers)) {
+          this.kafkaCluster.set(cluster);
+          this.kafkaOnline.set(true);
+        }
+      },
+      error: () => {
+        this.kafkaOnline.set(false);
+      }
+    });
+
+    this.apiService.getKafkaTopics?.().subscribe({
+      next: (topics: KafkaTopicInfo[]) => {
+        this.isKafkaLoading.set(false);
+        if (Array.isArray(topics)) {
+          this.kafkaTopics.set(
+            topics.map(t => ({ ...t, isOfficial: this.isOfficialKafkaTopic(t.name) }))
+          );
+          this.kafkaOnline.set(true);
+          if (showToastOnSuccess) {
+            this.showToast('success', 'Cluster Kafka Sincronizado', `${topics.length} tópicos leídos vía BFF.`);
+          }
+        }
+      },
+      error: () => {
+        this.isKafkaLoading.set(false);
+        this.kafkaOnline.set(false);
+        if (showToastOnSuccess) {
+          this.showToast('info', 'Modo Referencia Kafka', 'Mostrando topología base HA (3 brokers, 3 particiones, 3 réplicas).');
+        }
+      }
+    });
+
+    this.apiService.getKafkaConsumerGroups?.().subscribe({
+      next: (groups: KafkaConsumerGroupSummary[]) => {
+        if (Array.isArray(groups) && groups.length > 0) {
+          this.kafkaGroups.set(groups);
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  public openCreateKafkaTopicModal(): void {
+    this.kafkaTopicForm.reset({
+      name: '',
+      partitions: 3,
+      replicationFactor: 3,
+      cleanupPolicy: 'delete',
+      retentionMs: '604800000'
+    });
+    this.isKafkaTopicModalOpen.set(true);
+  }
+
+  public closeKafkaTopicModal(): void {
+    this.isKafkaTopicModalOpen.set(false);
+  }
+
+  public saveKafkaTopic(): void {
+    if (this.kafkaTopicForm.invalid) {
+      this.kafkaTopicForm.markAllAsTouched();
+      this.showToast('error', 'Validación Kafka', 'Verifica el nombre del tópico, particiones y factor de replicación.');
+      return;
+    }
+
+    const { name, partitions, replicationFactor, cleanupPolicy, retentionMs } = this.kafkaTopicForm.value;
+    const cleanName = String(name).trim();
+    if (this.kafkaTopics().some(t => t.name.toLowerCase() === cleanName.toLowerCase())) {
+      this.showToast('error', 'Tópico Existente', `Ya existe el tópico "${cleanName}".`);
+      return;
+    }
+
+    const configs = {
+      'cleanup.policy': String(cleanupPolicy),
+      'retention.ms': String(retentionMs),
+      'min.insync.replicas': '2'
+    };
+    const payload = {
+      name: cleanName,
+      partitions: Number(partitions),
+      replicationFactor: Number(replicationFactor),
+      configs
+    };
+
+    const newTopic: KafkaTopicInfo = {
+      name: cleanName,
+      partitions: Number(partitions),
+      replicationFactor: Number(replicationFactor),
+      underReplicatedPartitions: 0,
+      configs,
+      isOfficial: this.isOfficialKafkaTopic(cleanName)
+    };
+
+    this.kafkaTopics.update(list => [...list, newTopic]);
+    this.closeKafkaTopicModal();
+
+    this.apiService.createKafkaTopic?.(payload).subscribe({
+      next: () => {
+        this.kafkaOnline.set(true);
+        this.showToast('success', 'Tópico Kafka Creado', `Tópico ${cleanName} (${partitions}P / ${replicationFactor}R) creado.`);
+      },
+      error: () => {
+        this.showToast('info', 'Tópico Registrado Localmente', `Tópico ${cleanName} agregado (Kafka remoto sin conexión directa).`);
+      }
+    });
+  }
+
+  public openEditKafkaTopicModal(topic: KafkaTopicInfo): void {
+    this.editingKafkaTopic.set(topic);
+    this.kafkaTopicConfigForm.reset({
+      partitions: topic.partitions || 3,
+      cleanupPolicy: topic.configs?.['cleanup.policy'] || 'delete',
+      retentionMs: topic.configs?.['retention.ms'] || '604800000',
+      minInsyncReplicas: topic.configs?.['min.insync.replicas'] || '2'
+    });
+    this.isKafkaTopicConfigModalOpen.set(true);
+  }
+
+  public closeKafkaTopicConfigModal(): void {
+    this.isKafkaTopicConfigModalOpen.set(false);
+    this.editingKafkaTopic.set(null);
+  }
+
+  public saveKafkaTopicConfig(): void {
+    const target = this.editingKafkaTopic();
+    if (!target || this.kafkaTopicConfigForm.invalid) {
+      this.kafkaTopicConfigForm.markAllAsTouched();
+      return;
+    }
+
+    const { partitions, cleanupPolicy, retentionMs, minInsyncReplicas } = this.kafkaTopicConfigForm.value;
+    const newPartitions = Number(partitions);
+    if (newPartitions < target.partitions) {
+      this.showToast('error', 'Particiones Inválidas', 'Kafka no permite reducir particiones existentes.');
+      return;
+    }
+
+    const updatedConfigs: Record<string, string> = {
+      ...target.configs,
+      'cleanup.policy': String(cleanupPolicy),
+      'retention.ms': String(retentionMs),
+      'min.insync.replicas': String(minInsyncReplicas)
+    };
+
+    this.kafkaTopics.update(list =>
+      list.map(t => (t.name === target.name ? { ...t, partitions: newPartitions, configs: updatedConfigs } : t))
+    );
+    this.closeKafkaTopicConfigModal();
+
+    this.apiService.updateKafkaTopicConfig?.(target.name, {
+      partitions: newPartitions > target.partitions ? newPartitions : null,
+      configs: updatedConfigs
+    }).subscribe({
+      next: () => {
+        this.showToast('success', 'Configuración Actualizada', `Políticas de ${target.name} actualizadas en Kafka.`);
+      },
+      error: () => {
+        this.showToast('info', 'Configuración Actualizada', `Cambios aplicados en vista para ${target.name}.`);
+      }
+    });
+  }
+
+  public inspectKafkaTopic(topic: KafkaTopicInfo): void {
+    this.apiService.getKafkaTopicDetail?.(topic.name).subscribe({
+      next: (detail: any) => {
+        this.selectedKafkaTopicDetail.set(detail);
+      },
+      error: () => {
+        const partitionDetails = Array.from({ length: topic.partitions || 3 }, (_, idx) => ({
+          partition: idx,
+          leader: (idx % 3) + 1,
+          replicas: [1, 2, 3],
+          isr: [1, 2, 3],
+          earliestOffset: 0,
+          latestOffset: 0,
+          messageCount: 0
+        }));
+        this.selectedKafkaTopicDetail.set({ ...topic, partitionDetails });
+      }
+    });
+  }
+
+  public closeKafkaTopicDetail(): void {
+    this.selectedKafkaTopicDetail.set(null);
+  }
+
+  public confirmDeleteKafkaTopic(topic: KafkaTopicInfo): void {
+    this.openConfirmModal(
+      'Eliminar Tópico Kafka',
+      `¿Deseas eliminar permanentemente el tópico "${topic.name}" del clúster Kafka?`,
+      () => {
+        this.kafkaTopics.update(list => list.filter(t => t.name !== topic.name));
+        if (this.selectedKafkaTopicDetail()?.name === topic.name) {
+          this.selectedKafkaTopicDetail.set(null);
+        }
+        this.showToast('success', 'Tópico Eliminado', `Se eliminó el tópico ${topic.name}.`);
+        this.apiService.deleteKafkaTopic?.(topic.name).subscribe({ error: () => {} });
+      }
+    );
+  }
+
+  public inspectKafkaConsumerGroup(group: KafkaConsumerGroupSummary): void {
+    this.apiService.getKafkaConsumerGroupDetail?.(group.groupId).subscribe({
+      next: (detail: KafkaConsumerGroupDetail) => {
+        this.selectedKafkaGroupDetail.set(detail);
+        this.isKafkaGroupDetailModalOpen.set(true);
+      },
+      error: () => {
+        this.selectedKafkaGroupDetail.set({
+          groupId: group.groupId,
+          state: group.state || 'STABLE',
+          coordinator: { id: 1, host: 'kafka-1', port: 29092 },
+          memberCount: 1,
+          members: [
+            {
+              consumerId: `${group.groupId}-member-1`,
+              clientId: group.groupId === 'audit-group' ? 'ms-smartrent-audit' : 'ms-smartrent-report',
+              host: '172.31.76.200',
+              assignedPartitions: ['rentals.events-0', 'rentals.events-1', 'rentals.events-2', 'catalog.events-0', 'catalog.events-1', 'catalog.events-2']
+            }
+          ],
+          totalLag: 0,
+          offsets: [
+            { topic: 'rentals.events', partition: 0, currentOffset: 0, endOffset: 0, lag: 0 },
+            { topic: 'rentals.events', partition: 1, currentOffset: 0, endOffset: 0, lag: 0 },
+            { topic: 'rentals.events', partition: 2, currentOffset: 0, endOffset: 0, lag: 0 },
+            { topic: 'catalog.events', partition: 0, currentOffset: 0, endOffset: 0, lag: 0 },
+            { topic: 'catalog.events', partition: 1, currentOffset: 0, endOffset: 0, lag: 0 },
+            { topic: 'catalog.events', partition: 2, currentOffset: 0, endOffset: 0, lag: 0 }
+          ]
+        });
+        this.isKafkaGroupDetailModalOpen.set(true);
+      }
+    });
+  }
+
+  public closeKafkaGroupDetailModal(): void {
+    this.isKafkaGroupDetailModalOpen.set(false);
+    this.selectedKafkaGroupDetail.set(null);
+  }
+
+  public isOfficialKafkaTopic(name: string): boolean {
+    return ['rentals.events', 'catalog.events', 'rentals.events-dlt', 'catalog.events-dlt'].includes(name);
+  }
+
+  public formatRetention(ms?: string): string {
+    const parsed = Number(ms);
+    if (!ms || Number.isNaN(parsed) || parsed <= 0) {
+      return ms || 'Default';
+    }
+    const days = Math.round(parsed / 86400000);
+    if (days >= 1) {
+      return `${days} días (${ms} ms)`;
+    }
+    const hours = Math.max(1, Math.round(parsed / 3600000));
+    return `${hours} h (${ms} ms)`;
   }
 
   // ==========================================
