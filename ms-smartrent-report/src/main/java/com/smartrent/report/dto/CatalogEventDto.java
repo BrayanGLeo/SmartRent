@@ -17,6 +17,7 @@ public class CatalogEventDto {
     public CatalogEventDto() {
     }
 
+    @SuppressWarnings("java:S107")
     public CatalogEventDto(
             String eventId,
             String eventType,
