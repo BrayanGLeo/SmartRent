@@ -44,7 +44,7 @@ create_or_update_topic \
 # Tópico 2: Flujo de estado del catálogo de maquinarias (compact + delete, retención 14 días)
 create_or_update_topic \
   "catalog.events" 3 3 \
-  "min.insync.replicas=2,cleanup.policy=compact\,delete,retention.ms=1209600000,segment.ms=86400000,delete.retention.ms=86400000"
+  "min.insync.replicas=2,cleanup.policy=[compact,delete],retention.ms=1209600000,segment.ms=86400000,delete.retention.ms=86400000"
 
 # Dead Letter Topics asociados (retención extendida 30 días para auditoría de fallos)
 create_or_update_topic \
