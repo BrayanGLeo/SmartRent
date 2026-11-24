@@ -30,6 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class RentalsControllerTest {
 
     @Mock
@@ -271,7 +272,7 @@ class RentalsControllerTest {
 
         ResponseEntity<Rental> updatedExisting = controllerWithRepo.updateRentalStatus(1L, RentalStatus.APROBADO);
         assertEquals(HttpStatus.OK, updatedExisting.getStatusCode());
-        assertEquals(RentalStatus.APROBADO, updatedExisting.getBody().getStatus());
+        assertEquals(RentalStatus.APROBADO, java.util.Objects.requireNonNull(updatedExisting.getBody()).getStatus());
 
         when(rentalService.changeRentalStatus(99L, RentalStatus.EN_PREPARACION, "user123@test.com"))
                 .thenThrow(new NoSuchElementException("Not found"));
@@ -279,7 +280,7 @@ class RentalsControllerTest {
 
         ResponseEntity<Rental> createdFallback = controllerWithRepo.updateRentalStatus(99L, RentalStatus.EN_PREPARACION);
         assertEquals(HttpStatus.OK, createdFallback.getStatusCode());
-        assertEquals(99L, createdFallback.getBody().getId());
+        assertEquals(99L, java.util.Objects.requireNonNull(createdFallback.getBody()).getId());
 
         when(rentalService.changeRentalStatus(2L, RentalStatus.APROBADO, "user123@test.com"))
                 .thenThrow(new RuntimeException("Feign error"));

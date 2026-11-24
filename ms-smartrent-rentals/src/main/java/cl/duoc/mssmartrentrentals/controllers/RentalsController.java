@@ -7,9 +7,9 @@ import cl.duoc.mssmartrentrentals.services.RentalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -103,13 +103,14 @@ public class RentalsController {
     @PutMapping("/{id}/status")
     @PreAuthorize(ADMIN_OR_BODEGA_AUTH)
     public ResponseEntity<Rental> updateRentalStatus(
-            @org.springframework.lang.NonNull @PathVariable Long id,
+            @NonNull @PathVariable Long id,
             @RequestParam(required = false) RentalStatus status,
             @RequestBody(required = false) Map<String, Object> body) {
         RentalStatus resolvedStatus = status;
-        if (resolvedStatus == null && body != null && body.get("status") != null) {
+        Object rawStatus = body != null ? body.get("status") : null;
+        if (resolvedStatus == null && rawStatus != null) {
             try {
-                resolvedStatus = RentalStatus.valueOf(body.get("status").toString().toUpperCase(Locale.ROOT));
+                resolvedStatus = RentalStatus.valueOf(rawStatus.toString().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException ignored) {
                 return ResponseEntity.badRequest().build();
             }
@@ -120,7 +121,7 @@ public class RentalsController {
         return updateRentalStatus(id, resolvedStatus);
     }
 
-    public ResponseEntity<Rental> updateRentalStatus(@org.springframework.lang.NonNull Long id, RentalStatus status) {
+    public ResponseEntity<Rental> updateRentalStatus(@NonNull Long id, RentalStatus status) {
         String userEmail = getUserEmailFromToken();
         Rental updatedRental;
         try {
@@ -131,7 +132,7 @@ public class RentalsController {
             if (rentalRepository == null) {
                 return ResponseEntity.notFound().build();
             }
-            updatedRental = saveOrUpdateFallbackRental(id, status, userEmail);
+            updatedRental = saveOrUpdateFallbackRental(Objects.requireNonNull(rentalRepository), id, status, userEmail);
         } catch (RuntimeException ignored) {
             if (rentalRepository == null) {
                 return ResponseEntity.notFound().build();
@@ -147,8 +148,10 @@ public class RentalsController {
             return false;
         }
         return authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(ADMIN_OR_BODEGA_AUTHORITIES::contains);
+                .anyMatch(ga -> {
+                    String authority = ga.getAuthority();
+                    return authority != null && ADMIN_OR_BODEGA_AUTHORITIES.contains(authority);
+                });
     }
 
     private boolean isStrictlyArrendatario() {
@@ -160,8 +163,10 @@ public class RentalsController {
             return false;
         }
         return authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(ARRENDATARIO_AUTHORITIES::contains);
+                .anyMatch(ga -> {
+                    String authority = ga.getAuthority();
+                    return authority != null && ARRENDATARIO_AUTHORITIES.contains(authority);
+                });
     }
 
     private Set<String> extractTokenUserIdentifiers() {
@@ -213,12 +218,16 @@ public class RentalsController {
         return atIndex > 0 && ids.contains(normalizedRequested.substring(0, atIndex));
     }
 
-    private Rental saveOrUpdateFallbackRental(@org.springframework.lang.NonNull Long id, RentalStatus status, String userEmail) {
+    private Rental saveOrUpdateFallbackRental(
+            @NonNull RentalRepository repository,
+            @NonNull Long id,
+            RentalStatus status,
+            String userEmail) {
         LocalDate today = LocalDate.now(ZoneId.systemDefault());
-        return rentalRepository.findById(id)
+        return repository.findById(id)
                 .map(r -> {
                     r.setStatus(status);
-                    return rentalRepository.save(Objects.requireNonNull(r));
+                    return repository.save(Objects.requireNonNull(r));
                 })
                 .orElseGet(() -> {
                     Rental r = new Rental();
@@ -228,7 +237,7 @@ public class RentalsController {
                     r.setStartDate(today);
                     r.setEndDate(today.plusDays(7));
                     r.setStatus(status);
-                    return rentalRepository.save(r);
+                    return repository.save(r);
                 });
     }
 
