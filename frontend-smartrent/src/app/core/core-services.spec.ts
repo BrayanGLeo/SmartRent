@@ -533,6 +533,13 @@ describe('Core Services, Guards, Interceptors & Components', () => {
       expect(err403?.status).toBe(403);
       expect(alertSpy).not.toHaveBeenCalled();
 
+      // Status 0 / network error on /kafka whitelisted path (no alert)
+      let errKafka: HttpErrorResponse | undefined;
+      http.get('/v2/api/kafka/cluster').subscribe({ error: e => (errKafka = e) });
+      httpMock.expectOne('/v2/api/kafka/cluster').error(new ProgressEvent('error'));
+      expect(errKafka?.status).toBe(0);
+      expect(alertSpy).not.toHaveBeenCalled();
+
       // 500 on non-whitelisted path (triggers alert)
       let err500: Error | undefined;
       http.get('/api/external').subscribe({ error: e => (err500 = e) });
