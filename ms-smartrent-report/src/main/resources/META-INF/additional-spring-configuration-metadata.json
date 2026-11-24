@@ -1,0 +1,49 @@
+{
+  "properties": [
+    {
+      "name": "smartrent.kafka.consumer.group-id",
+      "type": "java.lang.String",
+      "description": "Identificador del consumer group principal de Kafka para reportería."
+    },
+    {
+      "name": "smartrent.kafka.consumer.dlt-group-id",
+      "type": "java.lang.String",
+      "description": "Identificador del consumer group de Kafka para eventos en Dead Letter Topic (DLT)."
+    },
+    {
+      "name": "smartrent.kafka.consumer.concurrency",
+      "type": "java.lang.Integer",
+      "description": "Número de hilos concurrentes para los listeners de Kafka."
+    },
+    {
+      "name": "smartrent.kafka.topics.rentals",
+      "type": "java.lang.String",
+      "description": "Nombre del tópico de eventos de arriendos."
+    },
+    {
+      "name": "smartrent.kafka.topics.rentals-dlt",
+      "type": "java.lang.String",
+      "description": "Nombre del Dead Letter Topic para eventos de arriendos."
+    },
+    {
+      "name": "smartrent.kafka.topics.catalog",
+      "type": "java.lang.String",
+      "description": "Nombre del tópico de eventos de catálogo."
+    },
+    {
+      "name": "smartrent.kafka.topics.catalog-dlt",
+      "type": "java.lang.String",
+      "description": "Nombre del Dead Letter Topic para eventos de catálogo."
+    },
+    {
+      "name": "smartrent.kafka.topics.partitions",
+      "type": "java.lang.Integer",
+      "description": "Número de particiones por defecto para los tópicos Kafka."
+    },
+    {
+      "name": "smartrent.kafka.topics.replicas",
+      "type": "java.lang.Integer",
+      "description": "Factor de replicación por defecto para los tópicos Kafka."
+    }
+  ]
+}

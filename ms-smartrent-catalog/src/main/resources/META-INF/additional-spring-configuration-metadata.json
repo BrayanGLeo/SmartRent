@@ -1,0 +1,34 @@
+{
+  "properties": [
+    {
+      "name": "smartrent.kafka.topics.catalog",
+      "type": "java.lang.String",
+      "description": "Nombre del tópico de eventos de catálogo."
+    },
+    {
+      "name": "smartrent.kafka.topics.catalog-dlt",
+      "type": "java.lang.String",
+      "description": "Nombre del Dead Letter Topic para eventos de catálogo."
+    },
+    {
+      "name": "smartrent.kafka.topics.partitions",
+      "type": "java.lang.Integer",
+      "description": "Número de particiones para los tópicos de catálogo."
+    },
+    {
+      "name": "smartrent.kafka.topics.replicas",
+      "type": "java.lang.Integer",
+      "description": "Factor de replicación para los tópicos de catálogo."
+    },
+    {
+      "name": "smartrent.kafka.topics.catalog-retention-ms",
+      "type": "java.lang.String",
+      "description": "Tiempo de retención (ms) para el tópico de eventos de catálogo."
+    },
+    {
+      "name": "smartrent.kafka.topics.catalog-cleanup-policy",
+      "type": "java.lang.String",
+      "description": "Política de limpieza del tópico de eventos de catálogo."
+    }
+  ]
+}
