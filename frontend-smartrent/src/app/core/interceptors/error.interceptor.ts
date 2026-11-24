@@ -33,7 +33,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         req.url.includes('/checkout') ||
         req.url.includes('/queues') ||
         req.url.includes('/exchanges') ||
-        req.url.includes('/bindings')
+        req.url.includes('/bindings') ||
+        req.url.includes('/kafka')
       ) {
         return throwError(() => error);
       }
