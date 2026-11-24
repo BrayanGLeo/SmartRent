@@ -17,33 +17,43 @@ public class RabbitTopologyController {
     private static final String KEY_TYPE = "type";
     private static final String KEY_DURABLE = "durable";
     private static final String KEY_AUTO_DELETE = "autoDelete";
+    private static final String KEY_PURPOSE = "purpose";
+    private static final String KEY_IS_OFFICIAL = "isOfficial";
+    private static final String KEY_DESCRIPTION = "description";
+    private static final String KEY_SOURCE = "source";
+    private static final String KEY_DESTINATION = "destination";
+    private static final String KEY_ROUTING_KEY = "routingKey";
+    private static final String TYPE_STANDARD = "standard";
+    private static final String TYPE_DIRECT = "direct";
+    private static final String QUEUE_CMD_EMAIL = "q.cmd.email";
+    private static final String EXCHANGE_SMARTRENT = "smartrent.exchange";
 
     private final List<Map<String, Object>> queues = new CopyOnWriteArrayList<>(List.of(
-            Map.of(KEY_NAME, "q.cmd.email", KEY_TYPE, "standard", KEY_DURABLE, true, KEY_AUTO_DELETE, false,
-                    "dlqAssociated", "q.cmd.email.dlq", "purpose", "Despacho de notificaciones por correo", "isOfficial", true),
-            Map.of(KEY_NAME, "q.cmd.prep", KEY_TYPE, "standard", KEY_DURABLE, true, KEY_AUTO_DELETE, false,
-                    "dlqAssociated", "q.cmd.prep.dlq", "purpose", "Generación de ticket de alistamiento en bodega", "isOfficial", true),
-            Map.of(KEY_NAME, "q.rentals.order.created", KEY_TYPE, "standard", KEY_DURABLE, true, KEY_AUTO_DELETE, false,
-                    "purpose", "Creación automática de arriendos desde órdenes de Checkout", "isOfficial", true),
+            Map.of(KEY_NAME, QUEUE_CMD_EMAIL, KEY_TYPE, TYPE_STANDARD, KEY_DURABLE, true, KEY_AUTO_DELETE, false,
+                    "dlqAssociated", "q.cmd.email.dlq", KEY_PURPOSE, "Despacho de notificaciones por correo", KEY_IS_OFFICIAL, true),
+            Map.of(KEY_NAME, "q.cmd.prep", KEY_TYPE, TYPE_STANDARD, KEY_DURABLE, true, KEY_AUTO_DELETE, false,
+                    "dlqAssociated", "q.cmd.prep.dlq", KEY_PURPOSE, "Generación de ticket de alistamiento en bodega", KEY_IS_OFFICIAL, true),
+            Map.of(KEY_NAME, "q.rentals.order.created", KEY_TYPE, TYPE_STANDARD, KEY_DURABLE, true, KEY_AUTO_DELETE, false,
+                    KEY_PURPOSE, "Creación automática de arriendos desde órdenes de Checkout", KEY_IS_OFFICIAL, true),
             Map.of(KEY_NAME, "q.cmd.email.dlq", KEY_TYPE, "dlq", KEY_DURABLE, true, KEY_AUTO_DELETE, false,
-                    "purpose", "Dead Letter Queue para contingencia de correos", "isOfficial", true)
+                    KEY_PURPOSE, "Dead Letter Queue para contingencia de correos", KEY_IS_OFFICIAL, true)
     ));
 
     private final List<Map<String, Object>> exchanges = new CopyOnWriteArrayList<>(List.of(
-            Map.of(KEY_NAME, "cmd.direct", KEY_TYPE, "direct", KEY_DURABLE, true, KEY_AUTO_DELETE, false,
-                    "description", "Enrutamiento directo de comandos operacionales", "isOfficial", true),
-            Map.of(KEY_NAME, "smartrent.exchange", KEY_TYPE, "direct", KEY_DURABLE, true, KEY_AUTO_DELETE, false,
-                    "description", "Exchange de eventos de negocio para carrito y checkout", "isOfficial", true),
-            Map.of(KEY_NAME, "x.notify", KEY_TYPE, "direct", KEY_DURABLE, true, KEY_AUTO_DELETE, false,
-                    "description", "Exchange directo de notificaciones", "isOfficial", true)
+            Map.of(KEY_NAME, "cmd.direct", KEY_TYPE, TYPE_DIRECT, KEY_DURABLE, true, KEY_AUTO_DELETE, false,
+                    KEY_DESCRIPTION, "Enrutamiento directo de comandos operacionales", KEY_IS_OFFICIAL, true),
+            Map.of(KEY_NAME, EXCHANGE_SMARTRENT, KEY_TYPE, TYPE_DIRECT, KEY_DURABLE, true, KEY_AUTO_DELETE, false,
+                    KEY_DESCRIPTION, "Exchange de eventos de negocio para carrito y checkout", KEY_IS_OFFICIAL, true),
+            Map.of(KEY_NAME, "x.notify", KEY_TYPE, TYPE_DIRECT, KEY_DURABLE, true, KEY_AUTO_DELETE, false,
+                    KEY_DESCRIPTION, "Exchange directo de notificaciones", KEY_IS_OFFICIAL, true)
     ));
 
     private final List<Map<String, Object>> bindings = new CopyOnWriteArrayList<>(List.of(
-            Map.of("id", "b-1", "source", "cmd.direct", "destination", "q.cmd.email", "routingKey", "email.send"),
-            Map.of("id", "b-2", "source", "smartrent.exchange", "destination", "q.cmd.email", "routingKey", "order.created"),
-            Map.of("id", "b-3", "source", "smartrent.exchange", "destination", "q.rentals.order.created", "routingKey", "order.created"),
-            Map.of("id", "b-4", "source", "smartrent.exchange", "destination", "q.cmd.email", "routingKey", "smartrent.routing.checkout"),
-            Map.of("id", "b-5", "source", "x.notify", "destination", "q.cmd.prep", "routingKey", "prep")
+            Map.of("id", "b-1", KEY_SOURCE, "cmd.direct", KEY_DESTINATION, QUEUE_CMD_EMAIL, KEY_ROUTING_KEY, "email.send"),
+            Map.of("id", "b-2", KEY_SOURCE, EXCHANGE_SMARTRENT, KEY_DESTINATION, QUEUE_CMD_EMAIL, KEY_ROUTING_KEY, "order.created"),
+            Map.of("id", "b-3", KEY_SOURCE, EXCHANGE_SMARTRENT, KEY_DESTINATION, "q.rentals.order.created", KEY_ROUTING_KEY, "order.created"),
+            Map.of("id", "b-4", KEY_SOURCE, EXCHANGE_SMARTRENT, KEY_DESTINATION, QUEUE_CMD_EMAIL, KEY_ROUTING_KEY, "smartrent.routing.checkout"),
+            Map.of("id", "b-5", KEY_SOURCE, "x.notify", KEY_DESTINATION, "q.cmd.prep", KEY_ROUTING_KEY, "prep")
     ));
 
     @GetMapping({"/api/queues", "/v1/api/queues", "/v2/api/queues"})
@@ -64,7 +74,7 @@ public class RabbitTopologyController {
     @DeleteMapping({"/api/queues/{name}", "/v1/api/queues/{name}", "/v2/api/queues/{name}"})
     public ResponseEntity<Void> deleteQueue(@PathVariable String name) {
         queues.removeIf(q -> name.equalsIgnoreCase(String.valueOf(q.get(KEY_NAME))));
-        bindings.removeIf(b -> name.equalsIgnoreCase(String.valueOf(b.get("destination"))));
+        bindings.removeIf(b -> name.equalsIgnoreCase(String.valueOf(b.get(KEY_DESTINATION))));
         return ResponseEntity.noContent().build();
     }
 
@@ -86,7 +96,7 @@ public class RabbitTopologyController {
     @DeleteMapping({"/api/exchanges/{name}", "/v1/api/exchanges/{name}", "/v2/api/exchanges/{name}"})
     public ResponseEntity<Void> deleteExchange(@PathVariable String name) {
         exchanges.removeIf(e -> name.equalsIgnoreCase(String.valueOf(e.get(KEY_NAME))));
-        bindings.removeIf(b -> name.equalsIgnoreCase(String.valueOf(b.get("source"))));
+        bindings.removeIf(b -> name.equalsIgnoreCase(String.valueOf(b.get(KEY_SOURCE))));
         return ResponseEntity.noContent().build();
     }
 
@@ -111,9 +121,9 @@ public class RabbitTopologyController {
                 bindings.removeIf(b -> id.toString().equals(String.valueOf(b.get("id"))));
             } else {
                 bindings.removeIf(b ->
-                        String.valueOf(binding.get("source")).equals(String.valueOf(b.get("source")))
-                                && String.valueOf(binding.get("destination")).equals(String.valueOf(b.get("destination")))
-                                && String.valueOf(binding.get("routingKey")).equals(String.valueOf(b.get("routingKey")))
+                        String.valueOf(binding.get(KEY_SOURCE)).equals(String.valueOf(b.get(KEY_SOURCE)))
+                                && String.valueOf(binding.get(KEY_DESTINATION)).equals(String.valueOf(b.get(KEY_DESTINATION)))
+                                && String.valueOf(binding.get(KEY_ROUTING_KEY)).equals(String.valueOf(b.get(KEY_ROUTING_KEY)))
                 );
             }
         }
