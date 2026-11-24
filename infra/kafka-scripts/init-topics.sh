@@ -56,10 +56,8 @@ create_or_update_topic \
   "min.insync.replicas=2,cleanup.policy=delete,retention.ms=2592000000"
 
 echo "[kafka-init] Descripción actual de tópicos (líderes, réplicas e ISR):"
-kafka-topics --bootstrap-server "$BOOTSTRAP" --describe \
-  --topic "rentals.events" \
-  --topic "catalog.events" \
-  --topic "rentals.events-dlt" \
-  --topic "catalog.events-dlt"
+for topic in "rentals.events" "catalog.events" "rentals.events-dlt" "catalog.events-dlt"; do
+  kafka-topics --bootstrap-server "$BOOTSTRAP" --describe --topic "$topic"
+done
 
 echo "[kafka-init] Inicialización completada exitosamente."
