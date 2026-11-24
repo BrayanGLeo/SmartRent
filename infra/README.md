@@ -12,6 +12,7 @@ Contiene las definiciones de despliegue **Docker Compose** desacopladas por inst
 | [`compose.mq.yml`](./compose.mq.yml) | **EC2-MQ** — RabbitMQ 3 Management Alpine | `172.31.29.239` | AMQP `5672`, UI `15672` |
 | [`compose.kafka.yml`](./compose.kafka.yml) | **EC2-Kafka** — 3 Zookeeper + 3 Brokers Kafka (`cp-kafka:7.4.0`) + `kafka-init` + Kafka UI | `172.31.30.107` | ZK `2181..2183`, Kafka `9092..9094`, UI `8090` |
 | [`compose.frontend.yml`](./compose.frontend.yml) | **EC2-Frontend** — SPA Angular 22 servida con Nginx endurecido | — | HTTP `80` |
+| [`app-scripts/wait-and-start.sh`](./app-scripts/wait-and-start.sh) | Entrypoint con delay y espera TCP inteligente para PostgreSQL, RabbitMQ y los 3 brokers Kafka en cada reinicio de `EC2-Apps` | — | — |
 | [`kafka-scripts/init-topics.sh`](./kafka-scripts/init-topics.sh) | Inicialización idempotente de tópicos oficiales y DLTs (`kafka-init`) | — | — |
 | [`kafka-scripts/manage-kafka.sh`](./kafka-scripts/manage-kafka.sh) | CLI replicable para administrar tópicos, consumer groups, lag y pruebas produce/consume | — | — |
 

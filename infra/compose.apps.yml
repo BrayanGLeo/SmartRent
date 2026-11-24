@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -25,11 +23,19 @@ services:
     build: ../ms-smartrent-catalog
     restart: unless-stopped
     container_name: smartrent-catalog
+    entrypoint: ["/bin/sh", "/app/wait-and-start.sh"]
+    volumes:
+      - ./app-scripts/wait-and-start.sh:/app/wait-and-start.sh:ro
     environment:
+      - SPRING_APPLICATION_NAME=ms-smartrent-catalog
       - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
+      - WAIT_INITIAL_DELAY=${APPS_STARTUP_DELAY:-15}
+      - WAIT_POST_READY_DELAY=${APPS_POST_READY_DELAY:-10}
+      - WAIT_MAX_SECONDS=${APPS_WAIT_MAX_SECONDS:-180}
+      - WAIT_FOR_TARGETS=smartrent-postgres:5432,${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
     depends_on:
       postgres:
         condition: service_healthy
@@ -40,13 +46,21 @@ services:
     build: ../ms-smartrent-rentals
     restart: unless-stopped
     container_name: smartrent-rentals
+    entrypoint: ["/bin/sh", "/app/wait-and-start.sh"]
+    volumes:
+      - ./app-scripts/wait-and-start.sh:/app/wait-and-start.sh:ro
     environment:
+      - SPRING_APPLICATION_NAME=ms-smartrent-rentals
       - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
       - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST:-172.31.29.239}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
       - CATALOG_URL=http://smartrent-catalog:8081
+      - WAIT_INITIAL_DELAY=${APPS_STARTUP_DELAY:-15}
+      - WAIT_POST_READY_DELAY=${APPS_POST_READY_DELAY:-10}
+      - WAIT_MAX_SECONDS=${APPS_WAIT_MAX_SECONDS:-180}
+      - WAIT_FOR_TARGETS=smartrent-postgres:5432,${RABBITMQ_HOST:-172.31.29.239}:5672,${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,8 +73,16 @@ services:
     build: ../ms-smartrent-notify
     restart: unless-stopped
     container_name: smartrent-notify
+    entrypoint: ["/bin/sh", "/app/wait-and-start.sh"]
+    volumes:
+      - ./app-scripts/wait-and-start.sh:/app/wait-and-start.sh:ro
     environment:
+      - SPRING_APPLICATION_NAME=ms-smartrent-notify
       - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST:-172.31.29.239}
+      - WAIT_INITIAL_DELAY=${APPS_STARTUP_DELAY:-15}
+      - WAIT_POST_READY_DELAY=5
+      - WAIT_MAX_SECONDS=${APPS_WAIT_MAX_SECONDS:-180}
+      - WAIT_FOR_TARGETS=${RABBITMQ_HOST:-172.31.29.239}:5672
     networks:
       - smartrent-network
 
@@ -68,11 +90,19 @@ services:
     build: ../ms-smartrent-audit
     restart: unless-stopped
     container_name: smartrent-audit
+    entrypoint: ["/bin/sh", "/app/wait-and-start.sh"]
+    volumes:
+      - ./app-scripts/wait-and-start.sh:/app/wait-and-start.sh:ro
     environment:
+      - SPRING_APPLICATION_NAME=ms-smartrent-audit
       - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
+      - WAIT_INITIAL_DELAY=${APPS_STARTUP_DELAY:-15}
+      - WAIT_POST_READY_DELAY=${APPS_POST_READY_DELAY:-10}
+      - WAIT_MAX_SECONDS=${APPS_WAIT_MAX_SECONDS:-180}
+      - WAIT_FOR_TARGETS=smartrent-postgres:5432,${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
     depends_on:
       postgres:
         condition: service_healthy
@@ -83,11 +113,19 @@ services:
     build: ../ms-smartrent-cart
     restart: unless-stopped
     container_name: smartrent-cart
+    entrypoint: ["/bin/sh", "/app/wait-and-start.sh"]
+    volumes:
+      - ./app-scripts/wait-and-start.sh:/app/wait-and-start.sh:ro
     environment:
+      - SPRING_APPLICATION_NAME=ms-smartrent-cart
       - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
       - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST:-172.31.29.239}
+      - WAIT_INITIAL_DELAY=${APPS_STARTUP_DELAY:-15}
+      - WAIT_POST_READY_DELAY=5
+      - WAIT_MAX_SECONDS=${APPS_WAIT_MAX_SECONDS:-180}
+      - WAIT_FOR_TARGETS=smartrent-postgres:5432,${RABBITMQ_HOST:-172.31.29.239}:5672
     depends_on:
       postgres:
         condition: service_healthy
@@ -98,11 +136,19 @@ services:
     build: ../ms-smartrent-checkout
     restart: unless-stopped
     container_name: smartrent-checkout
+    entrypoint: ["/bin/sh", "/app/wait-and-start.sh"]
+    volumes:
+      - ./app-scripts/wait-and-start.sh:/app/wait-and-start.sh:ro
     environment:
+      - SPRING_APPLICATION_NAME=ms-smartrent-checkout
       - SPRING_DATASOURCE_URL=jdbc:postgresql://smartrent-postgres:5432/${POSTGRES_DB:-smartrent_audit}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-smartrent}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-password}
       - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST:-172.31.29.239}
+      - WAIT_INITIAL_DELAY=${APPS_STARTUP_DELAY:-15}
+      - WAIT_POST_READY_DELAY=5
+      - WAIT_MAX_SECONDS=${APPS_WAIT_MAX_SECONDS:-180}
+      - WAIT_FOR_TARGETS=smartrent-postgres:5432,${RABBITMQ_HOST:-172.31.29.239}:5672
     depends_on:
       postgres:
         condition: service_healthy
@@ -113,8 +159,16 @@ services:
     build: ../ms-smartrent-report
     restart: unless-stopped
     container_name: smartrent-report
+    entrypoint: ["/bin/sh", "/app/wait-and-start.sh"]
+    volumes:
+      - ./app-scripts/wait-and-start.sh:/app/wait-and-start.sh:ro
     environment:
+      - SPRING_APPLICATION_NAME=ms-smartrent-report
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
+      - WAIT_INITIAL_DELAY=${APPS_STARTUP_DELAY:-15}
+      - WAIT_POST_READY_DELAY=${APPS_POST_READY_DELAY:-10}
+      - WAIT_MAX_SECONDS=${APPS_WAIT_MAX_SECONDS:-180}
+      - WAIT_FOR_TARGETS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
     networks:
       - smartrent-network
 
@@ -124,8 +178,17 @@ services:
     container_name: smartrent-bff
     ports:
       - "8080:8080"
+    entrypoint: ["/bin/sh", "/app/wait-and-start.sh"]
+    volumes:
+      - ./app-scripts/wait-and-start.sh:/app/wait-and-start.sh:ro
     environment:
+      - SPRING_APPLICATION_NAME=ms-smartrent-bff
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
+      - AZURE_GRAPH_CLIENT_SECRET=${AZURE_GRAPH_CLIENT_SECRET:-}
+      - WAIT_INITIAL_DELAY=${APPS_STARTUP_DELAY:-15}
+      - WAIT_POST_READY_DELAY=${APPS_POST_READY_DELAY:-10}
+      - WAIT_MAX_SECONDS=${APPS_WAIT_MAX_SECONDS:-180}
+      - WAIT_FOR_TARGETS=${KAFKA_HOST:-172.31.30.107}:9092,${KAFKA_HOST:-172.31.30.107}:9093,${KAFKA_HOST:-172.31.30.107}:9094
     depends_on:
       - smartrent-catalog
       - smartrent-rentals
