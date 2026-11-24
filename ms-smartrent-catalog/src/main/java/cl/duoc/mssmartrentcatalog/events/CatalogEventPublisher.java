@@ -10,6 +10,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -83,8 +84,8 @@ public class CatalogEventPublisher {
 
     private void sendEvent(String key, CatalogEventDto dto) {
         try {
-            var future = kafkaTemplate.send(catalogTopic, key, dto);
-            if (future != null) {
+            var future = kafkaTemplate.send(Objects.requireNonNull(catalogTopic), Objects.requireNonNull(key), dto);
+            if (Objects.nonNull(future)) {
                 future.whenComplete((result, ex) -> {
                     if (ex != null) {
                         log.error("Error asíncrono enviando evento a Kafka ({}) para machineId={}, eventId={}: {}",

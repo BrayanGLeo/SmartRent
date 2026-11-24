@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
+import java.util.Objects;
+
 @Configuration
 public class KafkaProducerConfig {
 
@@ -30,19 +32,19 @@ public class KafkaProducerConfig {
 
     @Bean
     public NewTopic rentalsEventsTopic() {
-        return TopicBuilder.name(rentalsTopic)
+        return TopicBuilder.name(Objects.requireNonNull(rentalsTopic))
                 .partitions(partitions)
                 .replicas(replicas)
                 .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "2")
-                .config(TopicConfig.CLEANUP_POLICY_CONFIG, rentalsCleanupPolicy)
-                .config(TopicConfig.RETENTION_MS_CONFIG, rentalsRetentionMs)
+                .config(TopicConfig.CLEANUP_POLICY_CONFIG, Objects.requireNonNull(rentalsCleanupPolicy))
+                .config(TopicConfig.RETENTION_MS_CONFIG, Objects.requireNonNull(rentalsRetentionMs))
                 .config(TopicConfig.RETENTION_BYTES_CONFIG, "1073741824")
                 .build();
     }
 
     @Bean
     public NewTopic rentalsEventsDltTopic() {
-        return TopicBuilder.name(rentalsDltTopic)
+        return TopicBuilder.name(Objects.requireNonNull(rentalsDltTopic))
                 .partitions(partitions)
                 .replicas(replicas)
                 .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "2")

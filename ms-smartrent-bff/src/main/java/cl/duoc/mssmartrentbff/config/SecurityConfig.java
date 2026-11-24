@@ -42,6 +42,9 @@ public class SecurityConfig {
     private static final String AUDITOR_ROLE_NAME = "Auditor";
     private static final String ROLE_JEFEBODEGA = "ROLE_JEFEBODEGA";
     private static final String JEFEBODEGA_ROLE_NAME = "JefeBodega";
+    private static final Set<String> INTERNAL_ROLES = Set.of(
+            ROLE_ADMIN, ADMIN_ROLE_NAME, ROLE_JEFEBODEGA, JEFEBODEGA_ROLE_NAME, ROLE_AUDITOR, AUDITOR_ROLE_NAME
+    );
     private static final String EXPECTED_CLIENT_ID = "749dc676-d557-460a-b138-dac9a6744b6e";
     private static final String EXPECTED_APP_ID_URI = "api://749dc676-d557-460a-b138-dac9a6744b6e";
 
@@ -56,7 +59,7 @@ public class SecurityConfig {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
 
         OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
-        OAuth2TokenValidator<Jwt> audienceValidator = new JwtClaimValidator<Object>(
+        OAuth2TokenValidator<Jwt> audienceValidator = new JwtClaimValidator<>(
                 "aud",
                 aud -> {
                     if (aud instanceof java.util.Collection<?> col) {
@@ -100,10 +103,10 @@ public class SecurityConfig {
                         return new org.springframework.security.authorization.AuthorizationDecision(true);
                     }
                     boolean isInternalRole = authObj.getAuthorities().stream()
-                            .map(GrantedAuthority::getAuthority)
-                            .anyMatch(a -> a.equals(ROLE_ADMIN) || a.equals(ADMIN_ROLE_NAME)
-                                    || a.equals(ROLE_JEFEBODEGA) || a.equals(JEFEBODEGA_ROLE_NAME)
-                                    || a.equals(ROLE_AUDITOR) || a.equals(AUDITOR_ROLE_NAME));
+                            .anyMatch(ga -> {
+                                String authority = ga.getAuthority();
+                                return authority != null && INTERNAL_ROLES.contains(authority);
+                            });
                     return new org.springframework.security.authorization.AuthorizationDecision(!isInternalRole);
                 })
                 .requestMatchers(
@@ -182,7 +185,10 @@ public class SecurityConfig {
 
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             // LinkedHashSet evita autoridades duplicadas manteniendo el orden
-            Set<GrantedAuthority> autoridades = new LinkedHashSet<>(scopes.convert(jwt));
+            var scopeAuthorities = scopes.convert(jwt);
+            Set<GrantedAuthority> autoridades = new LinkedHashSet<>(
+                    scopeAuthorities != null ? scopeAuthorities : List.of()
+            );
             List<String> roles = jwt.getClaimAsStringList("roles");
 
             if (roles != null) {

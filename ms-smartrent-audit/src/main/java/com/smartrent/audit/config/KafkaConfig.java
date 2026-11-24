@@ -29,9 +29,11 @@ import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.lang.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Configuration
 @EnableKafka
@@ -77,15 +79,15 @@ public class KafkaConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, Object> kafkaTemplate(ProducerFactory<String, Object> dltProducerFactory) {
+    public KafkaTemplate<String, Object> kafkaTemplate(@NonNull ProducerFactory<String, Object> dltProducerFactory) {
         return new KafkaTemplate<>(dltProducerFactory);
     }
 
     @Bean
-    public CommonErrorHandler kafkaErrorHandler(KafkaTemplate<String, Object> kafkaTemplate) {
+    public CommonErrorHandler kafkaErrorHandler(@NonNull KafkaTemplate<String, Object> kafkaTemplate) {
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
                 kafkaTemplate,
-                (record, ex) -> new TopicPartition(record.topic() + "-dlt", record.partition())
+                (consumerRecord, ex) -> new TopicPartition(consumerRecord.topic() + "-dlt", consumerRecord.partition())
         );
         ExponentialBackOffWithMaxRetries backOff = new ExponentialBackOffWithMaxRetries(2);
         backOff.setInitialInterval(1000L);
@@ -97,6 +99,7 @@ public class KafkaConfig {
         return handler;
     }
 
+    @NonNull
     private Map<String, Object> baseConsumerProps(String consumerGroupId) {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -107,19 +110,22 @@ public class KafkaConfig {
         return props;
     }
 
+    @NonNull
     private <T> ConsumerFactory<String, T> createJsonConsumerFactory(Class<T> targetType) {
-        JsonDeserializer<T> valueDeserializer = new JsonDeserializer<>(targetType, false);
-        valueDeserializer.addTrustedPackages("*");
-        return new DefaultKafkaConsumerFactory<>(
-                baseConsumerProps(groupId),
-                new ErrorHandlingDeserializer<>(new StringDeserializer()),
-                new ErrorHandlingDeserializer<>(valueDeserializer)
-        );
+        Map<String, Object> props = baseConsumerProps(groupId);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        props.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
+        props.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
+        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, targetType.getName());
+        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        return new DefaultKafkaConsumerFactory<>(props);
     }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, RentalEventDto> rentalKafkaListenerContainerFactory(
-            CommonErrorHandler kafkaErrorHandler) {
+            @NonNull CommonErrorHandler kafkaErrorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, RentalEventDto> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(createJsonConsumerFactory(RentalEventDto.class));
@@ -131,7 +137,7 @@ public class KafkaConfig {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, CatalogEventDto> catalogKafkaListenerContainerFactory(
-            CommonErrorHandler kafkaErrorHandler) {
+            @NonNull CommonErrorHandler kafkaErrorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, CatalogEventDto> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(createJsonConsumerFactory(CatalogEventDto.class));
@@ -145,11 +151,10 @@ public class KafkaConfig {
     public ConcurrentKafkaListenerContainerFactory<String, String> dltKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        ConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(
-                baseConsumerProps(groupId + "-dlt"),
-                new StringDeserializer(),
-                new StringDeserializer()
-        );
+        Map<String, Object> props = baseConsumerProps(groupId + "-dlt");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        ConsumerFactory<String, String> consumerFactory = new DefaultKafkaConsumerFactory<>(props);
         factory.setConsumerFactory(consumerFactory);
         factory.setConcurrency(1);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
@@ -158,7 +163,7 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic rentalsEventsTopic() {
-        return TopicBuilder.name(rentalsTopic)
+        return TopicBuilder.name(Objects.requireNonNull(rentalsTopic))
                 .partitions(partitions)
                 .replicas(replicas)
                 .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "2")
@@ -170,7 +175,7 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic rentalsEventsDltTopic() {
-        return TopicBuilder.name(rentalsDltTopic)
+        return TopicBuilder.name(Objects.requireNonNull(rentalsDltTopic))
                 .partitions(partitions)
                 .replicas(replicas)
                 .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "2")
@@ -181,7 +186,7 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic catalogEventsTopic() {
-        return TopicBuilder.name(catalogTopic)
+        return TopicBuilder.name(Objects.requireNonNull(catalogTopic))
                 .partitions(partitions)
                 .replicas(replicas)
                 .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "2")
@@ -194,7 +199,7 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic catalogEventsDltTopic() {
-        return TopicBuilder.name(catalogDltTopic)
+        return TopicBuilder.name(Objects.requireNonNull(catalogDltTopic))
                 .partitions(partitions)
                 .replicas(replicas)
                 .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "2")

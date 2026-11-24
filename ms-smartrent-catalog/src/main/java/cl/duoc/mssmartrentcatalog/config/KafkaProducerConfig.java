@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
+import java.util.Objects;
+
 @Configuration
 public class KafkaProducerConfig {
 
@@ -30,12 +32,12 @@ public class KafkaProducerConfig {
 
     @Bean
     public NewTopic catalogEventsTopic() {
-        return TopicBuilder.name(catalogTopic)
+        return TopicBuilder.name(Objects.requireNonNull(catalogTopic))
                 .partitions(partitions)
                 .replicas(replicas)
                 .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "2")
-                .config(TopicConfig.CLEANUP_POLICY_CONFIG, catalogCleanupPolicy)
-                .config(TopicConfig.RETENTION_MS_CONFIG, catalogRetentionMs)
+                .config(TopicConfig.CLEANUP_POLICY_CONFIG, Objects.requireNonNull(catalogCleanupPolicy))
+                .config(TopicConfig.RETENTION_MS_CONFIG, Objects.requireNonNull(catalogRetentionMs))
                 .config(TopicConfig.SEGMENT_MS_CONFIG, "86400000")
                 .config(TopicConfig.DELETE_RETENTION_MS_CONFIG, "86400000")
                 .build();
@@ -43,7 +45,7 @@ public class KafkaProducerConfig {
 
     @Bean
     public NewTopic catalogEventsDltTopic() {
-        return TopicBuilder.name(catalogDltTopic)
+        return TopicBuilder.name(Objects.requireNonNull(catalogDltTopic))
                 .partitions(partitions)
                 .replicas(replicas)
                 .config(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "2")

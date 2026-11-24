@@ -21,12 +21,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class RentalEventPublisherTest {
 
     @Mock
@@ -73,9 +76,9 @@ class RentalEventPublisherTest {
         publisher.publishAuditAndReportEvent(1L, 1L, "user@test.com", "SOLICITADO", "APROBADO", "RENTAL_STATUS_CHANGED");
         assertFalse(Mockito.mockingDetails(kafkaTemplate).getInvocations().isEmpty());
         verify(kafkaTemplate).send(
-                Mockito.eq("rentals.events"),
-                Mockito.eq("1"),
-                Mockito.argThat(payload -> payload instanceof RentalEventDto dto
+                eq("rentals.events"),
+                eq("1"),
+                argThat(payload -> payload instanceof RentalEventDto dto
                         && "Excavadora".equals(dto.getMachineName())
                         && Long.valueOf(1L).equals(dto.getMachineId())
                         && Long.valueOf(1L).equals(dto.getRentalId())
@@ -100,9 +103,9 @@ class RentalEventPublisherTest {
 
         customPublisher.publishAuditAndReportEvent(5L, 5L, " ", null, "APROBADO", " ");
         verify(kafkaTemplate).send(
-                Mockito.eq("custom.rentals"),
-                Mockito.eq("5"),
-                Mockito.argThat(payload -> payload instanceof RentalEventDto dto
+                eq("custom.rentals"),
+                eq("5"),
+                argThat(payload -> payload instanceof RentalEventDto dto
                         && "unknown".equals(dto.getUserId())
                         && "RENTAL_EVENT".equals(dto.getEventType()))
         );

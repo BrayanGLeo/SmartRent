@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 
 public class OrderCreatedEvent implements Serializable {
+    private static final long serialVersionUID = 1L;
     private Long orderId;
     private String userId;
     private String rut;

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -108,9 +109,9 @@ public class RentalEventPublisher {
         );
 
         try {
-            String key = String.valueOf(rentalId);
-            var future = kafkaTemplate.send(rentalsTopic, key, payload);
-            if (future != null) {
+            String key = Objects.requireNonNull(String.valueOf(rentalId));
+            var future = kafkaTemplate.send(Objects.requireNonNull(rentalsTopic), key, payload);
+            if (Objects.nonNull(future)) {
                 future.whenComplete((result, ex) -> {
                     if (ex != null) {
                         log.error("Error asíncrono enviando evento a Kafka ({}) para rentalId={}, eventId={}: {}",

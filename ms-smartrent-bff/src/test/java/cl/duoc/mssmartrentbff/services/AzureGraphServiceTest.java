@@ -12,11 +12,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("null")
 class AzureGraphServiceTest {
 
     private AzureGraphProperties properties;
@@ -61,7 +63,7 @@ class AzureGraphServiceTest {
 
         ResponseEntity<List<GraphUserDto>> response = controller.getTenantUsers();
         assertEquals(200, response.getStatusCode().value());
-        assertEquals(1, response.getBody().size());
+        assertEquals(1, Objects.requireNonNull(response.getBody()).size());
     }
 
     @Test

@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,8 +19,17 @@ import java.util.regex.Pattern;
 public class ReportService {
 
     private static final int MAX_RECENT_CATALOG_EVENTS = 20;
+    private static final String GENERIC_MACHINE = "Maquina_Generica";
     private static final Pattern MACHINE_NAME_PATTERN =
             Pattern.compile("\"machineName\"\\s*:\\s*\"([^\"]+)\"", Pattern.CASE_INSENSITIVE);
+    private static final List<Map.Entry<String, List<String>>> MACHINE_KEYWORDS = List.of(
+            Map.entry("Retroexcavadora", List.of("retroexcavadora", "\"machineid\":2")),
+            Map.entry("Excavadora", List.of("excavadora", "\"machineid\":1", "\"rentalid\":1")),
+            Map.entry("Grua", List.of("grua", "grúa", "\"machineid\":7", "\"machineid\":8")),
+            Map.entry("Rodillo Compactador", List.of("rodillo", "\"machineid\":3")),
+            Map.entry("Generador Industrial", List.of("generador", "\"machineid\":9", "\"machineid\":10")),
+            Map.entry("Martillo Demoledor", List.of("demoledor", "\"machineid\":5"))
+    );
 
     private final AtomicInteger dailyRentals = new AtomicInteger(0);
     private final Map<String, Integer> machineRequests = new ConcurrentHashMap<>();
@@ -30,11 +40,15 @@ public class ReportService {
     private final Map<Long, Boolean> machineAvailability = new ConcurrentHashMap<>();
     private final ConcurrentLinkedDeque<CatalogEventDto> recentCatalogEvents = new ConcurrentLinkedDeque<>();
 
+    private static Integer sumCounts(Integer a, Integer b) {
+        return Objects.requireNonNull(a) + Objects.requireNonNull(b);
+    }
+
     public void recordRentalEvent(String message) {
         dailyRentals.incrementAndGet();
 
         String machineName = extractMachineFromMessage(message);
-        machineRequests.merge(machineName, 1, Integer::sum);
+        machineRequests.merge(machineName, 1, ReportService::sumCounts);
     }
 
     public void recordRentalEvent(RentalEventDto event) {
@@ -44,8 +58,8 @@ public class ReportService {
         }
         dailyRentals.incrementAndGet();
         String machineName = resolveMachineName(event);
-        machineRequests.merge(machineName, 1, Integer::sum);
-        rentalsByStatus.merge(event.getStatus().trim().toUpperCase(Locale.ROOT), 1, Integer::sum);
+        machineRequests.merge(machineName, 1, ReportService::sumCounts);
+        rentalsByStatus.merge(event.getStatus().trim().toUpperCase(Locale.ROOT), 1, ReportService::sumCounts);
     }
 
     public void recordCatalogEvent(CatalogEventDto event) {
@@ -55,7 +69,7 @@ public class ReportService {
         }
         catalogEventsTotal.incrementAndGet();
         String normalizedType = event.getEventType().trim().toUpperCase(Locale.ROOT);
-        catalogEventsByType.merge(normalizedType, 1, Integer::sum);
+        catalogEventsByType.merge(normalizedType, 1, ReportService::sumCounts);
 
         boolean available = !"MACHINE_DELETED".equals(normalizedType) && Boolean.TRUE.equals(event.getAvailable());
         machineAvailability.put(event.getMachineId(), available);
@@ -68,7 +82,7 @@ public class ReportService {
 
     private String resolveMachineName(RentalEventDto event) {
         String explicit = event.getMachineName();
-        if (explicit != null && !explicit.isBlank() && !"Maquina_Generica".equalsIgnoreCase(explicit.trim())) {
+        if (explicit != null && !explicit.isBlank() && !GENERIC_MACHINE.equalsIgnoreCase(explicit.trim())) {
             return explicit.trim();
         }
         if (event.getMachineId() != null) {
@@ -79,39 +93,31 @@ public class ReportService {
                 case 5 -> "Martillo Demoledor";
                 case 7, 8 -> "Grua";
                 case 9, 10 -> "Generador Industrial";
-                default -> "Maquina_Generica";
+                default -> GENERIC_MACHINE;
             };
         }
-        return "Maquina_Generica";
+        return GENERIC_MACHINE;
     }
 
     private String extractMachineFromMessage(String message) {
         if (message == null) {
-            return "Maquina_Generica";
+            return GENERIC_MACHINE;
         }
         Matcher matcher = MACHINE_NAME_PATTERN.matcher(message);
         if (matcher.find()) {
             String explicitName = matcher.group(1).trim();
-            if (!explicitName.isEmpty() && !"Maquina_Generica".equalsIgnoreCase(explicitName)) {
+            if (!explicitName.isEmpty() && !GENERIC_MACHINE.equalsIgnoreCase(explicitName)) {
                 return explicitName;
             }
         }
 
         String lower = message.toLowerCase(Locale.ROOT);
-        if (lower.contains("retroexcavadora") || lower.contains("\"machineid\":2")) {
-            return "Retroexcavadora";
-        } else if (lower.contains("excavadora") || lower.contains("\"machineid\":1") || lower.contains("\"rentalid\":1")) {
-            return "Excavadora";
-        } else if (lower.contains("grua") || lower.contains("grúa") || lower.contains("\"machineid\":7") || lower.contains("\"machineid\":8")) {
-            return "Grua";
-        } else if (lower.contains("rodillo") || lower.contains("\"machineid\":3")) {
-            return "Rodillo Compactador";
-        } else if (lower.contains("generador") || lower.contains("\"machineid\":9") || lower.contains("\"machineid\":10")) {
-            return "Generador Industrial";
-        } else if (lower.contains("demoledor") || lower.contains("\"machineid\":5")) {
-            return "Martillo Demoledor";
+        for (Map.Entry<String, List<String>> entry : MACHINE_KEYWORDS) {
+            if (entry.getValue().stream().anyMatch(lower::contains)) {
+                return entry.getKey();
+            }
         }
-        return "Maquina_Generica";
+        return GENERIC_MACHINE;
     }
 
     public int getDailyRentals() {

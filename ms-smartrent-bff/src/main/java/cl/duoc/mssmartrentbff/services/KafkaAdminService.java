@@ -25,6 +25,7 @@ import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.config.ConfigResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
@@ -47,6 +49,9 @@ public class KafkaAdminService {
     private static final List<String> KEY_CONFIG_NAMES = List.of(
             "cleanup.policy", "retention.ms", "retention.bytes", "min.insync.replicas", "segment.ms"
     );
+    private static final Comparator<TopicPartition> TOPIC_PARTITION_COMPARATOR =
+            Comparator.comparing((TopicPartition tp) -> Objects.requireNonNull(tp).topic())
+                    .thenComparingInt(tp -> Objects.requireNonNull(tp).partition());
 
     private final Supplier<AdminClient> adminClientSupplier;
 
@@ -74,7 +79,7 @@ public class KafkaAdminService {
             Collection<Node> nodes = awaitFuture(cluster.nodes());
 
             List<Map<String, Object>> brokers = nodes.stream()
-                    .sorted(Comparator.comparingInt(Node::id))
+                    .sorted(Comparator.comparingInt(node -> Objects.requireNonNull(node).id()))
                     .map(this::nodeToMap)
                     .toList();
 
@@ -112,20 +117,21 @@ public class KafkaAdminService {
     }
 
     public Map<String, Object> describeTopic(String topicName) {
-        validateTopicName(topicName);
+        String validatedTopic = validateTopicName(topicName);
         try (AdminClient admin = adminClientSupplier.get()) {
             Map<String, TopicDescription> descriptions = awaitFuture(
-                    admin.describeTopics(List.of(topicName)).allTopicNames()
+                    admin.describeTopics(List.of(validatedTopic)).allTopicNames()
             );
-            TopicDescription desc = descriptions.get(topicName);
-            ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
+            TopicDescription desc = descriptions.get(validatedTopic);
+            ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, validatedTopic);
             Map<ConfigResource, Config> cfgMap = awaitFuture(admin.describeConfigs(List.of(resource)).all());
             Config cfg = cfgMap.get(resource);
 
+            List<TopicPartitionInfo> partitions = desc != null ? desc.partitions() : List.of();
             Map<TopicPartition, OffsetSpec> earliestReq = new HashMap<>();
             Map<TopicPartition, OffsetSpec> latestReq = new HashMap<>();
-            for (TopicPartitionInfo pInfo : desc.partitions()) {
-                TopicPartition tp = new TopicPartition(topicName, pInfo.partition());
+            for (TopicPartitionInfo pInfo : partitions) {
+                TopicPartition tp = new TopicPartition(validatedTopic, pInfo.partition());
                 earliestReq.put(tp, OffsetSpec.earliest());
                 latestReq.put(tp, OffsetSpec.latest());
             }
@@ -136,23 +142,30 @@ public class KafkaAdminService {
                     latestReq.isEmpty() ? Map.of() : awaitFuture(admin.listOffsets(latestReq).all());
 
             List<Map<String, Object>> partitionDetails = new ArrayList<>();
-            for (TopicPartitionInfo pInfo : desc.partitions()) {
-                TopicPartition tp = new TopicPartition(topicName, pInfo.partition());
-                long start = earliestOffsets.containsKey(tp) ? earliestOffsets.get(tp).offset() : 0L;
-                long end = latestOffsets.containsKey(tp) ? latestOffsets.get(tp).offset() : 0L;
+            for (TopicPartitionInfo pInfo : partitions) {
+                TopicPartition tp = new TopicPartition(validatedTopic, pInfo.partition());
+                ListOffsetsResult.ListOffsetsResultInfo startInfo = earliestOffsets.get(tp);
+                ListOffsetsResult.ListOffsetsResultInfo endInfo = latestOffsets.get(tp);
+                long start = startInfo != null ? startInfo.offset() : 0L;
+                long end = endInfo != null ? endInfo.offset() : 0L;
+                Node leader = pInfo.leader();
 
                 Map<String, Object> partMap = new LinkedHashMap<>();
                 partMap.put("partition", pInfo.partition());
-                partMap.put("leader", pInfo.leader() != null ? pInfo.leader().id() : null);
-                partMap.put("replicas", pInfo.replicas().stream().map(Node::id).toList());
-                partMap.put("isr", pInfo.isr().stream().map(Node::id).toList());
+                partMap.put("leader", leader != null ? leader.id() : null);
+                partMap.put("replicas", pInfo.replicas().stream()
+                        .map(node -> Objects.requireNonNull(node).id())
+                        .toList());
+                partMap.put("isr", pInfo.isr().stream()
+                        .map(node -> Objects.requireNonNull(node).id())
+                        .toList());
                 partMap.put("earliestOffset", start);
                 partMap.put("latestOffset", end);
                 partMap.put("messageCount", Math.max(0L, end - start));
                 partitionDetails.add(partMap);
             }
 
-            Map<String, Object> result = buildTopicSummary(topicName, desc, cfg);
+            Map<String, Object> result = buildTopicSummary(validatedTopic, desc, cfg);
             result.put("partitionDetails", partitionDetails);
             result.put("allConfigs", extractAllConfigs(cfg));
             return result;
@@ -163,8 +176,7 @@ public class KafkaAdminService {
         if (request == null) {
             throw new IllegalArgumentException("El cuerpo de solicitud del tópico es obligatorio");
         }
-        String name = request.getName() != null ? request.getName().trim() : null;
-        validateTopicName(name);
+        String name = validateTopicName(request.getName());
         if (name.startsWith("__")) {
             throw new IllegalArgumentException("No se permite crear tópicos internos con prefijo __");
         }
@@ -175,9 +187,10 @@ public class KafkaAdminService {
             throw new IllegalArgumentException("Particiones y factor de replicación deben ser mayores o iguales a 1");
         }
 
+        Map<String, String> requestConfigs = request.getConfigs();
         NewTopic newTopic = new NewTopic(name, partitions, replication);
-        if (request.getConfigs() != null && !request.getConfigs().isEmpty()) {
-            newTopic.configs(request.getConfigs());
+        if (requestConfigs != null && !requestConfigs.isEmpty()) {
+            newTopic.configs(requestConfigs);
         }
 
         try (AdminClient admin = adminClientSupplier.get()) {
@@ -188,42 +201,44 @@ public class KafkaAdminService {
         created.put("name", name);
         created.put("partitions", partitions);
         created.put("replicationFactor", (int) replication);
-        created.put("configs", request.getConfigs() != null ? request.getConfigs() : Map.of());
+        created.put("configs", requestConfigs != null ? requestConfigs : Map.of());
         return created;
     }
 
     public Map<String, Object> updateTopicConfig(String topicName, KafkaTopicConfigUpdateDto request) {
-        validateTopicName(topicName);
+        String validatedTopic = validateTopicName(topicName);
         if (request == null) {
             throw new IllegalArgumentException("El cuerpo de actualización del tópico es obligatorio");
         }
-        boolean hasConfigs = request.getConfigs() != null && !request.getConfigs().isEmpty();
-        boolean hasPartitions = request.getPartitions() != null;
+        Map<String, String> requestConfigs = request.getConfigs();
+        Integer requestedPartitions = request.getPartitions();
+        boolean hasConfigs = requestConfigs != null && !requestConfigs.isEmpty();
+        boolean hasPartitions = requestedPartitions != null;
         if (!hasConfigs && !hasPartitions) {
             throw new IllegalArgumentException("Debe especificar configuraciones o un nuevo número de particiones");
         }
 
         try (AdminClient admin = adminClientSupplier.get()) {
             Map<String, TopicDescription> existing = awaitFuture(
-                    admin.describeTopics(List.of(topicName)).allTopicNames()
+                    admin.describeTopics(List.of(validatedTopic)).allTopicNames()
             );
-            TopicDescription currentDesc = existing.get(topicName);
+            TopicDescription currentDesc = existing.get(validatedTopic);
 
-            if (hasPartitions) {
+            if (requestedPartitions != null && currentDesc != null) {
                 int currentPartitions = currentDesc.partitions().size();
-                int targetPartitions = request.getPartitions();
+                int targetPartitions = requestedPartitions;
                 if (targetPartitions < currentPartitions) {
                     throw new IllegalArgumentException(
                             "Kafka no permite reducir particiones (actual=" + currentPartitions + ", solicitado=" + targetPartitions + ")");
                 }
                 if (targetPartitions > currentPartitions) {
-                    awaitFuture(admin.createPartitions(Map.of(topicName, NewPartitions.increaseTo(targetPartitions))).all());
+                    awaitFuture(admin.createPartitions(Map.of(validatedTopic, NewPartitions.increaseTo(targetPartitions))).all());
                 }
             }
 
-            if (hasConfigs) {
-                ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, topicName);
-                List<AlterConfigOp> ops = request.getConfigs().entrySet().stream()
+            if (hasConfigs && requestConfigs != null) {
+                ConfigResource resource = new ConfigResource(ConfigResource.Type.TOPIC, validatedTopic);
+                List<AlterConfigOp> ops = requestConfigs.entrySet().stream()
                         .filter(e -> e.getKey() != null && !e.getKey().isBlank() && e.getValue() != null)
                         .map(e -> new AlterConfigOp(new ConfigEntry(e.getKey().trim(), e.getValue()), AlterConfigOp.OpType.SET))
                         .toList();
@@ -232,16 +247,16 @@ public class KafkaAdminService {
                 }
             }
         }
-        return describeTopic(topicName);
+        return describeTopic(validatedTopic);
     }
 
     public void deleteTopic(String topicName) {
-        validateTopicName(topicName);
-        if (topicName.startsWith("__")) {
+        String validatedTopic = validateTopicName(topicName);
+        if (validatedTopic.startsWith("__")) {
             throw new IllegalArgumentException("No está permitido eliminar tópicos internos del clúster Kafka");
         }
         try (AdminClient admin = adminClientSupplier.get()) {
-            awaitFuture(admin.deleteTopics(List.of(topicName)).all());
+            awaitFuture(admin.deleteTopics(List.of(validatedTopic)).all());
         }
     }
 
@@ -252,11 +267,11 @@ public class KafkaAdminService {
                 return List.of();
             }
             return listings.stream()
-                    .sorted(Comparator.comparing(ConsumerGroupListing::groupId))
+                    .sorted(Comparator.comparing(listing -> Objects.requireNonNull(listing).groupId()))
                     .map(listing -> {
                         Map<String, Object> map = new LinkedHashMap<>();
                         map.put("groupId", listing.groupId());
-                        map.put("state", listing.state().map(Enum::name).orElse("UNKNOWN"));
+                        map.put("state", listing.state().map(state -> Objects.requireNonNull(state).name()).orElse("UNKNOWN"));
                         map.put("isSimpleConsumerGroup", listing.isSimpleConsumerGroup());
                         return map;
                     })
@@ -286,41 +301,61 @@ public class KafkaAdminService {
                     latestQuery.isEmpty() ? Map.of() : awaitFuture(admin.listOffsets(latestQuery).all());
 
             List<Map<String, Object>> partitionOffsets = new ArrayList<>();
-            long totalLag = 0L;
-            if (currentOffsets != null) {
-                List<TopicPartition> sortedTps = currentOffsets.keySet().stream()
-                        .sorted(Comparator.comparing(TopicPartition::topic).thenComparingInt(TopicPartition::partition))
-                        .toList();
-                for (TopicPartition tp : sortedTps) {
-                    long currentOffset = currentOffsets.get(tp) != null ? currentOffsets.get(tp).offset() : 0L;
-                    long endOffset = endOffsets.containsKey(tp) ? endOffsets.get(tp).offset() : currentOffset;
-                    long lag = Math.max(0L, endOffset - currentOffset);
-                    totalLag += lag;
-
-                    Map<String, Object> row = new LinkedHashMap<>();
-                    row.put("topic", tp.topic());
-                    row.put("partition", tp.partition());
-                    row.put("currentOffset", currentOffset);
-                    row.put("endOffset", endOffset);
-                    row.put("lag", lag);
-                    partitionOffsets.add(row);
-                }
-            }
-
-            List<Map<String, Object>> members = desc.members().stream()
-                    .map(this::memberToMap)
-                    .toList();
-
-            Map<String, Object> result = new LinkedHashMap<>();
-            result.put("groupId", desc.groupId());
-            result.put("state", desc.state() != null ? desc.state().name() : "UNKNOWN");
-            result.put("coordinator", desc.coordinator() != null ? nodeToMap(desc.coordinator()) : null);
-            result.put("memberCount", members.size());
-            result.put("members", members);
-            result.put("totalLag", totalLag);
-            result.put("offsets", partitionOffsets);
-            return result;
+            long totalLag = collectPartitionOffsets(currentOffsets, endOffsets, partitionOffsets);
+            return buildConsumerGroupResult(groupId, desc, totalLag, partitionOffsets);
         }
+    }
+
+    private long collectPartitionOffsets(
+            Map<TopicPartition, OffsetAndMetadata> currentOffsets,
+            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets,
+            List<Map<String, Object>> partitionOffsets) {
+        if (currentOffsets == null) {
+            return 0L;
+        }
+        long totalLag = 0L;
+        List<TopicPartition> sortedTps = currentOffsets.keySet().stream()
+                .sorted(TOPIC_PARTITION_COMPARATOR)
+                .toList();
+        for (TopicPartition tp : sortedTps) {
+            OffsetAndMetadata offsetMeta = currentOffsets.get(tp);
+            long currentOffset = offsetMeta != null ? offsetMeta.offset() : 0L;
+            ListOffsetsResult.ListOffsetsResultInfo endInfo = endOffsets.get(tp);
+            long endOffset = endInfo != null ? endInfo.offset() : currentOffset;
+            long lag = Math.max(0L, endOffset - currentOffset);
+            totalLag += lag;
+
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("topic", tp.topic());
+            row.put("partition", tp.partition());
+            row.put("currentOffset", currentOffset);
+            row.put("endOffset", endOffset);
+            row.put("lag", lag);
+            partitionOffsets.add(row);
+        }
+        return totalLag;
+    }
+
+    private Map<String, Object> buildConsumerGroupResult(
+            String groupId,
+            ConsumerGroupDescription desc,
+            long totalLag,
+            List<Map<String, Object>> partitionOffsets) {
+        List<Map<String, Object>> members = desc != null
+                ? desc.members().stream().map(this::memberToMap).toList()
+                : List.of();
+        var state = desc != null ? desc.state() : null;
+        Node coordinator = desc != null ? desc.coordinator() : null;
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("groupId", desc != null ? desc.groupId() : groupId);
+        result.put("state", state != null ? state.name() : "UNKNOWN");
+        result.put("coordinator", coordinator != null ? nodeToMap(coordinator) : null);
+        result.put("memberCount", members.size());
+        result.put("members", members);
+        result.put("totalLag", totalLag);
+        result.put("offsets", partitionOffsets);
+        return result;
     }
 
     public void deleteConsumerGroup(String groupId) {
@@ -365,7 +400,7 @@ public class KafkaAdminService {
         }
         Map<String, String> map = new LinkedHashMap<>();
         cfg.entries().stream()
-                .sorted(Comparator.comparing(ConfigEntry::name))
+                .sorted(Comparator.comparing(entry -> Objects.requireNonNull(entry).name()))
                 .forEach(entry -> map.put(entry.name(), entry.value()));
         return map;
     }
@@ -380,9 +415,10 @@ public class KafkaAdminService {
     }
 
     private Map<String, Object> memberToMap(MemberDescription member) {
-        List<String> assigned = member.assignment() != null
-                ? member.assignment().topicPartitions().stream()
-                        .sorted(Comparator.comparing(TopicPartition::topic).thenComparingInt(TopicPartition::partition))
+        var assignment = member.assignment();
+        List<String> assigned = assignment != null
+                ? assignment.topicPartitions().stream()
+                        .sorted(TOPIC_PARTITION_COMPARATOR)
                         .map(tp -> tp.topic() + "-" + tp.partition())
                         .toList()
                 : List.of();
@@ -395,11 +431,13 @@ public class KafkaAdminService {
         return map;
     }
 
-    private static void validateTopicName(String topicName) {
+    @NonNull
+    private static String validateTopicName(String topicName) {
         if (topicName == null || topicName.isBlank() || !VALID_TOPIC_NAME.matcher(topicName.trim()).matches()) {
             throw new IllegalArgumentException(
                     "Nombre de tópico inválido: solo se permiten caracteres alfanuméricos, puntos, guiones y guion bajo");
         }
+        return Objects.requireNonNull(topicName.trim());
     }
 
     private static <T> T awaitFuture(KafkaFuture<T> future) {

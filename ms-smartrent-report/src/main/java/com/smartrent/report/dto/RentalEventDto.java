@@ -17,6 +17,7 @@ public class RentalEventDto {
     public RentalEventDto() {
     }
 
+    @SuppressWarnings("java:S107")
     public RentalEventDto(
             String eventId,
             String eventType,
