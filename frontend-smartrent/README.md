@@ -55,10 +55,11 @@ Configurados en [`src/app/app.config.ts`](./src/app/app.config.ts) y [`src/envir
 - **Mapa de recursos protegidos (`protectedResourceMap`)**:
   - Protegidos en todos los métodos: `/rentals*`, `/reports*`, `/audit*`, `/users*`, `/cart*`, `/checkout*`, `/queues*`, `/exchanges*`, `/bindings*`, `/kafka*`, `/catalog/services/all*`.
   - `/catalog*`: `GET` sin token para catálogo público; `POST`, `PUT`, `DELETE`, `PATCH` con `Bearer JWT`.
-- **Identidad CIAM y API Gateway**:
-  - `authority`: `https://753ae9df-d5ec-4c6b-8227-b334fc775087.ciamlogin.com/753ae9df-d5ec-4c6b-8227-b334fc775087/v2.0`
-  - `clientId`: `f5890cb5-fba6-429e-b886-323d05ea886c`
-  - `apiBaseUrl`: `https://hnws3rgb6i.execute-api.us-east-1.amazonaws.com/v2/api`
+- **Identidad CIAM y URLs de Despliegue**:
+  - **URL Pública HTTPS (Frontend):** `https://tv9aux1za4.execute-api.us-east-1.amazonaws.com` (AWS HTTP API Gateway `$default` → `EC2-Frontend` IP Elástica `34.225.219.131:80`)
+  - **API Gateway Backend (`apiBaseUrl`):** `https://hnws3rgb6i.execute-api.us-east-1.amazonaws.com/v2/api`
+  - **Authority CIAM:** `https://753ae9df-d5ec-4c6b-8227-b334fc775087.ciamlogin.com/753ae9df-d5ec-4c6b-8227-b334fc775087/v2.0`
+  - **Client ID Frontend:** `f5890cb5-fba6-429e-b886-323d05ea886c`
 - **Resolución de rol (`AuthService`)**: prioriza claims explícitos del token (`roles`, `role`, `extension_Role`, `groups`) antes de cualquier heurística de respaldo.
 
 ---

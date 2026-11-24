@@ -158,11 +158,12 @@ docker exec -it smartrent-postgres psql -U smartrent -d smartrent_audit
 2. **Cuidado con las IPs dinámicas (IPs Privadas Fijas de la VPC):**  
    En AWS Learner Lab, la **IP Pública** de la instancia cambia cada vez que se detiene e inicia, pero las **IPs Privadas (Private IPv4)** dentro de la misma VPC **no cambian**. Los archivos `infra/compose.apps.yml` e `infra/compose.kafka.yml` ya vienen preconfigurados por defecto con estas IPs privadas para autoarranque sin intervención manual:
 
-   | Instancia EC2 | Instance ID | Rol / Compose | IP Privada Fija (VPC) |
-   | :--- | :--- | :--- | :--- |
-   | **EC2-Apps** | `i-0f64ef75cc7bcb761` | Microservicios + BFF + PostgreSQL (`infra/compose.apps.yml`) | `172.31.76.200` |
-   | **EC2-MQ** | `i-0965eaa82b5d4db5f` | RabbitMQ (`infra/compose.mq.yml`) | `172.31.29.239` |
-   | **EC2-Kafka** | `i-0c90ee30cdfc784a7` | Apache Kafka + Zookeeper (`infra/compose.kafka.yml`) | `172.31.30.107` |
+   | Instancia EC2 | Instance ID | Rol / Compose | IP Privada Fija (VPC) | IP Elástica / URL Pública |
+   | :--- | :--- | :--- | :---: | :--- |
+   | **EC2-Apps** | `i-0f64ef75cc7bcb761` | Microservicios + BFF + PostgreSQL (`infra/compose.apps.yml`) | `172.31.76.200` | Backend API: `https://hnws3rgb6i.execute-api.us-east-1.amazonaws.com/v2/api` |
+   | **EC2-MQ** | `i-0965eaa82b5d4db5f` | RabbitMQ (`infra/compose.mq.yml`) | `172.31.29.239` | `http://100.50.92.218:15672` (EIP `100.50.92.218`, `guest`/`guest`) |
+   | **EC2-Kafka** | `i-0c90ee30cdfc784a7` | Apache Kafka HA 3×3 + UI (`infra/compose.kafka.yml`) | `172.31.30.107` | `http://3.231.182.87:8090` (EIP `3.231.182.87`) |
+   | **EC2-Frontend** | `i-0e0c3536edfd0b413` | Angular 22 SPA en Nginx (`deploy-ec2.sh` / `compose.frontend.yml`) | `172.31.27.98` | `https://tv9aux1za4.execute-api.us-east-1.amazonaws.com` (EIP `34.225.219.131`) |
 
    *(Nota: Si alguna vez recreas una instancia y cambia su IP privada, puedes sobreescribirla con `RABBITMQ_HOST` y `KAFKA_HOST` o actualizar los valores por defecto en `infra/`).*
 

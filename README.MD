@@ -24,6 +24,22 @@ La solución implementa una arquitectura de **8 microservicios desacoplados**, u
 
 ---
 
+## 🌐 Accesos y URLs de Despliegue (AWS)
+
+Todas las instancias cuentan con **IP Elástica fija** e **IP Privada VPC fija**, permitiendo autoarranque automático en AWS Academy Learner Lab:
+
+| Servicio / Consola | URL de Acceso | Instancia EC2 / Detalle |
+| :--- | :--- | :--- |
+| **🌐 Frontend (SPA Angular 22)** | https://tv9aux1za4.execute-api.us-east-1.amazonaws.com | AWS HTTP API Gateway (`$default`) → `EC2-Frontend` (`34.225.219.131:80`) |
+| **⚙️ Backend API (BFF Gateway)** | https://hnws3rgb6i.execute-api.us-east-1.amazonaws.com/v2/api | AWS HTTP API Gateway (`hnws3rgb6i`) → `EC2-Apps` (`172.31.76.200:8080`) |
+| **🔎 Catálogo Público (Health/Prueba)** | https://hnws3rgb6i.execute-api.us-east-1.amazonaws.com/v2/api/catalog/services | `GET` público hacia `ms-smartrent-catalog` + PostgreSQL 15 |
+| **⚡ Apache Kafka UI (HA 3×3)** | http://3.231.182.87:8090 | `EC2-Kafka` (`3.231.182.87` / VPC `172.31.30.107:9092..9094`) — acceso directo |
+| **🐇 RabbitMQ Management UI** | http://100.50.92.218:15672 | `EC2-MQ` (`100.50.92.218` / VPC `172.31.29.239:5672`) — usuario `guest` / `guest` |
+
+> **Nota:** Las URLs de Kafka UI y RabbitMQ Management utilizan `http://` (puertos `8090` y `15672`), mientras que Frontend y Backend operan bajo `https://` a través de AWS HTTP API Gateway.
+
+---
+
 ## 🧭 Arquitectura General
 
 ```mermaid

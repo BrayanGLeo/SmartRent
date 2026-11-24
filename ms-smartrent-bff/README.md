@@ -2,6 +2,9 @@
 
 Microservicio **BFF (Backend for Frontend)** y puerta de enlace interna de la plataforma **SmartRent**. Actúa como **OAuth2 Resource Server** frente a **Microsoft Entra External ID (CIAM)**, aplica políticas perimetrales de seguridad **RBAC** y **CORS**, enruta tráfico hacia los microservicios internos mediante **Spring Cloud Gateway MVC**, consulta usuarios federados en **Microsoft Graph** y expone las APIs administrativas de **RabbitMQ** y **Apache Kafka HA**.
 
+- **URL Pública HTTPS (vía AWS HTTP API Gateway):** `https://hnws3rgb6i.execute-api.us-east-1.amazonaws.com/v2/api`
+- **Prueba rápida pública:** `GET https://hnws3rgb6i.execute-api.us-east-1.amazonaws.com/v2/api/catalog/services`
+
 ---
 
 ## 🛠️ Stack Tecnológico
