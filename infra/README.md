@@ -4,17 +4,17 @@ Contiene las definiciones de despliegue **Docker Compose** desacopladas por inst
 
 ---
 
-## 📁 Contenido del Directorio
+## 📁 Contenido del Directorio y Accesos AWS
 
-| Archivo | Rol / Instancia Objetivo | IP Privada VPC (Default) | Puertos Expuestos |
-| :--- | :--- | :---: | :--- |
-| [`compose.apps.yml`](./compose.apps.yml) | **EC2-Apps** — 8 microservicios Spring Boot + PostgreSQL 15-alpine | `172.31.76.200` | BFF `8080`, PG `127.0.0.1:5432` |
-| [`compose.mq.yml`](./compose.mq.yml) | **EC2-MQ** — RabbitMQ 3 Management Alpine | `172.31.29.239` | AMQP `5672`, UI `15672` |
-| [`compose.kafka.yml`](./compose.kafka.yml) | **EC2-Kafka** — 3 Zookeeper + 3 Brokers Kafka (`cp-kafka:7.4.0`) + `kafka-init` + Kafka UI | `172.31.30.107` | ZK `2181..2183`, Kafka `9092..9094`, UI `8090` |
-| [`compose.frontend.yml`](./compose.frontend.yml) | **EC2-Frontend** — SPA Angular 22 servida con Nginx endurecido | — | HTTP `80` |
-| [`app-scripts/wait-and-start.sh`](./app-scripts/wait-and-start.sh) | Entrypoint con delay y espera TCP inteligente para PostgreSQL, RabbitMQ y los 3 brokers Kafka en cada reinicio de `EC2-Apps` | — | — |
-| [`kafka-scripts/init-topics.sh`](./kafka-scripts/init-topics.sh) | Inicialización idempotente de tópicos oficiales y DLTs (`kafka-init`) | — | — |
-| [`kafka-scripts/manage-kafka.sh`](./kafka-scripts/manage-kafka.sh) | CLI replicable para administrar tópicos, consumer groups, lag y pruebas produce/consume | — | — |
+| Archivo | Rol / Instancia Objetivo | IP Privada VPC | URL Pública / IP Elástica | Puertos Expuestos |
+| :--- | :--- | :---: | :--- | :--- |
+| [`compose.apps.yml`](./compose.apps.yml) | **EC2-Apps** (`i-0f64ef75cc7bcb761`) — 8 microservicios + PostgreSQL 15 | `172.31.76.200` | `https://hnws3rgb6i.execute-api.us-east-1.amazonaws.com/v2/api` | BFF `8080`, PG `127.0.0.1:5432` |
+| [`compose.mq.yml`](./compose.mq.yml) | **EC2-MQ** (`i-0965eaa82b5d4db5f`) — RabbitMQ 3 Management | `172.31.29.239` | `http://100.50.92.218:15672` (`guest`/`guest`) | AMQP `5672`, UI `15672` |
+| [`compose.kafka.yml`](./compose.kafka.yml) | **EC2-Kafka** (`i-0c90ee30cdfc784a7`) — 3 ZK + 3 Brokers + `kafka-init` + UI | `172.31.30.107` | `http://3.231.182.87:8090` | ZK `2181..2183`, Kafka `9092..9094`, UI `8090` |
+| [`compose.frontend.yml`](./compose.frontend.yml) | **EC2-Frontend** (`i-0e0c3536edfd0b413`) — SPA Angular 22 en Nginx | `172.31.27.98` | `https://tv9aux1za4.execute-api.us-east-1.amazonaws.com` (EIP `34.225.219.131`) | HTTP `80` |
+| [`app-scripts/wait-and-start.sh`](./app-scripts/wait-and-start.sh) | Entrypoint con delay y espera TCP inteligente para PostgreSQL, RabbitMQ y los 3 brokers Kafka en cada reinicio de `EC2-Apps` | — | — | — |
+| [`kafka-scripts/init-topics.sh`](./kafka-scripts/init-topics.sh) | Inicialización idempotente de tópicos oficiales y DLTs (`kafka-init`) | — | — | — |
+| [`kafka-scripts/manage-kafka.sh`](./kafka-scripts/manage-kafka.sh) | CLI replicable para administrar tópicos, consumer groups, lag y pruebas produce/consume | — | — | — |
 
 ---
 
